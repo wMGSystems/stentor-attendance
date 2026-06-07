@@ -4,8 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<!-- Dynamic Theme Color: initially set to Chandarana's faint blue to perfectly blend the status bar -->
-<meta name="theme-color" id="theme-color-meta" content="#bed7f7">
+<!-- Dynamic Theme Color: Matches the top-left color of the active gradient -->
+<meta name="theme-color" id="theme-color-meta" content="#52c234">
 <script>
   // Synchronously update the theme color before the page renders to prevent iOS status bar flash/lock
   (function() {
@@ -16,7 +16,7 @@
       if (savedTerm === 'carrefour') {
         meta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
       } else {
-        meta.setAttribute('content', isDark ? '#24396a' : '#bed7f7');
+        meta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
       }
     }
   })();
@@ -75,13 +75,14 @@ body {
 
 .bg-layer { position: fixed; inset: 0; z-index: -1; transition: opacity 0.8s ease-in-out; }
 
-/* Adjusted Gradients to perfectly blend into the status bar and have blue bottom right */
-.bg-chandarana { background: linear-gradient(135deg, #bed7f7 0%, #bed7f7 10%, #52c234 35%, #52c234 85%, #bed7f7 100%); opacity: 1; }
-.bg-carrefour { background: linear-gradient(135deg, #1a73e8 0%, #1a73e8 65%, rgba(82, 194, 52, 0.5) 100%); opacity: 0; }
+/* Chandarana: Green body with Blue at bottom-right */
+.bg-chandarana { background: linear-gradient(135deg, #52c234 0%, #52c234 65%, #1a73e8 100%); opacity: 1; }
+/* Carrefour: Blue body with Green at bottom-right */
+.bg-carrefour { background: linear-gradient(135deg, #1a73e8 0%, #1a73e8 65%, #52c234 100%); opacity: 0; }
 
 @media (prefers-color-scheme: dark) {
-  .bg-chandarana { background: linear-gradient(135deg, #24396a 0%, #24396a 10%, #0d5a45 35%, #064e3b 85%, #24396a 100%); }
-  .bg-carrefour { background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 65%, rgba(16, 185, 129, 0.4) 100%); }
+  .bg-chandarana { background: linear-gradient(135deg, #064e3b 0%, #064e3b 65%, #1e3a8a 100%); }
+  .bg-carrefour { background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 65%, #064e3b 100%); }
 }
 
 body.theme-chandarana .bg-chandarana { opacity: 1; }
@@ -325,7 +326,7 @@ function updateTerminalUI() {
   const themeMeta = document.getElementById('theme-color-meta');
   if (themeMeta) {
     if (currentTerminal === 'chandarana') {
-      themeMeta.setAttribute('content', isDark ? '#24396a' : '#bed7f7');
+      themeMeta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
     } else {
       themeMeta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
     }
@@ -366,7 +367,13 @@ function switchTerminal(term) {
   
   document.getElementById('successScreen').style.display = 'none';
   document.getElementById('mainForm').style.display = 'block';
-  resetStepsFrom(2);
+  
+  // Wipe internal arrays completely so logic doesn't leak during transition
+  staff = []; branches = [];
+  
+  resetStepsFrom(1);
+  document.getElementById('step1').classList.add('activeStep');
+  
   initApp();
 }
 
@@ -379,58 +386,75 @@ async function fetchFromServer(action, data) {
 }
 
 function populateBranches(branchList) {
+  if (!Array.isArray(branchList)) return;
   document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' + branchList.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
 }
 
 function initApp() {
   const myFetchId = ++activeFetchId; 
   const cacheKey = currentTerminal + "_portal_data";
-  const cachedData = localStorage.getItem(cacheKey);
-  let hasCachedData = false;
+  
+  let loadedFromCache = false;
 
-  // 1. Instant Load From Cache
-  if (cachedData) {
-    try {
+  // 1. Instant Load From Cache (Safely wrapped so it never fails the app)
+  try {
+    const cachedData = localStorage.getItem(cacheKey);
+    if (cachedData) {
       const parsed = JSON.parse(cachedData);
-      if (parsed.staff && parsed.branches) {
-        staff = parsed.staff; 
-        branches = parsed.branches;
+      // Ensure the payload actually contains our arrays
+      if (parsed && Array.isArray(parsed.branches)) {
+        staff = parsed.staff || []; 
+        branches = parsed.branches || [];
         populateBranches(branches);
         restoreFromCache();
-        hasCachedData = true;
+        loadedFromCache = true;
       }
-    } catch (e) {}
+    }
+  } catch (e) {
+    console.warn("Could not read portal cache.", e);
   }
 
-  if (!hasCachedData) {
+  if (!loadedFromCache) {
     document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
   }
 
   // 2. Unnoticeable Background Sync
   fetchFromServer('getPortalData', {})
     .then(data => {
-      if (myFetchId !== activeFetchId) return; // Discard if terminal switched during fetch
+      // Discard this fetch response if the user already switched the terminal tab!
+      if (myFetchId !== activeFetchId) return; 
       
-      const branchesChanged = JSON.stringify(branches) !== JSON.stringify(data.branches);
+      const newStaff = data.staff || [];
+      const newBranches = data.branches || [];
+      const branchesChanged = JSON.stringify(branches) !== JSON.stringify(newBranches);
       
-      staff = data.staff; 
-      branches = data.branches;
-      localStorage.setItem(cacheKey, JSON.stringify(data));
+      staff = newStaff; 
+      branches = newBranches;
+
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify({ staff, branches }));
+      } catch(e) {} // Catch quota exceeded / private mode errors quietly
       
-      if (!hasCachedData) {
+      // If we initially had no cache, inject options immediately
+      if (!loadedFromCache) {
         populateBranches(branches);
         restoreFromCache();
-      } else if (branchesChanged) {
-        // Prevent "ghosting": strictly avoid updating the dropdown if the user is looking at/selecting it
+      } 
+      // If we DID have cache but the server sent a NEW list, update gracefully
+      else if (branchesChanged) {
+        // Prevent "ghosting" or snapping: strictly avoid updating the dropdown if the user is looking at/selecting it
         const select = document.getElementById('branch');
         if (document.activeElement !== select) {
           const currentVal = select.value;
           populateBranches(branches);
-          if (currentVal) select.value = currentVal; // Restore selection seamlessly
+          
+          // Re-apply their selection completely seamlessly without triggering events
+          if (currentVal) select.value = currentVal; 
         }
       }
     }).catch(() => { 
-      if (myFetchId === activeFetchId && !hasCachedData) { 
+      // Only show error if we didn't have ANY cache to fall back on
+      if (myFetchId === activeFetchId && branches.length === 0) { 
         document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>'; 
       } 
     });
@@ -439,32 +463,44 @@ function initApp() {
 function getFormCacheKey() { return currentTerminal + "_attendance_cache"; }
 function autoSave(isCapturing = false) {
   if (isRestoring) return;
-  localStorage.setItem(getFormCacheKey(), JSON.stringify({ branch: document.getElementById('branch').value, staffID: document.getElementById('staffID').value, capturing: isCapturing, lat: coords ? coords.latitude : null, lng: coords ? coords.longitude : null }));
+  try {
+    localStorage.setItem(getFormCacheKey(), JSON.stringify({ branch: document.getElementById('branch').value, staffID: document.getElementById('staffID').value, capturing: isCapturing, lat: coords ? coords.latitude : null, lng: coords ? coords.longitude : null }));
+  } catch(e) {}
 }
 
 function restoreFromCache() {
   const cached = localStorage.getItem(getFormCacheKey()); if (!cached) return;
-  isRestoring = true; const d = JSON.parse(cached);
-  if (d.branch) { document.getElementById('branch').value = d.branch; handleBranchChange(); }
-  if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput(); }
-  if (d.lat && d.lng) { coords = { latitude: d.lat, longitude: d.lng }; showSuccess('gpsMsg', 'Location Verified'); activateStep(4); }
-  if (d.capturing === true) {
-    photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-    const p = document.getElementById('preview'); p.src = photo; p.style.display = 'block'; p.classList.add('recovered-photo');
-    showSuccess('cameraMsg', 'Identity Restored'); activateStep(4); activateStep(5); autoSave(false);
-  }
+  isRestoring = true; 
+  try {
+    const d = JSON.parse(cached);
+    if (d.branch) { 
+      const bEl = document.getElementById('branch');
+      bEl.value = d.branch; 
+      if (bEl.value) handleBranchChange(); 
+    }
+    if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput(); }
+    if (d.lat && d.lng) { coords = { latitude: d.lat, longitude: d.lng }; showSuccess('gpsMsg', 'Location Verified'); activateStep(4); }
+    if (d.capturing === true) {
+      photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+      const p = document.getElementById('preview'); p.src = photo; p.style.display = 'block'; p.classList.add('recovered-photo');
+      showSuccess('cameraMsg', 'Identity Restored'); activateStep(4); activateStep(5); autoSave(false);
+    }
+  } catch(e) {}
   isRestoring = false;
 }
 
 function activateStep(n) { document.getElementById('step' + n).classList.add('activeStep'); }
+
 function resetStepsFrom(n) {
   for (let i = n; i <= 6; i++) { const el = document.getElementById('step' + i); if (el) el.classList.remove('activeStep'); }
+  if (n <= 1) { document.getElementById('branch').value = ''; clearMsg('branchMsg'); }
   if (n <= 2) { staffName = ''; document.getElementById('staffID').value = ''; clearMsg('staffMsg'); }
   if (n <= 3) { coords = null; clearMsg('gpsMsg'); }
   if (n <= 4) { photo = null; const p = document.getElementById('preview'); p.style.display = 'none'; p.src = ''; p.classList.remove('recovered-photo'); clearMsg('cameraMsg'); document.getElementById('cameraInput').value = ''; }
   if (n <= 5) { document.getElementById('actionChoice').value = ''; clearMsg('actionMsg'); }
   clearMsg('submitMsg'); autoSave();
 }
+
 function resetToStart() {
   document.getElementById('successScreen').style.display = 'none'; document.getElementById('mainForm').style.display = 'block';
   document.getElementById('branch').value = ''; clearMsg('branchMsg'); resetStepsFrom(2); document.getElementById('step1').classList.add('activeStep');
@@ -484,14 +520,16 @@ document.getElementById('branch').onchange = function handleBranchChange() {
 document.getElementById('staffID').oninput = function handleStaffInput() {
   const val = this.value.trim();
   if (val.length < 1) { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); clearMsg('staffMsg'); return; }
-  const match = staff.find(s => s.id === val);
+  
+  // Safe execution inside event listener
+  const match = (staff || []).find(s => s.id === val);
   if (match) { staffName = match.name; showSuccess('staffMsg', 'Welcome ' + staffName.split(' ')[0]); activateStep(3); autoSave(); } 
   else { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); showError('staffMsg', 'Invalid Staff ID. Please check.'); }
 }
 
 document.getElementById('actionChoice').onchange = function() {
   const val = this.value; if (!val) { clearMsg('actionMsg'); document.getElementById('step6').classList.remove('activeStep'); return; }
-  const match = staff.find(s => s.id === document.getElementById('staffID').value.trim());
+  const match = (staff || []).find(s => s.id === document.getElementById('staffID').value.trim());
   const sheetStatus = match && match.status ? match.status : null;
 
   if (val === 'Clock Out' && sheetStatus !== 'Clock In') { showError('actionMsg', 'Cannot Clock Out. You have not Clocked In today.'); this.value = ''; document.getElementById('step6').classList.remove('activeStep'); return; }
@@ -503,7 +541,7 @@ function verifyGPS() {
   document.getElementById('gpsMsg').innerText = 'Locating...'; document.getElementById('gpsMsg').className = 'msg';
   navigator.geolocation.getCurrentPosition(
     pos => {
-      coords = pos.coords; const b = branches.find(x => x[0] === document.getElementById('branch').value);
+      coords = pos.coords; const b = (branches || []).find(x => x[0] === document.getElementById('branch').value);
       if (!b) { showError('gpsMsg', 'Select branch first.'); return; }
       const R = 6371e3; const dLat = (b[1] - coords.latitude) * Math.PI / 180; const dLon = (b[2] - coords.longitude) * Math.PI / 180;
       const a = Math.sin(dLat/2)**2 + Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)**2;
@@ -542,7 +580,7 @@ async function submitAttendance() {
     await fetchFromServer('recordAttendance', { name: staffName, id: staffID, branch, action, image: photo, lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0 });
     localStorage.removeItem(getFormCacheKey());
     
-    const match = staff.find(s => s.id === staffID); if(match) match.status = action; 
+    const match = (staff || []).find(s => s.id === staffID); if(match) match.status = action; 
     const firstName = staffName.split(' ')[0] || staffName;
     const isClockIn = action === 'Clock In'; const mins = (new Date().getHours() * 60) + new Date().getMinutes();
     
