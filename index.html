@@ -12,8 +12,8 @@
   /* Light Theme */
   --bg-primary: #ffffff;
   --bg-secondary: #f9f9f9;
-  --bg-gradient-start: #c8f0e8;
-  --bg-gradient-end: #b3d9ff;
+  --bg-gradient-start: #a8e6d8;
+  --bg-gradient-end: #6bb6ff;
   --text-primary: #1a1a1a;
   --text-secondary: #666666;
   --text-tertiary: #999999;
@@ -42,8 +42,8 @@
     /* Dark Theme */
     --bg-primary: #1a1a2e;
     --bg-secondary: #16213e;
-    --bg-gradient-start: #0f4c3b;
-    --bg-gradient-end: #1a3a52;
+    --bg-gradient-start: #0d5a45;
+    --bg-gradient-end: #1a4a70;
     --text-primary: #f5f5f5;
     --text-secondary: #b0b0b0;
     --text-tertiary: #808080;
@@ -88,29 +88,6 @@ body {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   transition: background 0.3s ease;
-}
-
-/* ── THEME TOGGLE ──────────────────────────────────────── */
-.theme-toggle {
-  position: fixed;
-  top: 16px;
-  right: 16px;
-  z-index: 400;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  box-shadow: 0 2px 8px var(--shadow-color);
-  transition: all 0.3s ease;
-}
-.theme-toggle:hover {
-  transform: scale(1.1);
 }
 
 /* ── PWA GUIDE ─────────────────────────────────────────── */
@@ -496,10 +473,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 <body>
 
-<!-- THEME TOGGLE -->
-<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
-  <span id="themeIcon">🌙</span>
-</button>
+
 
 <!-- PWA GUIDE -->
 <div id="pwa-guide">
@@ -611,36 +585,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 </div>
 
 <script>
-// ── THEME MANAGEMENT ───────────────────────────────────
-function initTheme() {
-  const savedTheme = localStorage.getItem('theme');
-  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-  
-  if (savedTheme) {
-    document.documentElement.style.colorScheme = savedTheme;
-  } else if (prefersLight) {
-    document.documentElement.style.colorScheme = 'light';
-  }
-  updateThemeIcon();
-}
-
-function toggleTheme() {
-  const current = localStorage.getItem('theme') || 
-    (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-  const newTheme = current === 'light' ? 'dark' : 'light';
-  
-  localStorage.setItem('theme', newTheme);
-  document.documentElement.style.colorScheme = newTheme;
-  updateThemeIcon();
-}
-
-function updateThemeIcon() {
-  const current = localStorage.getItem('theme') || 
-    (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-  const icon = document.getElementById('themeIcon');
-  icon.textContent = current === 'light' ? '🌙' : '☀️';
-}
-
 // ── CONFIG ─────────────────────────────────────────────
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVaxxz-D-YiG5ifp7vxuAkC8WhR0fpBUV_c38i2EWDLAuTsagbg2bzaLmNuXPsXj00/exec";
 
@@ -703,7 +647,6 @@ function dismissPwaGuideForever() { localStorage.setItem('pwa_never_show', '1');
 
 // ── INIT ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  initTheme();
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   if (!isStandalone && shouldShowPwaGuide() && buildPwaGuideContent()) {
     recordPwaShown();
@@ -946,14 +889,14 @@ function getClockInMessage(firstName) {
   };
   return {
     emoji: '⏰', badge: 'Clocked In',
-    msg: 'Your attendance has been recorded.',
-    warning: '⚠️ Warning: clock in past 8:00 AM. Consistent late arrivals are logged automatically and will be forwarded to administration for review.'
+    msg: 'Your late.',
+    warning: '⚠️ Warning: Consistent clock in past 8:00 AM are logged in the system automatically and will be forwarded to administration for review.'
   };
 }
 
 function getClockOutMessage(firstName) {
   const h = new Date().getHours();
-  if (h < 16) return { emoji: '👋', badge: 'Clocked Out', msg: 'Have a wonderful rest of your day!', warning: null };
+  if (h < 16) return { emoji: '👋', badge: 'Clocked Out', msg: 'Have a wonderful Afternoon!', warning: null };
   if (h >= 18) return { emoji: '🌙', badge: 'Clocked Out', msg: 'Have a restful night — and remember to place your order!', warning: null };
   return { emoji: '🌅', badge: 'Clocked Out', msg: 'Have a wonderful evening!', warning: null };
 }
