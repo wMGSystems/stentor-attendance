@@ -4,7 +4,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#1a73e8">
+<!-- Dynamic Theme Color: initially set to Chandarana's faint blue to perfectly blend the status bar -->
+<meta name="theme-color" id="theme-color-meta" content="#bed7f7">
+<script>
+  // Synchronously update the theme color before the page renders to prevent iOS status bar flash/lock
+  (function() {
+    var savedTerm = localStorage.getItem('selected_terminal') || 'chandarana';
+    var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var meta = document.getElementById('theme-color-meta');
+    if (meta) {
+      if (savedTerm === 'carrefour') {
+        meta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
+      } else {
+        meta.setAttribute('content', isDark ? '#24396a' : '#bed7f7');
+      }
+    }
+  })();
+</script>
 <title>Store Attendance</title>
 
 <style>
@@ -59,13 +75,12 @@ body {
 
 .bg-layer { position: fixed; inset: 0; z-index: -1; transition: opacity 0.8s ease-in-out; }
 
-/* Adjusted Gradients to match spec perfectly */
-/* Made Chandarana's top-left blue solid so it covers the screen cleanly without transparency */
-.bg-chandarana { background: linear-gradient(135deg, #bed7f7 0%, #52c234 35%, #52c234 100%); opacity: 1; }
+/* Adjusted Gradients to perfectly blend into the status bar */
+.bg-chandarana { background: linear-gradient(135deg, #bed7f7 0%, #bed7f7 10%, #52c234 50%, #52c234 100%); opacity: 1; }
 .bg-carrefour { background: linear-gradient(135deg, #1a73e8 0%, #1a73e8 65%, rgba(82, 194, 52, 0.5) 100%); opacity: 0; }
 
 @media (prefers-color-scheme: dark) {
-  .bg-chandarana { background: linear-gradient(135deg, #24396a 0%, #0d5a45 40%, #064e3b 100%); }
+  .bg-chandarana { background: linear-gradient(135deg, #24396a 0%, #24396a 10%, #0d5a45 50%, #064e3b 100%); }
   .bg-carrefour { background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 65%, rgba(16, 185, 129, 0.4) 100%); }
 }
 
@@ -322,7 +337,7 @@ function updateTerminalUI() {
   // Dynamically update theme-color meta tag to match the active gradient's top color.
   // This physically colors the iOS/Android status bar so the background beautifully covers the whole screen.
   const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  const themeMeta = document.getElementById('theme-color-meta');
   if (themeMeta) {
     if (currentTerminal === 'chandarana') {
       themeMeta.setAttribute('content', isDark ? '#24396a' : '#bed7f7');
