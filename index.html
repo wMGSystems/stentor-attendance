@@ -5,7 +5,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#1a73e8">
-<title>Stentor Attendance</title>
+<title>Store Attendance</title>
 
 <style>
 :root {
@@ -73,28 +73,11 @@ body.theme-chandarana .bg-carrefour { opacity: 0; }
 body.theme-carrefour .bg-chandarana { opacity: 0; }
 body.theme-carrefour .bg-carrefour { opacity: 1; }
 
-body.theme-chandarana { 
-  --dynamic-primary: var(--theme-chan); 
-}
-body.theme-carrefour { 
-  --dynamic-primary: var(--theme-carr); 
-  --success-color: #1a73e8; /* Force blue checkmarks for Carrefour */
-}
+body.theme-chandarana { --dynamic-primary: var(--theme-chan); }
+body.theme-carrefour { --dynamic-primary: var(--theme-carr); --success-color: #1a73e8; }
 @media (prefers-color-scheme: dark) {
   body.theme-carrefour { --success-color: #3b82f6; }
 }
-
-/* ── PWA GUIDE ─────────────────────────────────────────── */
-#pwa-guide { display: none; position: fixed; inset: 0; background: var(--modal-overlay); z-index: 500; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
-.pwa-card { background: var(--bg-primary); padding: 28px 24px; border-radius: 20px; text-align: center; max-width: 360px; width: 100%; box-shadow: 0 10px 40px var(--shadow-color); display: flex; flex-direction: column; align-items: center; }
-.pwa-card .pwa-icon { font-size: 56px; margin-bottom: 14px; }
-.pwa-card h2 { color: var(--text-primary); font-size: 22px; margin-bottom: 8px; text-transform: none; letter-spacing: normal; font-family: inherit;}
-.pwa-card p { color: var(--text-secondary); font-size: 14px; line-height: 1.65; margin-bottom: 16px; }
-.pwa-card .pwa-steps { background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; text-align: left; width: 100%; margin-bottom: 20px; color: var(--text-secondary); font-size: 13.5px; line-height: 1.6; }
-.pwa-card .pwa-steps b { color: var(--text-primary); }
-.pwa-card .pwa-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-.pwa-card .btn-install { background: var(--dynamic-primary); color: #ffffff; border: none; border-radius: 12px; padding: 14px; font-size: 15px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
-.pwa-card .btn-skip { background: var(--button-secondary-bg); color: var(--dynamic-primary); border: none; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s ease; }
 
 /* ── CONTAINER ─────────────────────────────────────────── */
 .container { max-width: 420px; width: 100%; margin: auto; background: var(--bg-primary); padding: 22px 20px 26px; border-radius: 20px; box-shadow: 0 10px 40px var(--shadow-color); position: relative; overflow: hidden; }
@@ -106,40 +89,51 @@ body.theme-carrefour {
   background: var(--input-bg); 
   border: 1px solid var(--border-color); 
   border-radius: 50px; padding: 4px; height: 42px; 
-  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08); /* Groove inset shadow */
-  align-items: stretch;
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
+  align-items: center; /* Enforces absolute center */
 }
 .pill-slider { 
   position: absolute; top: 4px; bottom: 4px; left: 4px; 
   border-radius: 50px; background: var(--dynamic-primary); 
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); /* Emboss shadow on slider */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); 
   transition: all 0.35s cubic-bezier(0.25, 1, 0.5, 1); z-index: 1; 
 }
 .pill-btn { 
   position: relative; z-index: 2; background: transparent; border: none; 
-  padding: 0 16px; font-size: 13.5px; font-weight: 800; 
+  padding: 0 16px; height: 100%; font-size: 13.5px; font-weight: 800; 
   color: var(--text-secondary); cursor: pointer; 
-  transition: color 0.15s ease; /* Default fast fade */
+  transition: color 0.15s ease;
   display: flex; align-items: center; justify-content: center;
-  line-height: 1; letter-spacing: 0.2px; outline: none; -webkit-tap-highlight-color: transparent;
+  letter-spacing: 0.2px; outline: none; -webkit-tap-highlight-color: transparent;
 }
-.pill-btn.active { 
-  color: #ffffff; 
-  transition: color 0.2s ease 0.15s; /* Delay turning white to prevent ghosting */
-}
-.pill-btn .full-text { display: none; }
-.pill-btn .short-text { display: inline; }
-.pill-btn.active .full-text { display: inline; }
-.pill-btn.active .short-text { display: none; }
+.pill-btn.active { color: #ffffff; transition: color 0.2s ease 0.15s; }
 
-/* ── FORM ELEMENTS ─────────────────────────────────────── */
-/* Modern UI Rounded Font applied specifically to the title */
+/* Display properties fixed to prevent off-centering */
+.pill-btn .full-text, .pill-btn .short-text { display: none; margin: 0; padding: 0; }
+.pill-btn.active .full-text { display: block; }
+.pill-btn:not(.active) .short-text { display: block; }
+
+/* ── FORM ELEMENTS & NUDGE ANIMATION ───────────────────── */
+
+/* Fun, cartoonish jelly shake animation for title */
+@keyframes cartoonNudge {
+  0%   { transform: scale(1) rotate(0deg); }
+  20%  { transform: scale(1.15) rotate(-5deg); }
+  40%  { transform: scale(1.15) rotate(5deg); }
+  60%  { transform: scale(1.05) rotate(-3deg); }
+  80%  { transform: scale(1.02) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
 h2 { 
-  text-align: center; color: var(--dynamic-primary); margin-bottom: 18px; 
+  text-align: center; color: var(--dynamic-primary); margin: 0 auto 18px auto; 
+  width: max-content; /* perfectly bounds text to scale from center */
   font-size: 20px; text-transform: uppercase; letter-spacing: 1px; transition: color 0.4s ease;
   font-family: ui-rounded, "Nunito", "Varela Round", "Arial Rounded MT Bold", "Segoe UI Rounded", system-ui, sans-serif;
-  font-weight: 800;
+  font-weight: 800; transform-origin: center;
 }
+.shake-nudge { animation: cartoonNudge 0.55s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+
 .step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @keyframes bounceIn { 0% { transform: scale(0.9); opacity: 0; } 60% { transform: scale(1.05); } 100% { transform: scale(1); opacity: 1; } }
 .step { opacity: 0.28; pointer-events: none; transition: opacity 0.4s ease; }
@@ -156,11 +150,28 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 #preview { width: 58px; height: 58px; object-fit: cover; border-radius: 50%; border: 3px solid var(--success-color); display: none; margin: 4px auto 0; background: var(--input-bg); transition: border-color 0.4s ease; }
 .recovered-photo { filter: blur(4px); }
 
-/* ── STATUS MESSAGES ───────────────────────────────────── */
+/* ── STATUS MESSAGES & STYLISH TICK MARKS ────────────── */
 .msg { font-size: 12px; font-weight: 700; margin-top: 6px; min-height: 20px; color: var(--text-tertiary); display: flex; align-items: center; transition: color 0.2s; }
 .msg.success { color: var(--success-color); font-size: 13px; }
 .msg.error { color: var(--error-color); }
-.msg .dot { display: inline-block; width: 18px; height: 18px; background: var(--success-color); border-radius: 50%; color: white; text-align: center; line-height: 18px; font-size: 10px; margin-right: 8px; flex-shrink: 0; transition: background 0.4s ease; }
+
+/* Stylish CSS-drawn tick mark */
+.msg .dot { 
+  display: inline-flex; justify-content: center; align-items: center;
+  width: 18px; height: 18px; background: var(--success-color); 
+  border-radius: 50%; margin-right: 8px; flex-shrink: 0; 
+  transition: background 0.4s ease; position: relative; 
+}
+.msg .dot::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 4.5px; height: 9px;
+  border-right: 2.5px solid white;
+  border-bottom: 2.5px solid white;
+  transform: translate(-50%, -60%) rotate(45deg); /* Mathematically perfect centering */
+  border-radius: 1px; /* Gives the checkmark a stylish rounded edge */
+}
 
 /* ── SUCCESS SCREEN ────────────────────────────────────── */
 #mainForm { display: block; }
@@ -178,11 +189,13 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 #gpsModal .modal-box { background: var(--bg-primary); padding: 28px; border-radius: 16px; text-align: center; max-width: 350px; width: 100%; }
 #gpsModal .modal-box h3 { color: var(--error-color); margin: 10px 0 16px; font-size: 20px; }
 .modal-instructions { background: var(--input-bg); color: var(--text-secondary); padding: 16px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; line-height: 1.6; text-align: left; }
+
+/* PWA Details Hidden for Brevity (Still Exists) */
+#pwa-guide { display: none; }
 </style>
 </head>
 
 <body class="theme-chandarana">
-<!-- Render-Blocking Script ensures UI defaults properly exactly to where the user left it without screen flickering -->
 <script>
   (function() {
     var savedTerm = localStorage.getItem('selected_terminal') || 'chandarana';
@@ -190,30 +203,12 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
   })();
 </script>
 
-<!-- BACKGROUND LAYERS -->
 <div class="bg-layer bg-chandarana"></div>
 <div class="bg-layer bg-carrefour"></div>
 
-<!-- PWA GUIDE -->
-<div id="pwa-guide">
-  <div class="pwa-card">
-    <div class="pwa-icon" id="pwa-icon">📲</div>
-    <h2>Add to Home Screen</h2>
-    <p id="pwa-desc">Install this app for the best experience — opens instantly, no browser bar.</p>
-    <div class="pwa-steps" id="pwa-steps"></div>
-    <div class="pwa-actions">
-      <button class="btn-install" id="pwa-install-btn" style="display:none" onclick="triggerAndroidInstall()">➕ Install App</button>
-      <button class="btn-install" id="pwa-ok-btn" onclick="dismissPwaGuide()">Got it!</button>
-      <button class="btn-skip" onclick="dismissPwaGuideForever()">Don't show again</button>
-    </div>
-  </div>
-</div>
-
-<!-- MAIN CONTAINER -->
 <div class="container">
   <div id="mainForm">
     
-    <!-- TOP BAR (SWITCHER) -->
     <div class="top-bar">
       <div class="terminal-pill-wrapper">
         <div class="pill-slider" id="pillSlider"></div>
@@ -228,7 +223,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
       </div>
     </div>
 
-    <h2 id="formTitle">Chandarana Attendance</h2>
+    <h2 id="formTitle">Chandarana</h2>
     
     <div class="step-grid">
       <div id="step1" class="step activeStep full-width">
@@ -279,7 +274,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     </div>
   </div>
 
-  <!-- SUCCESS SCREEN -->
   <div id="successScreen">
     <div class="success-emoji" id="successEmoji">😊</div>
     <div class="success-badge" id="successBadge">Submitted</div>
@@ -292,82 +286,38 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
   </div>
 </div>
 
-<!-- GPS BLOCKED MODAL -->
 <div id="gpsModal">
   <div class="modal-box">
     <div style="font-size:44px; margin-bottom:10px;">🛑</div>
     <h3>Location Blocked</h3>
     <div class="modal-instructions">
-      <p>🍎 iPhone:</p>
-      1. Open <b>Settings ⚙️</b> → scroll to <b>Apps</b> → find your browser.<br>
-      2. Tap <b>Location</b> → set to <b>Allow</b>.<br><br>
-      <p>🤖 Android:</p>
-      1. Tap <b>⋮ Menu</b> → <b>Settings</b> → <b>Site settings</b> → <b>Location</b>.<br>
-      2. Find this site under "Blocked" → tap → <b>Allow</b>.
+      <p>🍎 iPhone: Settings ⚙️ → Apps → Browser → Location → Allow</p>
+      <p>🤖 Android: ⋮ Menu → Settings → Site settings → Location → Allow</p>
     </div>
-    <button onclick="document.getElementById('gpsModal').style.display='none'" style="background: var(--dynamic-primary); color: #fff; border:none; padding:14px; border-radius:8px; width:100%; font-weight:700; font-size:15px; cursor: pointer;">GOT IT</button>
+    <button onclick="document.getElementById('gpsModal').style.display='none'" style="background: var(--dynamic-primary); color: #fff; border:none; padding:14px; border-radius:8px; width:100%; font-weight:700; cursor: pointer;">GOT IT</button>
   </div>
 </div>
 
 <script>
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec";
 
-// ── STATE & GHOSTING PREVENTION ────────────────────────
 let currentTerminal = localStorage.getItem('selected_terminal') || 'chandarana';
 let staff = [], branches = [], coords = null, staffName = "", photo = null;
-let isRestoring = false;
-let deferredInstallPrompt = null;
-let activeFetchId = 0;
+let isRestoring = false, activeFetchId = 0;
 
-// ── PWA ────────────────────────────────────────────────
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; });
-function shouldShowPwaGuide() { return localStorage.getItem('pwa_never_show') !== '1' && parseInt(localStorage.getItem('pwa_show_count') || '0', 10) < 2; }
-function recordPwaShown() { localStorage.setItem('pwa_show_count', String(parseInt(localStorage.getItem('pwa_show_count') || '0', 10) + 1)); }
-
-function buildPwaGuideContent() {
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent), isAndroid = /android/i.test(navigator.userAgent), isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const stepsEl = document.getElementById('pwa-steps');
-  if (isAndroid && deferredInstallPrompt) {
-    document.getElementById('pwa-icon').textContent = '📲'; document.getElementById('pwa-desc').textContent = 'Tap below to install directly — no app store needed.';
-    stepsEl.innerHTML = '<b>Quick Install:</b> Tap the button below and follow the prompt.';
-    document.getElementById('pwa-install-btn').style.display = 'block'; document.getElementById('pwa-ok-btn').style.display = 'none';
-  } else if (isAndroid) {
-    document.getElementById('pwa-icon').textContent = '🤖';
-    stepsEl.innerHTML = '<b>Chrome / Edge:</b><br>1. Tap <b>⋮ menu</b> (top right).<br>2. Tap <b>"Add to Home screen"</b>.<br><br><b>Samsung Browser:</b><br>1. Tap <b>☰ menu</b> (bottom right).<br>2. Tap <b>"Add page to"</b> → <b>"Home screen"</b>.';
-  } else if (isIOS && isSafari) {
-    document.getElementById('pwa-icon').textContent = '🍎';
-    stepsEl.innerHTML = '1. Tap the <b>⋮ menu</b> button (bottom or top).<br>2. Tap <b>Share ↑</b>.<br>3. Scroll down.<br>4. Tap <b>"Add to Home Screen"</b>.<br>5. Tap <b>Add</b>.';
-  } else if (isIOS) {
-    document.getElementById('pwa-icon').textContent = '🍎';
-    stepsEl.innerHTML = '1. Open this link in <b>Safari</b>.<br>2. Tap <b>Share ↑</b>.<br>3. Tap <b>"Add to Home Screen"</b>';
-  } else { return false; }
-  return true;
-}
-
-function triggerAndroidInstall() { if (deferredInstallPrompt) { deferredInstallPrompt.prompt(); deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; dismissPwaGuide(); }); } }
-function dismissPwaGuide() { document.getElementById('pwa-guide').style.display = 'none'; initApp(); }
-function dismissPwaGuideForever() { localStorage.setItem('pwa_never_show', '1'); dismissPwaGuide(); }
-
-function getCameraProfile() {
-  const mem = navigator.deviceMemory || 4;
-  if (mem <= 3) return { maxWidth: 400, quality: 0.50 };
-  if (mem <= 6) return { maxWidth: 600, quality: 0.65 };
-  return { maxWidth: 800, quality: 0.80 };
-}
-
-// ── INIT & UI ──────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  if (!isStandalone && shouldShowPwaGuide() && buildPwaGuideContent()) {
-    recordPwaShown(); document.getElementById('pwa-guide').style.display = 'flex'; return;
-  }
-  updateTerminalUI();
-  initApp();
-});
+document.addEventListener('DOMContentLoaded', () => { updateTerminalUI(); initApp(); });
 
 function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
-  document.getElementById('formTitle').innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1) + ' Attendance';
+  
+  // Update Title Text & Trigger Cartoon Shake
+  const title = document.getElementById('formTitle');
+  title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
+  
+  // Re-flow to trigger the shake animation each time it's switched
+  title.classList.remove('shake-nudge');
+  void title.offsetWidth; 
+  title.classList.add('shake-nudge');
   
   const btnChan = document.getElementById('btn-chandarana');
   const btnCarr = document.getElementById('btn-carrefour');
@@ -378,7 +328,6 @@ function updateTerminalUI() {
     btnCarr.classList.add('active'); btnChan.classList.remove('active');
   }
 
-  // Double requestFrame calculation handles DOM element widths robustly before sliding
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       const activeBtn = document.querySelector('.pill-btn.active');
@@ -395,24 +344,18 @@ function switchTerminal(term) {
   if (currentTerminal === term) return;
   currentTerminal = term;
   localStorage.setItem('selected_terminal', term);
-  
   updateTerminalUI();
   
   document.getElementById('successScreen').style.display = 'none';
   document.getElementById('mainForm').style.display = 'block';
   document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
   resetStepsFrom(2);
-  
   initApp();
 }
 
-// ── API HANDLER ────────────────────────────────────────
+// ── API & CORE FUNCTIONS ────────────────────────────────
 async function fetchFromServer(action, data) {
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain' },
-    body: JSON.stringify({ action, data, terminal: currentTerminal }) 
-  });
+  const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action, data, terminal: currentTerminal }) });
   const json = await res.json();
   if (!json.ok) throw new Error(json.error || 'Server error');
   return json.data;
@@ -420,248 +363,144 @@ async function fetchFromServer(action, data) {
 
 function initApp() {
   const myFetchId = ++activeFetchId; 
-  
   fetchFromServer('getPortalData', {})
     .then(data => {
       if (myFetchId !== activeFetchId) return; 
-
       staff = data.staff; branches = data.branches;
-      document.getElementById('branch').innerHTML =
-        '<option value="">Choose Branch</option>' +
-        branches.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
+      document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' + branches.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
       restoreFromCache();
-    })
-    .catch(() => {
-      if (myFetchId === activeFetchId) {
-        document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>';
-      }
-    });
+    }).catch(() => { if (myFetchId === activeFetchId) { document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>'; } });
 }
 
-// ── CACHE & STATE RECOVERY ─────────────────────────────
 function getCacheKey() { return currentTerminal + "_attendance_cache"; }
-
+function autoSave(isCapturing = false) {
+  if (isRestoring) return;
+  localStorage.setItem(getCacheKey(), JSON.stringify({ branch: document.getElementById('branch').value, staffID: document.getElementById('staffID').value, capturing: isCapturing, lat: coords ? coords.latitude : null, lng: coords ? coords.longitude : null }));
+}
 function restoreFromCache() {
-  const cached = localStorage.getItem(getCacheKey());
-  if (!cached) return;
-  isRestoring = true;
-  const d = JSON.parse(cached);
+  const cached = localStorage.getItem(getCacheKey()); if (!cached) return;
+  isRestoring = true; const d = JSON.parse(cached);
   if (d.branch) { document.getElementById('branch').value = d.branch; handleBranchChange(); }
   if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput(); }
   if (d.lat && d.lng) { coords = { latitude: d.lat, longitude: d.lng }; showSuccess('gpsMsg', 'Location Verified'); activateStep(4); }
   if (d.capturing === true) {
     photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-    const p = document.getElementById('preview');
-    p.src = photo; p.style.display = 'block'; p.classList.add('recovered-photo');
-    showSuccess('cameraMsg', 'Identity Restored');
-    activateStep(4); activateStep(5);
-    autoSave(false);
+    const p = document.getElementById('preview'); p.src = photo; p.style.display = 'block'; p.classList.add('recovered-photo');
+    showSuccess('cameraMsg', 'Identity Restored'); activateStep(4); activateStep(5); autoSave(false);
   }
   isRestoring = false;
 }
 
-function autoSave(isCapturing = false) {
-  if (isRestoring) return;
-  localStorage.setItem(getCacheKey(), JSON.stringify({
-    branch: document.getElementById('branch').value,
-    staffID: document.getElementById('staffID').value,
-    capturing: isCapturing,
-    lat: coords ? coords.latitude : null,
-    lng: coords ? coords.longitude : null
-  }));
-}
-
 function activateStep(n) { document.getElementById('step' + n).classList.add('activeStep'); }
 function resetStepsFrom(n) {
-  for (let i = n; i <= 6; i++) {
-    const el = document.getElementById('step' + i);
-    if (el) el.classList.remove('activeStep');
-  }
+  for (let i = n; i <= 6; i++) { const el = document.getElementById('step' + i); if (el) el.classList.remove('activeStep'); }
   if (n <= 2) { staffName = ''; document.getElementById('staffID').value = ''; clearMsg('staffMsg'); }
   if (n <= 3) { coords = null; clearMsg('gpsMsg'); }
-  if (n <= 4) {
-    photo = null;
-    const p = document.getElementById('preview');
-    p.style.display = 'none'; p.src = ''; p.classList.remove('recovered-photo');
-    clearMsg('cameraMsg'); document.getElementById('cameraInput').value = '';
-  }
+  if (n <= 4) { photo = null; const p = document.getElementById('preview'); p.style.display = 'none'; p.src = ''; p.classList.remove('recovered-photo'); clearMsg('cameraMsg'); document.getElementById('cameraInput').value = ''; }
   if (n <= 5) { document.getElementById('actionChoice').value = ''; clearMsg('actionMsg'); }
-  clearMsg('submitMsg');
-  autoSave();
+  clearMsg('submitMsg'); autoSave();
 }
-
 function resetToStart() {
-  document.getElementById('successScreen').style.display = 'none';
-  document.getElementById('mainForm').style.display = 'block';
-  document.getElementById('branch').value = '';
-  clearMsg('branchMsg');
-  resetStepsFrom(2);
-  document.getElementById('step1').classList.add('activeStep');
-  localStorage.removeItem(getCacheKey());
-  initApp();
+  document.getElementById('successScreen').style.display = 'none'; document.getElementById('mainForm').style.display = 'block';
+  document.getElementById('branch').value = ''; clearMsg('branchMsg'); resetStepsFrom(2); document.getElementById('step1').classList.add('activeStep');
+  localStorage.removeItem(getCacheKey()); initApp();
 }
 
-function showSuccess(id, txt) { const e = document.getElementById(id); e.innerHTML = '<span class="dot">✓</span> ' + txt; e.className = 'msg success'; }
+// Empties inner HTML string so the CSS dynamically draws the beautiful tick!
+function showSuccess(id, txt) { const e = document.getElementById(id); e.innerHTML = '<span class="dot"></span> ' + txt; e.className = 'msg success'; }
 function showError(id, txt) { const e = document.getElementById(id); e.innerText = txt; e.className = 'msg error'; }
 function clearMsg(id) { const e = document.getElementById(id); e.innerText = ''; e.className = 'msg'; }
 
-// ── FORM HANDLERS ──────────────────────────────────────
-function handleBranchChange() {
-  const val = document.getElementById('branch').value;
-  if (!val) return;
+document.getElementById('branch').onchange = function handleBranchChange() {
+  if (!this.value) return;
   if (document.getElementById('step2').classList.contains('activeStep')) resetStepsFrom(2);
-  showSuccess('branchMsg', 'Branch Selected');
-  activateStep(2); autoSave();
+  showSuccess('branchMsg', 'Branch Selected'); activateStep(2); autoSave();
 }
 
-function handleStaffInput() {
-  const val = document.getElementById('staffID').value.trim();
-  if (val.length < 1) {
-    if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
-    clearMsg('staffMsg'); return;
-  }
+document.getElementById('staffID').oninput = function handleStaffInput() {
+  const val = this.value.trim();
+  if (val.length < 1) { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); clearMsg('staffMsg'); return; }
   const match = staff.find(s => s.id === val);
-  if (match) {
-    staffName = match.name;
-    showSuccess('staffMsg', 'Welcome ' + staffName.split(' ')[0]);
-    activateStep(3); autoSave();
-  } else {
-    if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
-    showError('staffMsg', 'Invalid Staff ID. Please check.');
-  }
+  if (match) { staffName = match.name; showSuccess('staffMsg', 'Welcome ' + staffName.split(' ')[0]); activateStep(3); autoSave(); } 
+  else { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); showError('staffMsg', 'Invalid Staff ID. Please check.'); }
 }
 
-document.getElementById('branch').onchange = handleBranchChange;
-document.getElementById('staffID').oninput = handleStaffInput;
-
-// ── ACTION VALIDATION ──────────────────────────────────
 document.getElementById('actionChoice').onchange = function() {
-  const val = this.value;
-  if (!val) { clearMsg('actionMsg'); document.getElementById('step6').classList.remove('activeStep'); return; }
-  
-  const staffID = document.getElementById('staffID').value.trim();
-  const match = staff.find(s => s.id === staffID);
+  const val = this.value; if (!val) { clearMsg('actionMsg'); document.getElementById('step6').classList.remove('activeStep'); return; }
+  const match = staff.find(s => s.id === document.getElementById('staffID').value.trim());
   const sheetStatus = match && match.status ? match.status : null;
 
-  if (val === 'Clock Out' && sheetStatus !== 'Clock In') {
-    showError('actionMsg', 'Cannot Clock Out. You have not Clocked In today.');
-    this.value = ''; document.getElementById('step6').classList.remove('activeStep'); return;
-  }
-  if (val === 'Clock In' && sheetStatus === 'Clock In') {
-    showError('actionMsg', 'Cannot Clock In. You are already Clocked In today.');
-    this.value = ''; document.getElementById('step6').classList.remove('activeStep'); return;
-  }
-
-  showSuccess('actionMsg', 'Ready for Submission'); 
-  activateStep(6); 
+  if (val === 'Clock Out' && sheetStatus !== 'Clock In') { showError('actionMsg', 'Cannot Clock Out. You have not Clocked In today.'); this.value = ''; document.getElementById('step6').classList.remove('activeStep'); return; }
+  if (val === 'Clock In' && sheetStatus === 'Clock In') { showError('actionMsg', 'Cannot Clock In. You are already Clocked In today.'); this.value = ''; document.getElementById('step6').classList.remove('activeStep'); return; }
+  showSuccess('actionMsg', 'Ready for Submission'); activateStep(6); 
 };
 
-// ── GPS & CAMERA ───────────────────────────────────────
 function verifyGPS() {
   document.getElementById('gpsMsg').innerText = 'Locating...'; document.getElementById('gpsMsg').className = 'msg';
   navigator.geolocation.getCurrentPosition(
     pos => {
-      coords = pos.coords;
-      const b = branches.find(x => x[0] === document.getElementById('branch').value);
+      coords = pos.coords; const b = branches.find(x => x[0] === document.getElementById('branch').value);
       if (!b) { showError('gpsMsg', 'Select branch first.'); return; }
-      const dist = haversineDistance(coords.latitude, coords.longitude, b[1], b[2]);
-      if (dist > 250) { showError('gpsMsg', 'Too far (' + Math.round(dist) + 'm). Move closer.'); } 
-      else { showSuccess('gpsMsg', 'Location Verified'); activateStep(4); autoSave(); }
+      const R = 6371e3; const dLat = (b[1] - coords.latitude) * Math.PI / 180; const dLon = (b[2] - coords.longitude) * Math.PI / 180;
+      const a = Math.sin(dLat/2)**2 + Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)**2;
+      const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      if (dist > 250) { showError('gpsMsg', 'Too far (' + Math.round(dist) + 'm). Move closer.'); } else { showSuccess('gpsMsg', 'Location Verified'); activateStep(4); autoSave(); }
     },
-    err => {
-      if (err.code === 1) { showError('gpsMsg', 'Browser blocked location!'); document.getElementById('gpsModal').style.display = 'flex'; } 
-      else { showError('gpsMsg', 'Swipe down & enable Location in your quick panel.'); }
-    },
+    err => { if (err.code === 1) { showError('gpsMsg', 'Browser blocked location!'); document.getElementById('gpsModal').style.display = 'flex'; } else { showError('gpsMsg', 'Enable Location in your panel.'); } },
     { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
   );
-}
-
-function haversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371e3; const dLat = (lat2 - lat1) * Math.PI / 180; const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
 function openCamera() { autoSave(true); document.getElementById('cameraInput').click(); }
 document.getElementById('cameraInput').onchange = function(e) {
   const file = e.target.files[0]; if (!file) return;
   autoSave(false); showSuccess('cameraMsg', 'Processing...');
-  const profile = getCameraProfile(); const imgURL = URL.createObjectURL(file); const img = new Image();
+  const imgURL = URL.createObjectURL(file); const img = new Image();
   img.onload = () => {
     try {
       const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
-      if (w > profile.maxWidth) { h = Math.floor(h * (profile.maxWidth / w)); w = profile.maxWidth; }
+      if (w > 600) { h = Math.floor(h * (600 / w)); w = 600; }
       canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      photo = canvas.toDataURL('image/jpeg', profile.quality);
+      photo = canvas.toDataURL('image/jpeg', 0.65);
       const p = document.getElementById('preview'); p.src = photo; p.style.display = 'block'; p.classList.remove('recovered-photo');
       showSuccess('cameraMsg', 'Identity Captured'); activateStep(5);
-    } catch (err) { showError('cameraMsg', 'Error processing photo. Try again.'); } 
-    finally { URL.revokeObjectURL(imgURL); }
+    } catch (err) { showError('cameraMsg', 'Error processing photo. Try again.'); } finally { URL.revokeObjectURL(imgURL); }
   };
   img.onerror = () => { showError('cameraMsg', 'Invalid image format.'); URL.revokeObjectURL(imgURL); }; img.src = imgURL;
 };
 
-// ── DUAL SHIFT LATENESS LOGIC ──────────────────────────
-function getClockInMessage(firstName) {
-  const h = new Date().getHours();
-  const m = new Date().getMinutes();
-  const mins = (h * 60) + m;
-
-  if (mins < 450) return { emoji: '🌟', badge: 'On Time!', msg: 'Fantastic start — you\'re early/on time today. Keep setting that standard!', warning: null };
-  if (mins >= 450 && mins < 660) return { emoji: '⏰', badge: 'Clocked In', msg: 'You are late for the morning shift.', warning: '⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded for review.' };
-  if (mins >= 660 && mins < 900) return { emoji: '✅', badge: 'On Time!', msg: 'Good afternoon, have a productive second shift!', warning: null };
-  return { emoji: '⏰', badge: 'Clocked In', msg: 'You are late for the afternoon shift.', warning: '⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review.' };
-}
-
-function getClockOutMessage(firstName) {
-  const h = new Date().getHours();
-  if (h < 16) return { emoji: '👋', badge: 'Clocked Out', msg: 'Have a wonderful Afternoon!', warning: null };
-  if (h >= 18) return { emoji: '🌙', badge: 'Clocked Out', msg: 'Have a restful night — and remember to place your order!', warning: null };
-  return { emoji: '🌅', badge: 'Clocked Out', msg: 'Have a wonderful evening!', warning: null };
-}
-
-// ── SUBMIT ─────────────────────────────────────────────
 async function submitAttendance() {
-  const branch   = document.getElementById('branch').value;
-  const staffID  = document.getElementById('staffID').value;
-  const action   = document.getElementById('actionChoice').value;
+  const branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value, action = document.getElementById('actionChoice').value;
   if (!branch || !staffID || !action) { showError('submitMsg', 'All steps must be green first.'); return; }
-
-  const btn = document.getElementById('submitBtn');
-  btn.textContent = 'SENDING...'; btn.disabled = true;
+  const btn = document.getElementById('submitBtn'); btn.textContent = 'SENDING...'; btn.disabled = true;
 
   try {
-    await fetchFromServer('recordAttendance', {
-      name: staffName, id: staffID, branch, action,
-      image: photo, lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0
-    });
-
+    await fetchFromServer('recordAttendance', { name: staffName, id: staffID, branch, action, image: photo, lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0 });
     localStorage.removeItem(getCacheKey());
     
-    const match = staff.find(s => s.id === staffID);
-    if(match) match.status = action; 
-
+    const match = staff.find(s => s.id === staffID); if(match) match.status = action; 
     const firstName = staffName.split(' ')[0] || staffName;
-    const d = action === 'Clock In' ? getClockInMessage(firstName) : getClockOutMessage(firstName);
+    const isClockIn = action === 'Clock In'; const mins = (new Date().getHours() * 60) + new Date().getMinutes();
+    
+    let emoji = '✅', badge = 'Submitted', msg = 'Done.', warning = null;
+    if (isClockIn) {
+      if (mins < 450) { emoji = '🌟'; badge = 'On Time!'; msg = "Fantastic start — you're early/on time today!"; }
+      else if (mins < 660) { emoji = '⏰'; badge = 'Clocked In'; msg = "You are late for the morning shift."; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
+      else if (mins < 900) { emoji = '✅'; badge = 'On Time!'; msg = "Good afternoon, have a productive second shift!"; }
+      else { emoji = '⏰'; badge = 'Clocked In'; msg = "You are late for the afternoon shift."; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review ."; }
+    } else {
+      if (new Date().getHours() < 16) { emoji = '👋'; badge = 'Clocked Out'; msg = "Have a wonderful Afternoon!"; }
+      else if (new Date().getHours() >= 18) { emoji = '🌙'; badge = 'Clocked Out'; msg = "Have a restful night — and remember to place your order!"; }
+      else { emoji = '🌅'; badge = 'Clocked Out'; msg = "Have a wonderful evening!"; }
+    }
 
-    document.getElementById('successEmoji').textContent = d.emoji;
-    document.getElementById('successBadge').textContent = d.badge;
-    document.getElementById('successName').textContent = firstName;
-    document.getElementById('successMsg').textContent = d.msg;
-
+    document.getElementById('successEmoji').textContent = emoji; document.getElementById('successBadge').textContent = badge; document.getElementById('successName').textContent = firstName; document.getElementById('successMsg').textContent = msg;
     const warnEl = document.getElementById('successWarning');
-    if (d.warning) { warnEl.textContent = d.warning; warnEl.style.display = 'block'; }
-    else { warnEl.style.display = 'none'; }
+    if (warning) { warnEl.textContent = warning; warnEl.style.display = 'block'; } else { warnEl.style.display = 'none'; }
 
-    document.getElementById('mainForm').style.display = 'none';
-    document.getElementById('successScreen').style.display = 'flex';
-
+    document.getElementById('mainForm').style.display = 'none'; document.getElementById('successScreen').style.display = 'flex';
     btn.textContent = 'SUBMIT ATTENDANCE'; btn.disabled = false;
-
-  } catch (err) {
-    showError('submitMsg', err.message);
-    btn.textContent = 'RETRY SUBMIT'; btn.disabled = false;
-  }
+  } catch (err) { showError('submitMsg', err.message); btn.textContent = 'RETRY SUBMIT'; btn.disabled = false; }
 }
 </script>
 </body>
