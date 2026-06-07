@@ -493,7 +493,10 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
   <!-- FORM -->
   <div id="mainForm">
-    <h2>Attendance</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <h2 style="margin: 0;">Attendance</h2>
+      <button onclick="refreshApp()" style="background: var(--button-secondary-bg); color: var(--button-secondary-text); border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; height: auto;" title="Refresh app cache">🔄 Refresh</button>
+    </div>
     <div class="step-grid">
 
       <div id="step1" class="step activeStep full-width">
@@ -585,6 +588,51 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 </div>
 
 <script>
+// ── CACHE & REFRESH ───────────────────────────────────
+function refreshApp() {
+  if (confirm('This will clear app cache and refresh. Continue?')) {
+    // Clear localStorage attendance cache
+    localStorage.removeItem('attendance_cache');
+    localStorage.removeItem('pwa_show_count');
+    
+    // Clear service worker cache if available
+    if ('caches' in window) {
+      caches.keys().then(cacheNames => {
+        cacheNames.forEach(cacheName => {
+          caches.delete(cacheName);
+        });
+      });
+    }
+    
+    // Hard reload to bypass cache
+    window.location.href = window.location.href;
+  }
+}
+
+// Register service worker for offline support and caching
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('data:application/javascript,' + encodeURIComponent(`
+      self.addEventListener('install', event => {
+        self.skipWaiting();
+      });
+      
+      self.addEventListener('activate', event => {
+        event.waitUntil(clients.claim());
+      });
+      
+      self.addEventListener('fetch', event => {
+        if (event.request.method !== 'GET') return;
+        event.respondWith(
+          fetch(event.request).catch(() => {
+            return new Response('Offline', { status: 503 });
+          })
+        );
+      });
+    `)).catch(() => {});
+  });
+}
+
 // ── CONFIG ─────────────────────────────────────────────
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVaxxz-D-YiG5ifp7vxuAkC8WhR0fpBUV_c38i2EWDLAuTsagbg2bzaLmNuXPsXj00/exec";
 
@@ -627,10 +675,10 @@ function buildPwaGuideContent() {
     stepsEl.innerHTML = '<b>Chrome / Edge:</b><br>1. Tap <b>⋮ menu</b> (top right).<br>2. Tap <b>"Add to Home screen"</b>.<br><br><b>Samsung Browser:</b><br>1. Tap <b>☰ menu</b> (bottom right).<br>2. Tap <b>"Add page to"</b> → <b>"Home screen"</b>.';
   } else if (isIOS && isSafari) {
     document.getElementById('pwa-icon').textContent = '🍎';
-    stepsEl.innerHTML = '1. Tap the <b>Share ↑</b> icon (bottom / top of Safari).<br>2. Scroll and tap <b>"Add to Home Screen"</b>.<br>3. Tap <b>Add</b>.';
+    stepsEl.innerHTML = '1. Tap the <b>⋮ menu</b> icon (top right corner).<br>2. Tap <b>Share ↑</b>.<br>3. Scroll down in the list.<br>4. Tap <b>"Add to Home Screen"</b>.<br>5. Tap <b>Add</b>.';
   } else if (isIOS) {
     document.getElementById('pwa-icon').textContent = '🍎';
-    stepsEl.innerHTML = '1. Open this link in <b>Safari</b>.<br>2. Tap the <b>Share ↑</b> icon.<br>3. Tap <b>"Add to Home Screen"</b>.';
+    stepsEl.innerHTML = '1. Open this link in <b>Safari</b>.<br>2. Tap the <b>⋮ menu</b> icon (top right corner).<br>3. Tap <b>Share ↑</b>.<br>4. Scroll down in the list.<br>5. Tap <b>"Add to Home Screen"</b>.';
   } else {
     return false;
   }
