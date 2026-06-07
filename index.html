@@ -8,11 +8,76 @@
 <title>Stentor Attendance</title>
 
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  /* Light Theme */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9f9f9;
+  --bg-gradient-start: #c8f0e8;
+  --bg-gradient-end: #b3d9ff;
+  --text-primary: #1a1a1a;
+  --text-secondary: #666666;
+  --text-tertiary: #999999;
+  --border-color: #dddddd;
+  --input-bg: #f9f9f9;
+  --input-border: #ddd;
+  --input-focus: #1a73e8;
+  --button-primary-bg: #1a73e8;
+  --button-primary-text: #ffffff;
+  --button-secondary-bg: #e8f0fe;
+  --button-secondary-text: #1a73e8;
+  --success-color: #28a745;
+  --error-color: #dc3545;
+  --warning-bg: #fff4f3;
+  --warning-border: #fbc9c4;
+  --warning-text: #b71c1c;
+  --success-card-bg: #f6faff;
+  --success-card-border: #d0e4ff;
+  --modal-overlay: rgba(0, 0, 0, 0.72);
+  --shadow-color: rgba(0, 0, 0, 0.14);
+  --label-text: #666666;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Dark Theme */
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-gradient-start: #0f4c3b;
+    --bg-gradient-end: #1a3a52;
+    --text-primary: #f5f5f5;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #808080;
+    --border-color: #404040;
+    --input-bg: #2d2d44;
+    --input-border: #404040;
+    --input-focus: #4a9eff;
+    --button-primary-bg: #2563eb;
+    --button-primary-text: #ffffff;
+    --button-secondary-bg: #1e3a5f;
+    --button-secondary-text: #4a9eff;
+    --success-color: #4ade80;
+    --error-color: #ff6b6b;
+    --warning-bg: #3d2620;
+    --warning-border: #6b4423;
+    --warning-text: #ffb3a0;
+    --success-card-bg: #1e3a5f;
+    --success-card-border: #2d5a8c;
+    --modal-overlay: rgba(0, 0, 0, 0.88);
+    --shadow-color: rgba(0, 0, 0, 0.4);
+    --label-text: #a0a0a0;
+  }
+}
+
+*, *::before, *::after { 
+  box-sizing: border-box; 
+  margin: 0; 
+  padding: 0; 
+}
 
 body {
   font-family: 'Segoe UI', Tahoma, sans-serif;
-  background: linear-gradient(135deg, #e0f7fa, #f0f2f5);
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  color: var(--text-primary);
   min-height: 100vh;
   min-height: -webkit-fill-available;
   display: flex;
@@ -22,6 +87,30 @@ body {
   padding: 12px 10px 32px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  transition: background 0.3s ease;
+}
+
+/* ── THEME TOGGLE ──────────────────────────────────────── */
+.theme-toggle {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 400;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 2px 8px var(--shadow-color);
+  transition: all 0.3s ease;
+}
+.theme-toggle:hover {
+  transform: scale(1.1);
 }
 
 /* ── PWA GUIDE ─────────────────────────────────────────── */
@@ -29,42 +118,63 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(10,20,40,0.97);
+  background: var(--modal-overlay);
   z-index: 500;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 28px 20px;
   text-align: center;
+  backdrop-filter: blur(4px);
 }
 #pwa-guide .pwa-icon { font-size: 56px; margin-bottom: 14px; }
-#pwa-guide h2 { color: #fff; font-size: 22px; margin-bottom: 8px; }
-#pwa-guide p { color: #aac4e8; font-size: 14px; line-height: 1.65; max-width: 320px; margin-bottom: 10px; }
+#pwa-guide h2 { color: var(--text-primary); font-size: 22px; margin-bottom: 8px; }
+#pwa-guide p { color: var(--text-secondary); font-size: 14px; line-height: 1.65; max-width: 320px; margin-bottom: 10px; }
 #pwa-guide .pwa-steps {
-  background: rgba(255,255,255,0.07);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   padding: 16px 18px;
   text-align: left;
   max-width: 340px;
   width: 100%;
   margin-bottom: 20px;
-  color: #cde;
+  color: var(--text-secondary);
   font-size: 13.5px;
   line-height: 1.7;
 }
-#pwa-guide .pwa-steps b { color: #fff; }
+#pwa-guide .pwa-steps b { color: var(--text-primary); }
 #pwa-guide .pwa-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
 #pwa-guide .btn-install {
-  background: #1a73e8; color: #fff; border: none;
-  border-radius: 12px; padding: 14px; font-size: 15px;
-  font-weight: 700; cursor: pointer; width: 100%;
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+#pwa-guide .btn-install:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.3);
 }
 #pwa-guide .btn-skip {
-  background: transparent; color: #7a9cc0;
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 12px; padding: 12px; font-size: 13px;
-  font-weight: 600; cursor: pointer; width: 100%;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+#pwa-guide .btn-skip:hover {
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 /* ── CONTAINER ─────────────────────────────────────────── */
@@ -72,17 +182,18 @@ body {
   max-width: 420px;
   width: 100%;
   margin: auto;
-  background: white;
+  background: var(--bg-primary);
   padding: 22px 20px 26px;
   border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.14);
+  box-shadow: 0 10px 40px var(--shadow-color);
   position: relative;
-  overflow: hidden; /* clip success screen to rounded corners */
+  overflow: hidden;
+  transition: background 0.3s ease;
 }
 
 h2 {
   text-align: center;
-  color: #1a73e8;
+  color: var(--button-primary-bg);
   margin-bottom: 18px;
   font-size: 19px;
   text-transform: uppercase;
@@ -102,158 +213,293 @@ h2 {
 .full-width { grid-column: span 2; }
 
 /* ── FORM ELEMENTS ─────────────────────────────────────── */
-label { font-weight: 700; font-size: 11px; display: block; margin-bottom: 5px; color: #666; text-transform: uppercase; }
+label { 
+  font-weight: 700; 
+  font-size: 11px; 
+  display: block; 
+  margin-bottom: 5px; 
+  color: var(--label-text);
+  text-transform: uppercase; 
+  transition: color 0.3s ease;
+}
 
 input, select {
-  width: 100%; height: 44px; padding: 0 12px;
-  border-radius: 10px; border: 1px solid #ddd;
-  font-size: 14px; background: #f9f9f9;
-  transition: border 0.2s; -webkit-appearance: none;
+  width: 100%; 
+  height: 44px; 
+  padding: 0 12px;
+  border-radius: 10px; 
+  border: 1px solid var(--input-border);
+  font-size: 14px; 
+  background: var(--input-bg);
+  color: var(--text-primary);
+  transition: border 0.2s, background 0.2s;
+  -webkit-appearance: none;
 }
-input:focus, select:focus { outline: none; border-color: #1a73e8; background: #fff; }
+input::placeholder, select {
+  color: var(--text-tertiary);
+}
+input:focus, select:focus { 
+  outline: none; 
+  border-color: var(--input-focus); 
+  background: var(--bg-secondary);
+}
 
 button {
-  width: 100%; height: 44px; padding: 0 12px;
-  border-radius: 10px; border: none; font-size: 14px;
-  font-weight: 700; background: #e8f0fe; color: #1a73e8;
-  cursor: pointer; transition: background 0.2s, transform 0.1s;
+  width: 100%; 
+  height: 44px; 
+  padding: 0 12px;
+  border-radius: 10px; 
+  border: none; 
+  font-size: 14px;
+  font-weight: 700; 
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
+  cursor: pointer; 
+  transition: background 0.2s, transform 0.1s;
 }
 button:active { transform: scale(0.98); }
 button.primary {
-  background: #1a73e8; color: white; height: 52px;
-  font-size: 16px; letter-spacing: 0.5px;
-  box-shadow: 0 4px 14px rgba(26,115,232,0.35);
+  background: var(--button-primary-bg); 
+  color: var(--button-primary-text);
+  height: 52px;
+  font-size: 16px; 
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35);
 }
 button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 /* ── PHOTO PREVIEW ─────────────────────────────────────── */
 #preview {
-  width: 58px; height: 58px; object-fit: cover;
-  border-radius: 50%; border: 3px solid #28a745;
-  display: none; margin: 4px auto 0;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  background: #000; transition: filter 0.3s;
+  width: 58px; 
+  height: 58px; 
+  object-fit: cover;
+  border-radius: 50%; 
+  border: 3px solid var(--success-color);
+  display: none; 
+  margin: 4px auto 0;
+  box-shadow: 0 4px 10px var(--shadow-color);
+  background: var(--input-bg);
+  transition: filter 0.3s;
 }
 .recovered-photo { filter: blur(4px); }
 
 /* ── STATUS MESSAGES ───────────────────────────────────── */
 .msg {
-  font-size: 12px; font-weight: 700; margin-top: 6px;
-  min-height: 20px; color: #888;
-  display: flex; align-items: center; transition: color 0.2s;
+  font-size: 12px; 
+  font-weight: 700; 
+  margin-top: 6px;
+  min-height: 20px; 
+  color: var(--text-tertiary);
+  display: flex; 
+  align-items: center; 
+  transition: color 0.2s;
 }
-.msg.success { color: #28a745; font-size: 13px; }
-.msg.error   { color: #dc3545; }
+.msg.success { color: var(--success-color); font-size: 13px; }
+.msg.error   { color: var(--error-color); }
 .msg .dot {
-  display: inline-block; width: 18px; height: 18px;
-  background: #28a745; border-radius: 50%; color: white;
-  text-align: center; line-height: 18px; font-size: 10px;
-  margin-right: 8px; flex-shrink: 0;
+  display: inline-block; 
+  width: 18px; 
+  height: 18px;
+  background: var(--success-color); 
+  border-radius: 50%; 
+  color: white;
+  text-align: center; 
+  line-height: 18px; 
+  font-size: 10px;
+  margin-right: 8px; 
+  flex-shrink: 0;
 }
 
 /* ── SUCCESS SCREEN ────────────────────────────────────── */
+#mainForm {
+  display: block;
+  min-height: auto;
+}
+
 #successScreen {
   display: none;
-  position: absolute;
-  inset: 0;
-  background: white;
-  z-index: 100;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 28px 24px 24px;
+  justify-content: flex-start;
+  padding: 32px 24px 24px;
   text-align: center;
-  gap: 0; /* controlled by children margins */
+  gap: 0;
+  width: 100%;
+  overflow-y: auto;
+  max-height: 100vh;
 }
 
 .success-emoji {
-  font-size: 64px;
+  font-size: 72px;
   line-height: 1;
   margin-bottom: 16px;
+  animation: bounceIn 0.6s ease;
 }
 
 .success-badge {
-  background: #1a73e8;
-  color: white;
+  background: var(--button-primary-bg);
+  color: var(--button-primary-text);
   font-size: 13px;
   font-weight: 800;
   letter-spacing: 1px;
   text-transform: uppercase;
-  padding: 6px 20px;
+  padding: 8px 24px;
   border-radius: 999px;
-  margin-bottom: 18px;
+  margin-bottom: 24px;
+  display: inline-block;
+  box-shadow: 0 4px 12px rgba(26, 115, 232, 0.25);
 }
 
 .success-card {
-  background: #f6faff;
-  border: 1.5px solid #d0e4ff;
+  background: var(--success-card-bg);
+  border: 1.5px solid var(--success-card-border);
   border-radius: 16px;
-  padding: 18px 20px;
+  padding: 24px 20px;
   width: 100%;
-  margin-bottom: 14px;
+  margin-bottom: 18px;
+  animation: bounceIn 0.7s ease 0.1s backwards;
 }
 
 .success-name {
-  font-size: 20px;
+  font-size: 28px;
   font-weight: 800;
-  color: #1a73e8;
-  margin-bottom: 6px;
+  color: var(--button-primary-bg);
+  margin-bottom: 12px;
 }
 
 .success-msg {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 
 .success-warning {
-  background: #fff4f3;
-  border: 1.5px solid #fbc9c4;
-  border-left: 4px solid #e53935;
+  background: var(--warning-bg);
+  border: 1.5px solid var(--warning-border);
+  border-left: 4px solid var(--error-color);
   border-radius: 12px;
-  padding: 12px 14px;
+  padding: 14px 16px;
   width: 100%;
   text-align: left;
   font-size: 13px;
   font-weight: 700;
-  color: #b71c1c;
-  line-height: 1.55;
-  margin-bottom: 14px;
+  color: var(--warning-text);
+  line-height: 1.6;
+  margin-bottom: 20px;
   display: none;
+  animation: bounceIn 0.7s ease 0.2s backwards;
 }
 
 .success-back {
   width: 100%;
   height: 48px;
-  background: #f0f4ff;
-  color: #1a73e8;
+  background: var(--button-secondary-bg);
+  color: var(--button-secondary-text);
   border: none;
   border-radius: 12px;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  margin-top: 4px;
+  margin-top: 8px;
   transition: background 0.2s;
 }
-.success-back:active { background: #dde8ff; }
+.success-back:active { background: var(--input-bg); }
 
 /* ── GPS MODAL ─────────────────────────────────────────── */
 #gpsModal {
-  display: none; position: fixed; inset: 0;
-  background: rgba(0,0,0,0.72); z-index: 999;
-  flex-direction: column; align-items: center;
-  justify-content: center; padding: 20px;
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--modal-overlay);
+  z-index: 999;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  backdrop-filter: blur(4px);
 }
 #gpsModal .modal-box {
-  background: white; padding: 24px; border-radius: 16px;
-  text-align: center; max-width: 350px; width: 100%;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+  background: var(--bg-primary);
+  padding: 28px;
+  border-radius: 16px;
+  text-align: center;
+  max-width: 350px;
+  width: 100%;
+  box-shadow: 0 10px 40px var(--shadow-color);
+}
+#gpsModal .modal-box h3 {
+  color: var(--error-color);
+  margin: 10px 0 16px;
+  font-size: 20px;
+}
+#gpsModal .modal-box p {
+  color: var(--text-secondary);
+}
+#gpsModal .modal-box b {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.modal-instructions {
+  background: var(--input-bg);
+  color: var(--text-secondary);
+  padding: 16px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.modal-warning {
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+
+.modal-instructions p {
+  margin-top: 10px;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 13px;
+}
+.modal-instructions p:first-child {
+  margin-top: 0;
+}
+
+/* ── RESPONSIVE ────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .container {
+    border-radius: 16px;
+    padding: 18px 16px;
+  }
+  
+  .success-emoji {
+    font-size: 64px;
+  }
+  
+  .success-name {
+    font-size: 24px;
+  }
+  
+  .success-card {
+    padding: 20px 16px;
+  }
 }
 </style>
 </head>
 
 <body>
+
+<!-- THEME TOGGLE -->
+<button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+  <span id="themeIcon">🌙</span>
+</button>
 
 <!-- PWA GUIDE -->
 <div id="pwa-guide">
@@ -345,26 +591,56 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 <div id="gpsModal">
   <div class="modal-box">
     <div style="font-size:44px; margin-bottom:10px;">🛑</div>
-    <h3 style="color:#dc3545; margin:0 0 14px; font-size:21px;">Location Blocked</h3>
-    <div style="text-align:left; background:#f8f9fa; padding:14px; border-radius:10px; margin-bottom:14px; font-size:13.5px; color:#444; line-height:1.55;">
-      <p style="margin-top:0; color:#000; font-size:14px;"><b>🍎 iPhone:</b></p>
+    <h3>Location Blocked</h3>
+    <div class="modal-instructions">
+      <p>🍎 iPhone:</p>
       1. Open <b>Settings ⚙️</b> → scroll to <b>Apps</b> → find your browser.<br>
       2. Tap <b>Location</b> → set to <b>Allow</b>.<br><br>
-      <p style="margin-top:0; color:#000; font-size:14px;"><b>🤖 Android:</b></p>
+      <p>🤖 Android:</p>
       1. Tap <b>⋮ Menu</b> → <b>Settings</b> → <b>Site settings</b> → <b>Location</b>.<br>
       2. Find this site under "Blocked" → tap → <b>Allow</b>.
     </div>
-    <div style="background:#fff3cd; color:#856404; padding:10px; border-radius:8px; font-size:12.5px; font-weight:700; margin-bottom:14px;">
+    <div class="modal-warning">
       ⚠️ After allowing, swipe down to refresh the page!
     </div>
-    <button onclick="document.getElementById('gpsModal').style.display='none'"
-      style="background:#1a73e8; color:white; border:none; padding:14px; border-radius:8px; width:100%; font-weight:700; font-size:15px;">
+    <button onclick="document.getElementById('gpsModal').style.display='none'" 
+      style="background: var(--button-primary-bg); color: var(--button-primary-text); border:none; padding:14px; border-radius:8px; width:100%; font-weight:700; font-size:15px; cursor: pointer;">
       GOT IT
     </button>
   </div>
 </div>
 
 <script>
+// ── THEME MANAGEMENT ───────────────────────────────────
+function initTheme() {
+  const savedTheme = localStorage.getItem('theme');
+  const prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+  
+  if (savedTheme) {
+    document.documentElement.style.colorScheme = savedTheme;
+  } else if (prefersLight) {
+    document.documentElement.style.colorScheme = 'light';
+  }
+  updateThemeIcon();
+}
+
+function toggleTheme() {
+  const current = localStorage.getItem('theme') || 
+    (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  const newTheme = current === 'light' ? 'dark' : 'light';
+  
+  localStorage.setItem('theme', newTheme);
+  document.documentElement.style.colorScheme = newTheme;
+  updateThemeIcon();
+}
+
+function updateThemeIcon() {
+  const current = localStorage.getItem('theme') || 
+    (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+  const icon = document.getElementById('themeIcon');
+  icon.textContent = current === 'light' ? '🌙' : '☀️';
+}
+
 // ── CONFIG ─────────────────────────────────────────────
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyVaxxz-D-YiG5ifp7vxuAkC8WhR0fpBUV_c38i2EWDLAuTsagbg2bzaLmNuXPsXj00/exec";
 
@@ -427,6 +703,7 @@ function dismissPwaGuideForever() { localStorage.setItem('pwa_never_show', '1');
 
 // ── INIT ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
   if (!isStandalone && shouldShowPwaGuide() && buildPwaGuideContent()) {
     recordPwaShown();
