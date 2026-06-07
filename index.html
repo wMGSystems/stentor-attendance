@@ -75,12 +75,12 @@ body {
 
 .bg-layer { position: fixed; inset: 0; z-index: -1; transition: opacity 0.8s ease-in-out; }
 
-/* Adjusted Gradients to perfectly blend into the status bar */
-.bg-chandarana { background: linear-gradient(135deg, #bed7f7 0%, #bed7f7 10%, #52c234 50%, #52c234 100%); opacity: 1; }
+/* Adjusted Gradients to perfectly blend into the status bar and have blue bottom right */
+.bg-chandarana { background: linear-gradient(135deg, #bed7f7 0%, #bed7f7 10%, #52c234 35%, #52c234 85%, #bed7f7 100%); opacity: 1; }
 .bg-carrefour { background: linear-gradient(135deg, #1a73e8 0%, #1a73e8 65%, rgba(82, 194, 52, 0.5) 100%); opacity: 0; }
 
 @media (prefers-color-scheme: dark) {
-  .bg-chandarana { background: linear-gradient(135deg, #24396a 0%, #24396a 10%, #0d5a45 50%, #064e3b 100%); }
+  .bg-chandarana { background: linear-gradient(135deg, #24396a 0%, #24396a 10%, #0d5a45 35%, #064e3b 85%, #24396a 100%); }
   .bg-carrefour { background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 65%, rgba(16, 185, 129, 0.4) 100%); }
 }
 
@@ -98,7 +98,7 @@ body.theme-carrefour { --dynamic-primary: var(--theme-carr); --success-color: #1
 /* ── CONTAINER ─────────────────────────────────────────── */
 .container { max-width: 420px; width: 100%; margin: auto; background: var(--bg-primary); padding: 22px 20px 26px; border-radius: 20px; box-shadow: 0 10px 40px var(--shadow-color); position: relative; overflow: hidden; }
 
-/* ── SWITCHER PILL (GROOVE & EMBOSS REFINEMENTS) ───────── */
+/* ── SWITCHER PILL ─────────────────────────────────────── */
 .top-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
 .terminal-pill-wrapper { 
   position: relative; display: inline-flex; 
@@ -106,7 +106,7 @@ body.theme-carrefour { --dynamic-primary: var(--theme-carr); --success-color: #1
   border: 1px solid var(--border-color); 
   border-radius: 50px; padding: 4px; height: 42px; 
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
-  align-items: center; /* Enforces absolute center */
+  align-items: center; 
 }
 .pill-slider { 
   position: absolute; top: 4px; bottom: 4px; left: 4px; 
@@ -124,14 +124,11 @@ body.theme-carrefour { --dynamic-primary: var(--theme-carr); --success-color: #1
 }
 .pill-btn.active { color: #ffffff; transition: color 0.2s ease 0.15s; }
 
-/* Display properties fixed to prevent off-centering */
 .pill-btn .full-text, .pill-btn .short-text { display: none; margin: 0; padding: 0; }
 .pill-btn.active .full-text { display: block; }
 .pill-btn:not(.active) .short-text { display: block; }
 
 /* ── FORM ELEMENTS & NUDGE ANIMATION ───────────────────── */
-
-/* Fun, cartoonish jelly shake animation for title */
 @keyframes cartoonNudge {
   0%   { transform: scale(1) rotate(0deg); }
   20%  { transform: scale(1.15) rotate(-5deg); }
@@ -143,7 +140,7 @@ body.theme-carrefour { --dynamic-primary: var(--theme-carr); --success-color: #1
 
 h2 { 
   text-align: center; color: var(--dynamic-primary); margin: 0 auto 18px auto; 
-  width: max-content; /* perfectly bounds text to scale from center */
+  width: max-content; 
   font-size: 20px; text-transform: uppercase; letter-spacing: 1px; transition: color 0.4s ease;
   font-family: ui-rounded, "Nunito", "Varela Round", "Arial Rounded MT Bold", "Segoe UI Rounded", system-ui, sans-serif;
   font-weight: 800; transform-origin: center;
@@ -166,12 +163,11 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 #preview { width: 58px; height: 58px; object-fit: cover; border-radius: 50%; border: 3px solid var(--success-color); display: none; margin: 4px auto 0; background: var(--input-bg); transition: border-color 0.4s ease; }
 .recovered-photo { filter: blur(4px); }
 
-/* ── STATUS MESSAGES & STYLISH TICK MARKS ────────────── */
+/* ── STATUS MESSAGES ───────────────────────────────────── */
 .msg { font-size: 12px; font-weight: 700; margin-top: 6px; min-height: 20px; color: var(--text-tertiary); display: flex; align-items: center; transition: color 0.2s; }
 .msg.success { color: var(--success-color); font-size: 13px; }
 .msg.error { color: var(--error-color); }
 
-/* Stylish CSS-drawn tick mark */
 .msg .dot { 
   display: inline-flex; justify-content: center; align-items: center;
   width: 18px; height: 18px; background: var(--success-color); 
@@ -179,14 +175,9 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
   transition: background 0.4s ease; position: relative; 
 }
 .msg .dot::after {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  width: 4.5px; height: 9px;
-  border-right: 2.5px solid white;
-  border-bottom: 2.5px solid white;
-  transform: translate(-50%, -60%) rotate(45deg); /* Mathematically perfect centering */
-  border-radius: 1px; /* Gives the checkmark a stylish rounded edge */
+  content: ''; position: absolute; top: 50%; left: 50%;
+  width: 4.5px; height: 9px; border-right: 2.5px solid white; border-bottom: 2.5px solid white;
+  transform: translate(-50%, -60%) rotate(45deg); border-radius: 1px; 
 }
 
 /* ── SUCCESS SCREEN ────────────────────────────────────── */
@@ -205,9 +196,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 #gpsModal .modal-box { background: var(--bg-primary); padding: 28px; border-radius: 16px; text-align: center; max-width: 350px; width: 100%; }
 #gpsModal .modal-box h3 { color: var(--error-color); margin: 10px 0 16px; font-size: 20px; }
 .modal-instructions { background: var(--input-bg); color: var(--text-secondary); padding: 16px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; line-height: 1.6; text-align: left; }
-
-/* PWA Details Hidden for Brevity (Still Exists) */
-#pwa-guide { display: none; }
 </style>
 </head>
 
@@ -325,7 +313,6 @@ document.addEventListener('DOMContentLoaded', () => {
   updateTerminalUI(); 
   initApp(); 
 
-  // Ensures OS status bar adapts instantly when user changes system theme mode
   if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
   }
@@ -334,8 +321,6 @@ document.addEventListener('DOMContentLoaded', () => {
 function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
   
-  // Dynamically update theme-color meta tag to match the active gradient's top color.
-  // This physically colors the iOS/Android status bar so the background beautifully covers the whole screen.
   const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const themeMeta = document.getElementById('theme-color-meta');
   if (themeMeta) {
@@ -346,11 +331,8 @@ function updateTerminalUI() {
     }
   }
   
-  // Update Title Text & Trigger Cartoon Shake
   const title = document.getElementById('formTitle');
   title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
-  
-  // Re-flow to trigger the shake animation each time it's switched
   title.classList.remove('shake-nudge');
   void title.offsetWidth; 
   title.classList.add('shake-nudge');
@@ -384,7 +366,6 @@ function switchTerminal(term) {
   
   document.getElementById('successScreen').style.display = 'none';
   document.getElementById('mainForm').style.display = 'block';
-  document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
   resetStepsFrom(2);
   initApp();
 }
@@ -397,24 +378,72 @@ async function fetchFromServer(action, data) {
   return json.data;
 }
 
-function initApp() {
-  const myFetchId = ++activeFetchId; 
-  fetchFromServer('getPortalData', {})
-    .then(data => {
-      if (myFetchId !== activeFetchId) return; 
-      staff = data.staff; branches = data.branches;
-      document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' + branches.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
-      restoreFromCache();
-    }).catch(() => { if (myFetchId === activeFetchId) { document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>'; } });
+function populateBranches(branchList) {
+  document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' + branchList.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
 }
 
-function getCacheKey() { return currentTerminal + "_attendance_cache"; }
+function initApp() {
+  const myFetchId = ++activeFetchId; 
+  const cacheKey = currentTerminal + "_portal_data";
+  const cachedData = localStorage.getItem(cacheKey);
+  let hasCachedData = false;
+
+  // 1. Instant Load From Cache
+  if (cachedData) {
+    try {
+      const parsed = JSON.parse(cachedData);
+      if (parsed.staff && parsed.branches) {
+        staff = parsed.staff; 
+        branches = parsed.branches;
+        populateBranches(branches);
+        restoreFromCache();
+        hasCachedData = true;
+      }
+    } catch (e) {}
+  }
+
+  if (!hasCachedData) {
+    document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
+  }
+
+  // 2. Unnoticeable Background Sync
+  fetchFromServer('getPortalData', {})
+    .then(data => {
+      if (myFetchId !== activeFetchId) return; // Discard if terminal switched during fetch
+      
+      const branchesChanged = JSON.stringify(branches) !== JSON.stringify(data.branches);
+      
+      staff = data.staff; 
+      branches = data.branches;
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+      
+      if (!hasCachedData) {
+        populateBranches(branches);
+        restoreFromCache();
+      } else if (branchesChanged) {
+        // Prevent "ghosting": strictly avoid updating the dropdown if the user is looking at/selecting it
+        const select = document.getElementById('branch');
+        if (document.activeElement !== select) {
+          const currentVal = select.value;
+          populateBranches(branches);
+          if (currentVal) select.value = currentVal; // Restore selection seamlessly
+        }
+      }
+    }).catch(() => { 
+      if (myFetchId === activeFetchId && !hasCachedData) { 
+        document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>'; 
+      } 
+    });
+}
+
+function getFormCacheKey() { return currentTerminal + "_attendance_cache"; }
 function autoSave(isCapturing = false) {
   if (isRestoring) return;
-  localStorage.setItem(getCacheKey(), JSON.stringify({ branch: document.getElementById('branch').value, staffID: document.getElementById('staffID').value, capturing: isCapturing, lat: coords ? coords.latitude : null, lng: coords ? coords.longitude : null }));
+  localStorage.setItem(getFormCacheKey(), JSON.stringify({ branch: document.getElementById('branch').value, staffID: document.getElementById('staffID').value, capturing: isCapturing, lat: coords ? coords.latitude : null, lng: coords ? coords.longitude : null }));
 }
+
 function restoreFromCache() {
-  const cached = localStorage.getItem(getCacheKey()); if (!cached) return;
+  const cached = localStorage.getItem(getFormCacheKey()); if (!cached) return;
   isRestoring = true; const d = JSON.parse(cached);
   if (d.branch) { document.getElementById('branch').value = d.branch; handleBranchChange(); }
   if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput(); }
@@ -439,10 +468,9 @@ function resetStepsFrom(n) {
 function resetToStart() {
   document.getElementById('successScreen').style.display = 'none'; document.getElementById('mainForm').style.display = 'block';
   document.getElementById('branch').value = ''; clearMsg('branchMsg'); resetStepsFrom(2); document.getElementById('step1').classList.add('activeStep');
-  localStorage.removeItem(getCacheKey()); initApp();
+  localStorage.removeItem(getFormCacheKey()); initApp();
 }
 
-// Empties inner HTML string so the CSS dynamically draws the beautiful tick!
 function showSuccess(id, txt) { const e = document.getElementById(id); e.innerHTML = '<span class="dot"></span> ' + txt; e.className = 'msg success'; }
 function showError(id, txt) { const e = document.getElementById(id); e.innerText = txt; e.className = 'msg error'; }
 function clearMsg(id) { const e = document.getElementById(id); e.innerText = ''; e.className = 'msg'; }
@@ -512,7 +540,7 @@ async function submitAttendance() {
 
   try {
     await fetchFromServer('recordAttendance', { name: staffName, id: staffID, branch, action, image: photo, lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0 });
-    localStorage.removeItem(getCacheKey());
+    localStorage.removeItem(getFormCacheKey());
     
     const match = staff.find(s => s.id === staffID); if(match) match.status = action; 
     const firstName = staffName.split(' ')[0] || staffName;
