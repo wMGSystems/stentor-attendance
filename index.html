@@ -73,7 +73,8 @@ body {
   padding: 12px 10px 32px; overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 
-.bg-layer { position: fixed; inset: 0; z-index: -1; transition: opacity 0.8s ease-in-out; }
+/* Background fade sped up to 0.4s to better sync with the status bar change */
+.bg-layer { position: fixed; inset: 0; z-index: -1; transition: opacity 0.4s ease-in-out; }
 
 /* Chandarana: Green body with Blue at bottom-right */
 .bg-chandarana { background: linear-gradient(135deg, #52c234 0%, #52c234 65%, #1a73e8 100%); opacity: 1; }
@@ -324,13 +325,17 @@ function updateTerminalUI() {
   
   const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const themeMeta = document.getElementById('theme-color-meta');
-  if (themeMeta) {
-    if (currentTerminal === 'chandarana') {
-      themeMeta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
-    } else {
-      themeMeta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
+  
+  // Delay the meta-tag status bar change by 200ms to perfectly sync with the 0.4s background CSS transition
+  setTimeout(() => {
+    if (themeMeta) {
+      if (currentTerminal === 'chandarana') {
+        themeMeta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
+      } else {
+        themeMeta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
+      }
     }
-  }
+  }, 200);
   
   const title = document.getElementById('formTitle');
   title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
@@ -368,7 +373,6 @@ function switchTerminal(term) {
   document.getElementById('successScreen').style.display = 'none';
   document.getElementById('mainForm').style.display = 'block';
   
-  // Wipe internal arrays completely so logic doesn't leak during transition
   staff = []; branches = [];
   
   resetStepsFrom(1);
@@ -377,7 +381,6 @@ function switchTerminal(term) {
   initApp();
 }
 
-// ── API & CORE FUNCTIONS ────────────────────────────────
 async function fetchFromServer(action, data) {
   const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action, data, terminal: currentTerminal }) });
   const json = await res.json();
@@ -396,12 +399,10 @@ function initApp() {
   
   let loadedFromCache = false;
 
-  // 1. Instant Load From Cache (Safely wrapped so it never fails the app)
   try {
     const cachedData = localStorage.getItem(cacheKey);
     if (cachedData) {
       const parsed = JSON.parse(cachedData);
-      // Ensure the payload actually contains our arrays
       if (parsed && Array.isArray(parsed.branches)) {
         staff = parsed.staff || []; 
         branches = parsed.branches || [];
@@ -418,10 +419,8 @@ function initApp() {
     document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
   }
 
-  // 2. Unnoticeable Background Sync
   fetchFromServer('getPortalData', {})
     .then(data => {
-      // Discard this fetch response if the user already switched the terminal tab!
       if (myFetchId !== activeFetchId) return; 
       
       const newStaff = data.staff || [];
@@ -433,27 +432,21 @@ function initApp() {
 
       try {
         localStorage.setItem(cacheKey, JSON.stringify({ staff, branches }));
-      } catch(e) {} // Catch quota exceeded / private mode errors quietly
+      } catch(e) {} 
       
-      // If we initially had no cache, inject options immediately
       if (!loadedFromCache) {
         populateBranches(branches);
         restoreFromCache();
       } 
-      // If we DID have cache but the server sent a NEW list, update gracefully
       else if (branchesChanged) {
-        // Prevent "ghosting" or snapping: strictly avoid updating the dropdown if the user is looking at/selecting it
         const select = document.getElementById('branch');
         if (document.activeElement !== select) {
           const currentVal = select.value;
           populateBranches(branches);
-          
-          // Re-apply their selection completely seamlessly without triggering events
           if (currentVal) select.value = currentVal; 
         }
       }
     }).catch(() => { 
-      // Only show error if we didn't have ANY cache to fall back on
       if (myFetchId === activeFetchId && branches.length === 0) { 
         document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>'; 
       } 
@@ -521,20 +514,25 @@ document.getElementById('staffID').oninput = function handleStaffInput() {
   const val = this.value.trim();
   if (val.length < 1) { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); clearMsg('staffMsg'); return; }
   
-  // Safe execution inside event listener
   const match = (staff || []).find(s => s.id === val);
   if (match) { staffName = match.name; showSuccess('staffMsg', 'Welcome ' + staffName.split(' ')[0]); activateStep(3); autoSave(); } 
   else { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); showError('staffMsg', 'Invalid Staff ID. Please check.'); }
 }
 
 document.getElementById('actionChoice').onchange = function() {
-  const val = this.value; if (!val) { clearMsg('actionMsg'); document.getElementById('step6').classList.remove('activeStep'); return; }
-  const match = (staff || []).find(s => s.id === document.getElementById('staffID').value.trim());
-  const sheetStatus = match && match.status ? match.status : null;
-
-  if (val === 'Clock Out' && sheetStatus !== 'Clock In') { showError('actionMsg', 'Cannot Clock Out. You have not Clocked In today.'); this.value = ''; document.getElementById('step6').classList.remove('activeStep'); return; }
-  if (val === 'Clock In' && sheetStatus === 'Clock In') { showError('actionMsg', 'Cannot Clock In. You are already Clocked In today.'); this.value = ''; document.getElementById('step6').classList.remove('activeStep'); return; }
-  showSuccess('actionMsg', 'Ready for Submission'); activateStep(6); 
+  clearMsg('submitMsg'); // Ensure any old submission errors are removed cleanly
+  const val = this.value; 
+  
+  if (!val) { 
+    clearMsg('actionMsg'); 
+    document.getElementById('step6').classList.remove('activeStep'); 
+    return; 
+  }
+  
+  // Removed strict Clock In/Out verification entirely. 
+  // Let the employee freely record their punch to prevent deadlocks and incorrect error states.
+  showSuccess('actionMsg', 'Ready for Submission'); 
+  activateStep(6); 
 };
 
 function verifyGPS() {
