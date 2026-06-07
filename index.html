@@ -4,8 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<!-- Dynamic Theme Color: initially set to Chandarana's green to perfectly blend the status bar -->
-<meta name="theme-color" id="theme-color-meta" content="#059669">
+<!-- Dynamic Theme Color: initially set to Chandarana's original solid green to perfectly blend the status bar -->
+<meta name="theme-color" id="theme-color-meta" content="#52c234">
 <script>
   // Synchronously update the theme color before the page renders to prevent iOS status bar flash/lock
   (function() {
@@ -16,7 +16,7 @@
       if (savedTerm === 'carrefour') {
         meta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
       } else {
-        meta.setAttribute('content', isDark ? '#064e3b' : '#059669');
+        meta.setAttribute('content', isDark ? '#0d5a45' : '#52c234');
       }
     }
   })();
@@ -36,9 +36,9 @@
   --modal-overlay: rgba(0, 0, 0, 0.72); --shadow-color: rgba(0, 0, 0, 0.14);
   --label-text: #666666;
   
-  /* Dynamic Theme Colors for Light Mode */
-  --theme-chan: #059669; /* Emerald Green */
-  --theme-carr: #1a73e8; /* Royal Blue */
+  /* Original Theme Colors */
+  --theme-chan: #52c234; /* Original Green */
+  --theme-carr: #1a73e8; /* Original Royal Blue */
   --dynamic-primary: var(--theme-chan);
 }
 
@@ -56,7 +56,7 @@
     --label-text: #a0a0a0;
 
     /* Dynamic Theme Colors for Dark Mode */
-    --theme-chan: #10b981; /* Bright Green */
+    --theme-chan: #52c234; /* Bright Green */
     --theme-carr: #3b82f6; /* Bright Blue */
   }
 }
@@ -75,12 +75,12 @@ body {
 
 .bg-layer { position: fixed; inset: 0; z-index: -1; transition: opacity 0.8s ease-in-out; }
 
-/* Adjusted Gradients to perfectly blend into the status bar */
-.bg-chandarana { background: linear-gradient(135deg, #059669 0%, #059669 65%, rgba(26, 115, 232, 0.4) 100%); opacity: 1; }
+/* Perfected Gradients: Both now share the same natural full-screen structure using Original Colors */
+.bg-chandarana { background: linear-gradient(135deg, #52c234 0%, #52c234 65%, #bed7f7 100%); opacity: 1; }
 .bg-carrefour { background: linear-gradient(135deg, #1a73e8 0%, #1a73e8 65%, rgba(82, 194, 52, 0.5) 100%); opacity: 0; }
 
 @media (prefers-color-scheme: dark) {
-  .bg-chandarana { background: linear-gradient(135deg, #064e3b 0%, #064e3b 65%, rgba(30, 58, 138, 0.4) 100%); }
+  .bg-chandarana { background: linear-gradient(135deg, #0d5a45 0%, #0d5a45 65%, #24396a 100%); }
   .bg-carrefour { background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 65%, rgba(16, 185, 129, 0.4) 100%); }
 }
 
@@ -106,7 +106,7 @@ body.theme-carrefour { --dynamic-primary: var(--theme-carr); --success-color: #1
   border: 1px solid var(--border-color); 
   border-radius: 50px; padding: 4px; height: 42px; 
   box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.08);
-  align-items: center; /* Enforces absolute center */
+  align-items: center; 
 }
 .pill-slider { 
   position: absolute; top: 4px; bottom: 4px; left: 4px; 
@@ -124,14 +124,11 @@ body.theme-carrefour { --dynamic-primary: var(--theme-carr); --success-color: #1
 }
 .pill-btn.active { color: #ffffff; transition: color 0.2s ease 0.15s; }
 
-/* Display properties fixed to prevent off-centering */
 .pill-btn .full-text, .pill-btn .short-text { display: none; margin: 0; padding: 0; }
 .pill-btn.active .full-text { display: block; }
 .pill-btn:not(.active) .short-text { display: block; }
 
 /* ── FORM ELEMENTS & NUDGE ANIMATION ───────────────────── */
-
-/* Fun, cartoonish jelly shake animation for title */
 @keyframes cartoonNudge {
   0%   { transform: scale(1) rotate(0deg); }
   20%  { transform: scale(1.15) rotate(-5deg); }
@@ -143,7 +140,7 @@ body.theme-carrefour { --dynamic-primary: var(--theme-carr); --success-color: #1
 
 h2 { 
   text-align: center; color: var(--dynamic-primary); margin: 0 auto 18px auto; 
-  width: max-content; /* perfectly bounds text to scale from center */
+  width: max-content; 
   font-size: 20px; text-transform: uppercase; letter-spacing: 1px; transition: color 0.4s ease;
   font-family: ui-rounded, "Nunito", "Varela Round", "Arial Rounded MT Bold", "Segoe UI Rounded", system-ui, sans-serif;
   font-weight: 800; transform-origin: center;
@@ -171,7 +168,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .msg.success { color: var(--success-color); font-size: 13px; }
 .msg.error { color: var(--error-color); }
 
-/* Stylish CSS-drawn tick mark */
 .msg .dot { 
   display: inline-flex; justify-content: center; align-items: center;
   width: 18px; height: 18px; background: var(--success-color); 
@@ -185,8 +181,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
   width: 4.5px; height: 9px;
   border-right: 2.5px solid white;
   border-bottom: 2.5px solid white;
-  transform: translate(-50%, -60%) rotate(45deg); /* Mathematically perfect centering */
-  border-radius: 1px; /* Gives the checkmark a stylish rounded edge */
+  transform: translate(-50%, -60%) rotate(45deg); 
+  border-radius: 1px; 
 }
 
 /* ── SUCCESS SCREEN ────────────────────────────────────── */
@@ -206,7 +202,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 #gpsModal .modal-box h3 { color: var(--error-color); margin: 10px 0 16px; font-size: 20px; }
 .modal-instructions { background: var(--input-bg); color: var(--text-secondary); padding: 16px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; line-height: 1.6; text-align: left; }
 
-/* PWA Details Hidden for Brevity (Still Exists) */
 #pwa-guide { display: none; }
 </style>
 </head>
@@ -335,12 +330,11 @@ function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
   
   // Dynamically update theme-color meta tag to match the active gradient's top color.
-  // This physically colors the iOS/Android status bar so the background beautifully covers the whole screen.
   const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   const themeMeta = document.getElementById('theme-color-meta');
   if (themeMeta) {
     if (currentTerminal === 'chandarana') {
-      themeMeta.setAttribute('content', isDark ? '#064e3b' : '#059669');
+      themeMeta.setAttribute('content', isDark ? '#0d5a45' : '#52c234');
     } else {
       themeMeta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
     }
@@ -350,7 +344,6 @@ function updateTerminalUI() {
   const title = document.getElementById('formTitle');
   title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
   
-  // Re-flow to trigger the shake animation each time it's switched
   title.classList.remove('shake-nudge');
   void title.offsetWidth; 
   title.classList.add('shake-nudge');
@@ -384,12 +377,11 @@ function switchTerminal(term) {
   
   document.getElementById('successScreen').style.display = 'none';
   document.getElementById('mainForm').style.display = 'block';
-  document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
   resetStepsFrom(2);
   initApp();
 }
 
-// ── API & CORE FUNCTIONS ────────────────────────────────
+// ── API & INSTANT LOAD CACHING LOGIC ────────────────────
 async function fetchFromServer(action, data) {
   const res = await fetch(APPS_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action, data, terminal: currentTerminal }) });
   const json = await res.json();
@@ -397,15 +389,65 @@ async function fetchFromServer(action, data) {
   return json.data;
 }
 
+function renderBranches() {
+  const branchSelect = document.getElementById('branch');
+  const currentVal = branchSelect.value;
+  branchSelect.innerHTML = '<option value="">Choose Branch</option>' + branches.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
+  
+  // Keep the user's selection if they already selected something while it was loading in the background
+  if (currentVal && branches.find(b => b[0] === currentVal)) {
+    branchSelect.value = currentVal;
+  }
+}
+
 function initApp() {
   const myFetchId = ++activeFetchId; 
+  const cacheKey = currentTerminal + '_portal_data_cache';
+  
+  // 1. INSTANT LOAD: Check device memory for cached lists
+  const cachedPortal = localStorage.getItem(cacheKey);
+  if (cachedPortal) {
+    try {
+      const parsedData = JSON.parse(cachedPortal);
+      if (parsedData.branches && parsedData.staff) {
+        branches = parsedData.branches;
+        staff = parsedData.staff;
+        renderBranches();
+        restoreFromCache(); // Restore form state instantly
+      }
+    } catch(e) { console.error("Cache parsing error", e); }
+  } else {
+    document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
+  }
+
+  // 2. BACKGROUND FETCH: Silently update cache and user statuses from the server
   fetchFromServer('getPortalData', {})
     .then(data => {
       if (myFetchId !== activeFetchId) return; 
-      staff = data.staff; branches = data.branches;
-      document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' + branches.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
-      restoreFromCache();
-    }).catch(() => { if (myFetchId === activeFetchId) { document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>'; } });
+      
+      // Save fresh data to device cache
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+      staff = data.staff; 
+      branches = data.branches;
+      
+      renderBranches();
+      
+      // If there was no cache previously, we need to restore the form now that data is loaded
+      if (!cachedPortal) {
+        restoreFromCache();
+      }
+      
+      // If user typed staff ID while backend was fetching, re-validate silently to update "Clocked In/Out" status checks
+      const typedId = document.getElementById('staffID').value.trim();
+      if (typedId && staff.find(s => s.id === typedId)) {
+        document.getElementById('staffID').dispatchEvent(new Event('input'));
+      }
+      
+    }).catch(() => { 
+      if (myFetchId === activeFetchId && !cachedPortal) { 
+        document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>'; 
+      } 
+    });
 }
 
 function getCacheKey() { return currentTerminal + "_attendance_cache"; }
@@ -442,7 +484,6 @@ function resetToStart() {
   localStorage.removeItem(getCacheKey()); initApp();
 }
 
-// Empties inner HTML string so the CSS dynamically draws the beautiful tick!
 function showSuccess(id, txt) { const e = document.getElementById(id); e.innerHTML = '<span class="dot"></span> ' + txt; e.className = 'msg success'; }
 function showError(id, txt) { const e = document.getElementById(id); e.innerText = txt; e.className = 'msg error'; }
 function clearMsg(id) { const e = document.getElementById(id); e.innerText = ''; e.className = 'msg'; }
@@ -512,9 +553,19 @@ async function submitAttendance() {
 
   try {
     await fetchFromServer('recordAttendance', { name: staffName, id: staffID, branch, action, image: photo, lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0 });
-    localStorage.removeItem(getCacheKey());
+    localStorage.removeItem(getCacheKey()); // clear form input cache
     
+    // Update local cache so we don't accidentally let them clock in twice before refreshing
     const match = staff.find(s => s.id === staffID); if(match) match.status = action; 
+    const cacheKey = currentTerminal + '_portal_data_cache';
+    const cachedPortal = localStorage.getItem(cacheKey);
+    if(cachedPortal) {
+       const parsed = JSON.parse(cachedPortal);
+       const cacheMatch = parsed.staff.find(s => s.id === staffID);
+       if(cacheMatch) cacheMatch.status = action;
+       localStorage.setItem(cacheKey, JSON.stringify(parsed));
+    }
+
     const firstName = staffName.split(' ')[0] || staffName;
     const isClockIn = action === 'Clock In'; const mins = (new Date().getHours() * 60) + new Date().getMinutes();
     
