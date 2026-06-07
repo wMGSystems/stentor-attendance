@@ -8,7 +8,6 @@
 <title>Stentor Attendance</title>
 
 <style>
-/* ── RESET & BASE ───────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -20,17 +19,17 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 12px 10px 24px;
+  padding: 12px 10px 32px;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-/* ── PWA INSTALL GUIDE ──────────────────────────────────── */
+/* ── PWA GUIDE ─────────────────────────────────────────── */
 #pwa-guide {
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(10, 20, 40, 0.97);
+  background: rgba(10,20,40,0.97);
   z-index: 500;
   flex-direction: column;
   align-items: center;
@@ -38,22 +37,9 @@ body {
   padding: 28px 20px;
   text-align: center;
 }
-#pwa-guide .pwa-icon {
-  font-size: 56px;
-  margin-bottom: 16px;
-}
-#pwa-guide h2 {
-  color: #fff;
-  font-size: 22px;
-  margin-bottom: 10px;
-}
-#pwa-guide p {
-  color: #aac4e8;
-  font-size: 14px;
-  line-height: 1.65;
-  max-width: 320px;
-  margin-bottom: 10px;
-}
+#pwa-guide .pwa-icon { font-size: 56px; margin-bottom: 14px; }
+#pwa-guide h2 { color: #fff; font-size: 22px; margin-bottom: 8px; }
+#pwa-guide p { color: #aac4e8; font-size: 14px; line-height: 1.65; max-width: 320px; margin-bottom: 10px; }
 #pwa-guide .pwa-steps {
   background: rgba(255,255,255,0.07);
   border: 1px solid rgba(255,255,255,0.12);
@@ -68,47 +54,30 @@ body {
   line-height: 1.7;
 }
 #pwa-guide .pwa-steps b { color: #fff; }
-#pwa-guide .pwa-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
-  max-width: 320px;
-}
+#pwa-guide .pwa-actions { display: flex; flex-direction: column; gap: 10px; width: 100%; max-width: 320px; }
 #pwa-guide .btn-install {
-  background: #1a73e8;
-  color: #fff;
-  border: none;
-  border-radius: 12px;
-  padding: 14px;
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  width: 100%;
+  background: #1a73e8; color: #fff; border: none;
+  border-radius: 12px; padding: 14px; font-size: 15px;
+  font-weight: 700; cursor: pointer; width: 100%;
 }
 #pwa-guide .btn-skip {
-  background: transparent;
-  color: #7a9cc0;
+  background: transparent; color: #7a9cc0;
   border: 1px solid rgba(255,255,255,0.15);
-  border-radius: 12px;
-  padding: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  width: 100%;
+  border-radius: 12px; padding: 12px; font-size: 13px;
+  font-weight: 600; cursor: pointer; width: 100%;
 }
 
-/* ── MAIN FORM CONTAINER ────────────────────────────────── */
+/* ── CONTAINER ─────────────────────────────────────────── */
 .container {
   max-width: 420px;
   width: 100%;
   margin: auto;
   background: white;
-  padding: 22px 20px 24px;
+  padding: 22px 20px 26px;
   border-radius: 20px;
   box-shadow: 0 10px 40px rgba(0,0,0,0.14);
   position: relative;
-  /* No fixed height — let it grow naturally so scroll works */
+  overflow: hidden; /* clip success screen to rounded corners */
 }
 
 h2 {
@@ -120,193 +89,165 @@ h2 {
   letter-spacing: 1px;
 }
 
-/* ── STEP GRID ──────────────────────────────────────────── */
-.step-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
+/* ── STEP GRID ─────────────────────────────────────────── */
+.step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 @keyframes bounceIn {
   0%   { transform: scale(0.9); opacity: 0; }
   60%  { transform: scale(1.05); }
   100% { transform: scale(1); opacity: 1; }
 }
-
-.step {
-  opacity: 0.3;
-  pointer-events: none;
-  transition: opacity 0.4s ease;
-}
-.step.activeStep {
-  opacity: 1;
-  pointer-events: auto;
-  animation: bounceIn 0.5s ease;
-}
+.step { opacity: 0.28; pointer-events: none; transition: opacity 0.4s ease; }
+.step.activeStep { opacity: 1; pointer-events: auto; animation: bounceIn 0.45s ease; }
 .full-width { grid-column: span 2; }
 
-/* ── FORM ELEMENTS ──────────────────────────────────────── */
-label {
-  font-weight: 700;
-  font-size: 11px;
-  display: block;
-  margin-bottom: 5px;
-  color: #666;
-  text-transform: uppercase;
-}
+/* ── FORM ELEMENTS ─────────────────────────────────────── */
+label { font-weight: 700; font-size: 11px; display: block; margin-bottom: 5px; color: #666; text-transform: uppercase; }
 
 input, select {
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: 1px solid #ddd;
-  font-size: 14px;
-  background: #f9f9f9;
-  transition: border 0.2s;
-  -webkit-appearance: none;
+  width: 100%; height: 44px; padding: 0 12px;
+  border-radius: 10px; border: 1px solid #ddd;
+  font-size: 14px; background: #f9f9f9;
+  transition: border 0.2s; -webkit-appearance: none;
 }
-input:focus, select:focus {
-  outline: none;
-  border-color: #1a73e8;
-  background: #fff;
-}
+input:focus, select:focus { outline: none; border-color: #1a73e8; background: #fff; }
 
 button {
-  width: 100%;
-  height: 44px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: none;
-  font-size: 14px;
-  font-weight: 700;
-  background: #e8f0fe;
-  color: #1a73e8;
-  cursor: pointer;
-  transition: background 0.2s, transform 0.1s;
+  width: 100%; height: 44px; padding: 0 12px;
+  border-radius: 10px; border: none; font-size: 14px;
+  font-weight: 700; background: #e8f0fe; color: #1a73e8;
+  cursor: pointer; transition: background 0.2s, transform 0.1s;
 }
 button:active { transform: scale(0.98); }
 button.primary {
-  background: #1a73e8;
-  color: white;
-  height: 52px;
-  font-size: 16px;
-  letter-spacing: 0.5px;
+  background: #1a73e8; color: white; height: 52px;
+  font-size: 16px; letter-spacing: 0.5px;
   box-shadow: 0 4px 14px rgba(26,115,232,0.35);
 }
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
+button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-/* ── PHOTO PREVIEW ──────────────────────────────────────── */
+/* ── PHOTO PREVIEW ─────────────────────────────────────── */
 #preview {
-  width: 60px;
-  height: 60px;
-  object-fit: cover;
-  border-radius: 50%;
-  border: 3px solid #28a745;
-  display: none;
-  margin: 4px auto 0;
+  width: 58px; height: 58px; object-fit: cover;
+  border-radius: 50%; border: 3px solid #28a745;
+  display: none; margin: 4px auto 0;
   box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-  background: #000;
-  transition: filter 0.3s;
+  background: #000; transition: filter 0.3s;
 }
 .recovered-photo { filter: blur(4px); }
 
-/* ── STATUS MESSAGES ────────────────────────────────────── */
+/* ── STATUS MESSAGES ───────────────────────────────────── */
 .msg {
-  font-size: 12px;
-  font-weight: 700;
-  margin-top: 6px;
-  min-height: 20px;
-  color: #888;
-  display: flex;
-  align-items: center;
-  transition: color 0.2s;
+  font-size: 12px; font-weight: 700; margin-top: 6px;
+  min-height: 20px; color: #888;
+  display: flex; align-items: center; transition: color 0.2s;
 }
 .msg.success { color: #28a745; font-size: 13px; }
 .msg.error   { color: #dc3545; }
 .msg .dot {
-  display: inline-block;
-  width: 18px; height: 18px;
-  background: #28a745;
-  border-radius: 50%;
-  color: white;
-  text-align: center;
-  line-height: 18px;
-  font-size: 10px;
-  margin-right: 8px;
-  flex-shrink: 0;
+  display: inline-block; width: 18px; height: 18px;
+  background: #28a745; border-radius: 50%; color: white;
+  text-align: center; line-height: 18px; font-size: 10px;
+  margin-right: 8px; flex-shrink: 0;
 }
 
-/* ── SUCCESS SCREEN ─────────────────────────────────────── */
+/* ── SUCCESS SCREEN ────────────────────────────────────── */
 #successScreen {
   display: none;
   position: absolute;
   inset: 0;
   background: white;
-  border-radius: 20px;
   z-index: 100;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 28px 24px 24px;
   text-align: center;
-  padding: 32px 24px;
-}
-.success-emoji { font-size: 72px; margin-bottom: 16px; }
-#successScreen h3 {
-  color: #1a73e8;
-  font-size: 19px;
-  background: #f0f7ff;
-  padding: 12px 24px;
-  border-radius: 14px;
-  margin-bottom: 14px;
-  width: 90%;
-}
-#thankYouMsg {
-  color: #444;
-  font-weight: 600;
-  font-size: 16px;
-  line-height: 1.65;
-  white-space: pre-line;
-  margin-bottom: 12px;
-}
-#lateWarningMsg {
-  color: #c0392b;
-  font-weight: 700;
-  font-size: 13px;
-  line-height: 1.5;
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: #fff0ee;
-  border-radius: 10px;
-  border-left: 4px solid #e74c3c;
-  display: none;
-  width: 90%;
-  text-align: left;
+  gap: 0; /* controlled by children margins */
 }
 
-/* ── GPS BLOCKED MODAL ──────────────────────────────────── */
-#gpsModal {
+.success-emoji {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 16px;
+}
+
+.success-badge {
+  background: #1a73e8;
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 20px;
+  border-radius: 999px;
+  margin-bottom: 18px;
+}
+
+.success-card {
+  background: #f6faff;
+  border: 1.5px solid #d0e4ff;
+  border-radius: 16px;
+  padding: 18px 20px;
+  width: 100%;
+  margin-bottom: 14px;
+}
+
+.success-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a73e8;
+  margin-bottom: 6px;
+}
+
+.success-msg {
+  font-size: 14px;
+  font-weight: 600;
+  color: #555;
+  line-height: 1.6;
+}
+
+.success-warning {
+  background: #fff4f3;
+  border: 1.5px solid #fbc9c4;
+  border-left: 4px solid #e53935;
+  border-radius: 12px;
+  padding: 12px 14px;
+  width: 100%;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 700;
+  color: #b71c1c;
+  line-height: 1.55;
+  margin-bottom: 14px;
   display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.72);
-  z-index: 999;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+}
+
+.success-back {
+  width: 100%;
+  height: 48px;
+  background: #f0f4ff;
+  color: #1a73e8;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.2s;
+}
+.success-back:active { background: #dde8ff; }
+
+/* ── GPS MODAL ─────────────────────────────────────────── */
+#gpsModal {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.72); z-index: 999;
+  flex-direction: column; align-items: center;
+  justify-content: center; padding: 20px;
 }
 #gpsModal .modal-box {
-  background: white;
-  padding: 24px;
-  border-radius: 16px;
-  text-align: center;
-  max-width: 350px;
-  width: 100%;
+  background: white; padding: 24px; border-radius: 16px;
+  text-align: center; max-width: 350px; width: 100%;
   box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 </style>
@@ -314,35 +255,23 @@ button:disabled {
 
 <body>
 
-<!-- ═══════════════════════════════════════════════════════
-     PWA INSTALL GUIDE
-════════════════════════════════════════════════════════ -->
+<!-- PWA GUIDE -->
 <div id="pwa-guide">
   <div class="pwa-icon" id="pwa-icon">📲</div>
   <h2>Add to Home Screen</h2>
-  <p id="pwa-desc">Install this app for the best experience — it works offline and opens instantly.</p>
-
-  <div class="pwa-steps" id="pwa-steps">
-    <!-- Content injected by JS based on device -->
-  </div>
-
+  <p id="pwa-desc">Install this app for the best experience — opens instantly, no browser bar.</p>
+  <div class="pwa-steps" id="pwa-steps"></div>
   <div class="pwa-actions">
-    <button class="btn-install" id="pwa-install-btn" style="display:none" onclick="triggerAndroidInstall()">
-      ➕ Install App
-    </button>
-    <button class="btn-install" id="pwa-ok-btn" onclick="dismissPwaGuide()">
-      Got it!
-    </button>
-    <button class="btn-skip" onclick="dismissPwaGuideForever()">
-      Don't show again
-    </button>
+    <button class="btn-install" id="pwa-install-btn" style="display:none" onclick="triggerAndroidInstall()">➕ Install App</button>
+    <button class="btn-install" id="pwa-ok-btn" onclick="dismissPwaGuide()">Got it!</button>
+    <button class="btn-skip" onclick="dismissPwaGuideForever()">Don't show again</button>
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     MAIN FORM
-════════════════════════════════════════════════════════ -->
+<!-- MAIN CONTAINER -->
 <div class="container">
+
+  <!-- FORM -->
   <div id="mainForm">
     <h2>Attendance</h2>
     <div class="step-grid">
@@ -355,7 +284,7 @@ button:disabled {
 
       <div id="step2" class="step full-width">
         <label>Staff ID</label>
-        <input id="staffID" type="tel" placeholder="Enter ID" autocomplete="off">
+        <input id="staffID" type="tel" placeholder="Enter your ID" autocomplete="off">
         <div id="staffMsg" class="msg"></div>
       </div>
 
@@ -388,25 +317,31 @@ button:disabled {
       </div>
 
       <div id="step6" class="step full-width">
-        <button id="submitBtn" onclick="submitAttendance()" class="primary">
-          SUBMIT ATTENDANCE
-        </button>
+        <button id="submitBtn" onclick="submitAttendance()" class="primary">SUBMIT ATTENDANCE</button>
         <div id="submitMsg" class="msg" style="justify-content:center; text-align:center;"></div>
       </div>
 
     </div>
   </div>
 
-  <!-- Success Screen (inside container for border-radius) -->
+  <!-- SUCCESS SCREEN -->
   <div id="successScreen">
-    <div class="success-emoji">😊</div>
-    <h3>Submission Sent</h3>
-    <p id="thankYouMsg"></p>
-    <div id="lateWarningMsg"></div>
+    <div class="success-emoji" id="successEmoji">😊</div>
+    <div class="success-badge" id="successBadge">Submitted</div>
+
+    <div class="success-card">
+      <div class="success-name" id="successName"></div>
+      <div class="success-msg" id="successMsg"></div>
+    </div>
+
+    <div class="success-warning" id="successWarning"></div>
+
+    <button class="success-back" onclick="resetToStart()">← Submit Another</button>
   </div>
+
 </div>
 
-<!-- GPS Blocked Modal -->
+<!-- GPS BLOCKED MODAL -->
 <div id="gpsModal">
   <div class="modal-box">
     <div style="font-size:44px; margin-bottom:10px;">🛑</div>
@@ -429,153 +364,97 @@ button:disabled {
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════════════════════
-     SCRIPT
-════════════════════════════════════════════════════════ -->
 <script>
-// ── CONFIG ────────────────────────────────────────────────
-// IMPORTANT: Replace with your deployed Apps Script doPost URL
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyElZCMxREYm-BME4wgLp_RFKG61yYXnzp4drcPTE0Cta871EDOa4UHmtsc9hs9XL6x/exec";
+// ── CONFIG ─────────────────────────────────────────────
+const APPS_SCRIPT_URL = "YOUR_DEPLOYED_APPS_SCRIPT_URL_HERE";
 
-// ── STATE ─────────────────────────────────────────────────
+// ── STATE ──────────────────────────────────────────────
 let staff = [], branches = [], coords = null, staffName = "", photo = null;
 let isRestoring = false;
-let deferredInstallPrompt = null; // Android PWA prompt
+let deferredInstallPrompt = null;
 
-// ── CAMERA QUALITY (hardware-adaptive) ───────────────────
+// ── HARDWARE-ADAPTIVE CAMERA ───────────────────────────
 function getCameraProfile() {
-  const mem = navigator.deviceMemory || 4; // GB RAM (not available on iOS, defaults to 4)
-  if (mem <= 3) return { maxWidth: 400, quality: 0.50 }; // Budget
-  if (mem <= 6) return { maxWidth: 600, quality: 0.65 }; // Mid-range
-  return        { maxWidth: 800, quality: 0.80 };         // Flagship
+  const mem = navigator.deviceMemory || 4;
+  if (mem <= 3) return { maxWidth: 400, quality: 0.50 };
+  if (mem <= 6) return { maxWidth: 600, quality: 0.65 };
+  return              { maxWidth: 800, quality: 0.80 };
 }
 
-// ── PWA INSTALL GUIDE ────────────────────────────────────
-// Intercept Android install prompt early (must be before DOMContentLoaded)
-window.addEventListener('beforeinstallprompt', e => {
-  e.preventDefault();
-  deferredInstallPrompt = e;
-});
+// ── PWA ────────────────────────────────────────────────
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferredInstallPrompt = e; });
 
 function shouldShowPwaGuide() {
   if (localStorage.getItem('pwa_never_show') === '1') return false;
-  const count = parseInt(localStorage.getItem('pwa_show_count') || '0', 10);
-  return count < 2;
+  return parseInt(localStorage.getItem('pwa_show_count') || '0', 10) < 2;
 }
-
 function recordPwaShown() {
-  const count = parseInt(localStorage.getItem('pwa_show_count') || '0', 10);
-  localStorage.setItem('pwa_show_count', String(count + 1));
+  localStorage.setItem('pwa_show_count', String(parseInt(localStorage.getItem('pwa_show_count') || '0', 10) + 1));
 }
-
 function buildPwaGuideContent() {
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  const isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const isAndroid = /android/i.test(navigator.userAgent);
-  const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-  const stepsEl = document.getElementById('pwa-steps');
-
+  const isSafari  = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+  const stepsEl   = document.getElementById('pwa-steps');
   if (isAndroid && deferredInstallPrompt) {
-    // Android with native prompt available
     document.getElementById('pwa-icon').textContent = '📲';
-    document.getElementById('pwa-desc').textContent = 'Tap below to install the app directly — no app store needed.';
-    stepsEl.innerHTML = '<b>Quick Install:</b> Tap the button below and follow the prompt to add Stentor Attendance to your home screen.';
+    document.getElementById('pwa-desc').textContent = 'Tap below to install directly — no app store needed.';
+    stepsEl.innerHTML = '<b>Quick Install:</b> Tap the button below and follow the prompt.';
     document.getElementById('pwa-install-btn').style.display = 'block';
     document.getElementById('pwa-ok-btn').style.display = 'none';
-
   } else if (isAndroid) {
-    // Android without native prompt (Samsung, Opera, etc.)
     document.getElementById('pwa-icon').textContent = '🤖';
-    document.getElementById('pwa-desc').textContent = 'Add this app to your home screen for faster access.';
-    stepsEl.innerHTML = `
-      <b>Chrome / Edge:</b><br>
-      1. Tap the <b>⋮ menu</b> (top right).<br>
-      2. Tap <b>"Add to Home screen"</b>.<br><br>
-      <b>Samsung Browser:</b><br>
-      1. Tap the <b>☰ menu</b> (bottom right).<br>
-      2. Tap <b>"Add page to"</b> → <b>"Home screen"</b>.`;
-
+    stepsEl.innerHTML = '<b>Chrome / Edge:</b><br>1. Tap <b>⋮ menu</b> (top right).<br>2. Tap <b>"Add to Home screen"</b>.<br><br><b>Samsung Browser:</b><br>1. Tap <b>☰ menu</b> (bottom right).<br>2. Tap <b>"Add page to"</b> → <b>"Home screen"</b>.';
   } else if (isIOS && isSafari) {
-    // iOS Safari — updated for iOS 26 interface change
     document.getElementById('pwa-icon').textContent = '🍎';
-    document.getElementById('pwa-desc').textContent = 'Add this app to your home screen in Safari.';
-    stepsEl.innerHTML = `
-      1. Tap the <b>Settings/Options (···)</b> button at the top right — or the <b>Share ↑</b> icon at the bottom.<br>
-      2. Scroll down and tap <b>"Add to Home Screen"</b>.<br>
-      3. Tap <b>Add</b>.`;
-
-  } else if (isIOS && !isSafari) {
-    // iOS with a third-party browser (Chrome, Firefox, Edge on iOS)
+    stepsEl.innerHTML = '1. Tap the <b>Share ↑</b> icon (bottom / top of Safari).<br>2. Scroll and tap <b>"Add to Home Screen"</b>.<br>3. Tap <b>Add</b>.';
+  } else if (isIOS) {
     document.getElementById('pwa-icon').textContent = '🍎';
-    document.getElementById('pwa-desc').textContent = 'Add this app to your home screen.';
-    stepsEl.innerHTML = `
-      1. Tap your browser's <b>menu or share icon</b>.<br>
-      2. Look for <b>"Add to Home Screen"</b> or <b>"Open in Safari"</b>.<br>
-      3. If using Safari: tap the <b>Share ↑</b> icon → <b>"Add to Home Screen"</b>.`;
+    stepsEl.innerHTML = '1. Open this link in <b>Safari</b>.<br>2. Tap the <b>Share ↑</b> icon.<br>3. Tap <b>"Add to Home Screen"</b>.';
   } else {
-    // Desktop or unknown — skip guide
     return false;
   }
   return true;
 }
-
 function triggerAndroidInstall() {
   if (deferredInstallPrompt) {
     deferredInstallPrompt.prompt();
-    deferredInstallPrompt.userChoice.then(() => {
-      deferredInstallPrompt = null;
-      dismissPwaGuide();
-    });
+    deferredInstallPrompt.userChoice.then(() => { deferredInstallPrompt = null; dismissPwaGuide(); });
   }
 }
+function dismissPwaGuide() { document.getElementById('pwa-guide').style.display = 'none'; initApp(); }
+function dismissPwaGuideForever() { localStorage.setItem('pwa_never_show', '1'); dismissPwaGuide(); }
 
-function dismissPwaGuide() {
-  document.getElementById('pwa-guide').style.display = 'none';
-  initApp();
-}
-
-function dismissPwaGuideForever() {
-  localStorage.setItem('pwa_never_show', '1');
-  dismissPwaGuide();
-}
-
-// ── INIT ─────────────────────────────────────────────────
+// ── INIT ───────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches
-    || window.navigator.standalone;
-
-  if (!isStandalone && shouldShowPwaGuide()) {
-    const hasContent = buildPwaGuideContent();
-    if (hasContent) {
-      recordPwaShown();
-      document.getElementById('pwa-guide').style.display = 'flex';
-      return; // initApp() called when user dismisses
-    }
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  if (!isStandalone && shouldShowPwaGuide() && buildPwaGuideContent()) {
+    recordPwaShown();
+    document.getElementById('pwa-guide').style.display = 'flex';
+    return;
   }
   initApp();
 });
 
-// ── APP INIT & DATA FETCH ─────────────────────────────────
 function initApp() {
   fetchFromServer('getPortalData', {})
     .then(data => {
-      staff = data.staff;
-      branches = data.branches;
+      staff = data.staff; branches = data.branches;
       document.getElementById('branch').innerHTML =
         '<option value="">Choose Branch</option>' +
         branches.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
       restoreFromCache();
     })
-    .catch(err => {
-      document.getElementById('branch').innerHTML = '<option value="">Failed to load</option>';
-      console.error('Init error:', err);
+    .catch(() => {
+      document.getElementById('branch').innerHTML = '<option value="">Failed to load — refresh</option>';
     });
 }
 
-// ── API FETCH (replaces google.script.run) ───────────────
+// ── API ────────────────────────────────────────────────
 async function fetchFromServer(action, data) {
   const res = await fetch(APPS_SCRIPT_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain' }, // CORS: Apps Script requires text/plain for no-preflight
+    headers: { 'Content-Type': 'text/plain' },
     body: JSON.stringify({ action, data })
   });
   const json = await res.json();
@@ -583,32 +462,19 @@ async function fetchFromServer(action, data) {
   return json.data;
 }
 
-// ── CACHE RECOVERY (for phones that crash on camera) ─────
+// ── CACHE RECOVERY ─────────────────────────────────────
 function restoreFromCache() {
   const cached = localStorage.getItem('attendance_cache');
   if (!cached) return;
   isRestoring = true;
   const d = JSON.parse(cached);
-
-  if (d.branch) {
-    document.getElementById('branch').value = d.branch;
-    handleBranchChange();
-  }
-  if (d.staffID) {
-    document.getElementById('staffID').value = d.staffID;
-    handleStaffInput();
-  }
-  if (d.lat && d.lng) {
-    coords = { latitude: d.lat, longitude: d.lng };
-    showSuccess('gpsMsg', 'Location Verified');
-    activateStep(4);
-  }
+  if (d.branch) { document.getElementById('branch').value = d.branch; handleBranchChange(); }
+  if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput(); }
+  if (d.lat && d.lng) { coords = { latitude: d.lat, longitude: d.lng }; showSuccess('gpsMsg', 'Location Verified'); activateStep(4); }
   if (d.capturing === true) {
-    // 1x1 transparent placeholder — blurred to signal "recovered"
     photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
     const p = document.getElementById('preview');
-    p.src = photo; p.style.display = 'block';
-    p.classList.add('recovered-photo');
+    p.src = photo; p.style.display = 'block'; p.classList.add('recovered-photo');
     showSuccess('cameraMsg', 'Identity Restored');
     activateStep(4); activateStep(5);
     autoSave(false);
@@ -616,30 +482,38 @@ function restoreFromCache() {
   isRestoring = false;
 }
 
-// ── STEP HELPERS ─────────────────────────────────────────
-function activateStep(n) {
-  document.getElementById('step' + n).classList.add('activeStep');
-}
+// ── STEP HELPERS ───────────────────────────────────────
+function activateStep(n) { document.getElementById('step' + n).classList.add('activeStep'); }
 
 function resetStepsFrom(n) {
   for (let i = n; i <= 6; i++) {
     const el = document.getElementById('step' + i);
     if (el) el.classList.remove('activeStep');
   }
-  // Clear associated state
   if (n <= 2) { staffName = ''; document.getElementById('staffID').value = ''; clearMsg('staffMsg'); }
   if (n <= 3) { coords = null; clearMsg('gpsMsg'); }
   if (n <= 4) {
     photo = null;
     const p = document.getElementById('preview');
-    p.style.display = 'none'; p.src = '';
-    p.classList.remove('recovered-photo');
-    clearMsg('cameraMsg');
-    document.getElementById('cameraInput').value = '';
+    p.style.display = 'none'; p.src = ''; p.classList.remove('recovered-photo');
+    clearMsg('cameraMsg'); document.getElementById('cameraInput').value = '';
   }
   if (n <= 5) { document.getElementById('actionChoice').value = ''; clearMsg('actionMsg'); }
   clearMsg('submitMsg');
   autoSave();
+}
+
+// Full reset — called by "Submit Another" back button
+function resetToStart() {
+  document.getElementById('successScreen').style.display = 'none';
+  document.getElementById('mainForm').style.display = 'block';
+  // Reset branch too
+  document.getElementById('branch').value = '';
+  clearMsg('branchMsg');
+  resetStepsFrom(2);
+  // Step 1 stays active always
+  document.getElementById('step1').classList.add('activeStep');
+  localStorage.removeItem('attendance_cache');
 }
 
 function showSuccess(id, txt) {
@@ -647,17 +521,10 @@ function showSuccess(id, txt) {
   e.innerHTML = '<span class="dot">✓</span> ' + txt;
   e.className = 'msg success';
 }
-function showError(id, txt) {
-  const e = document.getElementById(id);
-  e.innerText = txt;
-  e.className = 'msg error';
-}
-function clearMsg(id) {
-  const e = document.getElementById(id);
-  e.innerText = ''; e.className = 'msg';
-}
+function showError(id, txt) { const e = document.getElementById(id); e.innerText = txt; e.className = 'msg error'; }
+function clearMsg(id) { const e = document.getElementById(id); e.innerText = ''; e.className = 'msg'; }
 
-// ── AUTO SAVE (draft cache) ───────────────────────────────
+// ── AUTO SAVE ──────────────────────────────────────────
 function autoSave(isCapturing = false) {
   if (isRestoring) return;
   localStorage.setItem('attendance_cache', JSON.stringify({
@@ -669,13 +536,12 @@ function autoSave(isCapturing = false) {
   }));
 }
 
-// ── FORM HANDLERS ─────────────────────────────────────────
+// ── FORM HANDLERS ──────────────────────────────────────
 
-// ANTI-CHEAT: branch change resets everything downstream
+// ANTI-CHEAT: branch change resets all downstream steps
 function handleBranchChange() {
   const val = document.getElementById('branch').value;
   if (!val) return;
-  // If any step beyond 1 was already active, reset them all
   if (document.getElementById('step2').classList.contains('activeStep')) {
     resetStepsFrom(2);
   }
@@ -684,9 +550,17 @@ function handleBranchChange() {
   autoSave();
 }
 
+// Staff ID — only unlocks step 3 on a VALID match
 function handleStaffInput() {
   const val = document.getElementById('staffID').value.trim();
-  if (val.length < 1) return;
+  if (val.length < 1) {
+    // If step 3 was open from a previous valid entry, close it
+    if (document.getElementById('step3').classList.contains('activeStep')) {
+      resetStepsFrom(3);
+    }
+    clearMsg('staffMsg');
+    return;
+  }
   const match = staff.find(s => s.id === val);
   if (match) {
     staffName = match.name;
@@ -694,6 +568,10 @@ function handleStaffInput() {
     activateStep(3);
     autoSave();
   } else {
+    // Wrong ID — close any steps that were opened
+    if (document.getElementById('step3').classList.contains('activeStep')) {
+      resetStepsFrom(3);
+    }
     showError('staffMsg', 'Invalid Staff ID. Please check.');
   }
 }
@@ -701,17 +579,15 @@ function handleStaffInput() {
 document.getElementById('branch').onchange = handleBranchChange;
 document.getElementById('staffID').oninput = handleStaffInput;
 
-// ── GPS ───────────────────────────────────────────────────
+// ── GPS ────────────────────────────────────────────────
 function verifyGPS() {
   document.getElementById('gpsMsg').innerText = 'Locating...';
   document.getElementById('gpsMsg').className = 'msg';
-
   navigator.geolocation.getCurrentPosition(
     pos => {
       coords = pos.coords;
       const b = branches.find(x => x[0] === document.getElementById('branch').value);
       if (!b) { showError('gpsMsg', 'Select branch first.'); return; }
-
       const dist = haversineDistance(coords.latitude, coords.longitude, b[1], b[2]);
       if (dist > 250) {
         showError('gpsMsg', 'Too far (' + Math.round(dist) + 'm). Move closer.');
@@ -737,12 +613,11 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
   const R = 6371e3;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = Math.sin(dLat / 2) ** 2
-    + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// ── CAMERA ───────────────────────────────────────────────
+// ── CAMERA ─────────────────────────────────────────────
 function openCamera() { autoSave(true); document.getElementById('cameraInput').click(); }
 
 document.getElementById('cameraInput').onchange = function(e) {
@@ -750,11 +625,9 @@ document.getElementById('cameraInput').onchange = function(e) {
   if (!file) return;
   autoSave(false);
   showSuccess('cameraMsg', 'Processing...');
-
   const profile = getCameraProfile();
   const imgURL = URL.createObjectURL(file);
   const img = new Image();
-
   img.onload = () => {
     try {
       const canvas = document.createElement('canvas');
@@ -763,10 +636,8 @@ document.getElementById('cameraInput').onchange = function(e) {
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       photo = canvas.toDataURL('image/jpeg', profile.quality);
-
       const p = document.getElementById('preview');
-      p.src = photo; p.style.display = 'block';
-      p.classList.remove('recovered-photo');
+      p.src = photo; p.style.display = 'block'; p.classList.remove('recovered-photo');
       showSuccess('cameraMsg', 'Identity Captured');
       activateStep(5);
     } catch (err) {
@@ -783,50 +654,39 @@ document.getElementById('actionChoice').onchange = function() {
   if (this.value) { showSuccess('actionMsg', 'Ready for Submission'); activateStep(6); }
 };
 
-// ── TIME-AWARE SUCCESS MESSAGES ───────────────────────────
+// ── SUCCESS MESSAGES ───────────────────────────────────
 function getClockInMessage(firstName) {
-  const now = new Date();
-  const h = now.getHours(), m = now.getMinutes();
-  const totalMins = h * 60 + m;
-
-  if (totalMins < 6 * 60 + 30) {
-    // Before 6:30 AM — Early bird
-    return {
-      main: "Thank you " + firstName + ",\nFantastic start! Thanks for setting an early standard today. Keep it up!",
-      warning: null
-    };
-  } else if (totalMins <= 8 * 60) {
-    // 6:30 AM – 8:00 AM — On time
-    return {
-      main: "Thank you " + firstName + ",\nhave a productive shift!",
-      warning: null
-    };
-  } else {
-    // After 8:00 AM — Late
-    return {
-      main: "Thank you " + firstName + ", your attendance has been recorded.",
-      warning: "⚠️ Warning: clock in past 8:00 AM. Consistent late arrivals are logged automatically and will be forwarded to administration for review."
-    };
-  }
+  const mins = new Date().getHours() * 60 + new Date().getMinutes();
+  if (mins < 6 * 60 + 30) return {
+    emoji: '🌟', badge: 'Early Bird!',
+    msg: 'Fantastic start — you\'re ahead of everyone today. Keep setting that standard!',
+    warning: null
+  };
+  if (mins <= 8 * 60) return {
+    emoji: '✅', badge: 'Clocked In',
+    msg: 'Have a productive shift today!',
+    warning: null
+  };
+  return {
+    emoji: '⏰', badge: 'Clocked In',
+    msg: 'Your attendance has been recorded.',
+    warning: '⚠️ Warning: clock in past 8:00 AM. Consistent late arrivals are logged automatically and will be forwarded to administration for review.'
+  };
 }
 
 function getClockOutMessage(firstName) {
   const h = new Date().getHours();
-  if (h < 16) return "Thank you " + firstName + ",\nhave a wonderful day!";
-  if (h >= 18) return "Thank you " + firstName + ",\nhave a restful night and remember to place your order!";
-  return "Thank you " + firstName + ",\nhave a wonderful evening!";
+  if (h < 16) return { emoji: '👋', badge: 'Clocked Out', msg: 'Have a wonderful rest of your day!', warning: null };
+  if (h >= 18) return { emoji: '🌙', badge: 'Clocked Out', msg: 'Have a restful night — and remember to place your order!', warning: null };
+  return { emoji: '🌅', badge: 'Clocked Out', msg: 'Have a wonderful evening!', warning: null };
 }
 
-// ── SUBMIT ────────────────────────────────────────────────
+// ── SUBMIT ─────────────────────────────────────────────
 async function submitAttendance() {
-  const branch = document.getElementById('branch').value;
-  const staffID = document.getElementById('staffID').value;
-  const action = document.getElementById('actionChoice').value;
-
-  if (!branch || !staffID || !action) {
-    showError('submitMsg', 'All steps must be green first.');
-    return;
-  }
+  const branch   = document.getElementById('branch').value;
+  const staffID  = document.getElementById('staffID').value;
+  const action   = document.getElementById('actionChoice').value;
+  if (!branch || !staffID || !action) { showError('submitMsg', 'All steps must be green first.'); return; }
 
   const btn = document.getElementById('submitBtn');
   btn.textContent = 'SENDING...'; btn.disabled = true;
@@ -841,26 +701,23 @@ async function submitAttendance() {
 
     localStorage.removeItem('attendance_cache');
 
-    // Build success message
     const firstName = staffName.split(' ')[0] || staffName;
-    let msgData;
-    if (action === 'Clock In') {
-      msgData = getClockInMessage(firstName);
-    } else {
-      msgData = { main: getClockOutMessage(firstName), warning: null };
-    }
+    const d = action === 'Clock In' ? getClockInMessage(firstName) : getClockOutMessage(firstName);
 
-    document.getElementById('thankYouMsg').textContent = msgData.main;
-    const warningEl = document.getElementById('lateWarningMsg');
-    if (msgData.warning) {
-      warningEl.textContent = msgData.warning;
-      warningEl.style.display = 'block';
-    } else {
-      warningEl.style.display = 'none';
-    }
+    document.getElementById('successEmoji').textContent = d.emoji;
+    document.getElementById('successBadge').textContent = d.badge;
+    document.getElementById('successName').textContent = firstName;
+    document.getElementById('successMsg').textContent = d.msg;
+
+    const warnEl = document.getElementById('successWarning');
+    if (d.warning) { warnEl.textContent = d.warning; warnEl.style.display = 'block'; }
+    else { warnEl.style.display = 'none'; }
 
     document.getElementById('mainForm').style.display = 'none';
     document.getElementById('successScreen').style.display = 'flex';
+
+    // Re-enable button for if they come back
+    btn.textContent = 'SUBMIT ATTENDANCE'; btn.disabled = false;
 
   } catch (err) {
     showError('submitMsg', err.message);
