@@ -77,9 +77,13 @@
 body {
   font-family: 'Segoe UI', Tahoma, sans-serif;
   background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-color: var(--bg-gradient-end);
   color: var(--text-primary);
   min-height: 100vh;
-  min-height: -webkit-fill-available;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -493,10 +497,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
   <!-- FORM -->
   <div id="mainForm">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-      <h2 style="margin: 0;">Attendance</h2>
-      <button onclick="refreshApp()" style="background: var(--button-secondary-bg); color: var(--button-secondary-text); border: none; border-radius: 8px; padding: 8px 12px; font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; height: auto;" title="Refresh app cache">🔄 Refresh</button>
-    </div>
+    <h2>Attendance</h2>
     <div class="step-grid">
 
       <div id="step1" class="step activeStep full-width">
@@ -589,26 +590,6 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 <script>
 // ── CACHE & REFRESH ───────────────────────────────────
-function refreshApp() {
-  if (confirm('This will clear app cache and refresh. Continue?')) {
-    // Clear localStorage attendance cache
-    localStorage.removeItem('attendance_cache');
-    localStorage.removeItem('pwa_show_count');
-    
-    // Clear service worker cache if available
-    if ('caches' in window) {
-      caches.keys().then(cacheNames => {
-        cacheNames.forEach(cacheName => {
-          caches.delete(cacheName);
-        });
-      });
-    }
-    
-    // Hard reload to bypass cache
-    window.location.href = window.location.href;
-  }
-}
-
 // Register service worker for offline support and caching
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
@@ -675,10 +656,10 @@ function buildPwaGuideContent() {
     stepsEl.innerHTML = '<b>Chrome / Edge:</b><br>1. Tap <b>⋮ menu</b> (top right).<br>2. Tap <b>"Add to Home screen"</b>.<br><br><b>Samsung Browser:</b><br>1. Tap <b>☰ menu</b> (bottom right).<br>2. Tap <b>"Add page to"</b> → <b>"Home screen"</b>.';
   } else if (isIOS && isSafari) {
     document.getElementById('pwa-icon').textContent = '🍎';
-    stepsEl.innerHTML = '1. Tap the <b>⋮ menu</b> icon (top right corner).<br>2. Tap <b>Share ↑</b>.<br>3. Scroll down in the list.<br>4. Tap <b>"Add to Home Screen"</b>.<br>5. Tap <b>Add</b>.';
+    stepsEl.innerHTML = '1. Tap the <b>⋮ menu</b> button (may be at top right or bottom).<br>2. Tap <b>Share ↑</b>.<br>3. Scroll down in the menu.<br>4. Tap <b>"Add to Home Screen"</b>.<br>5. Tap <b>Add</b> to confirm.';
   } else if (isIOS) {
     document.getElementById('pwa-icon').textContent = '🍎';
-    stepsEl.innerHTML = '1. Open this link in <b>Safari</b>.<br>2. Tap the <b>⋮ menu</b> icon (top right corner).<br>3. Tap <b>Share ↑</b>.<br>4. Scroll down in the list.<br>5. Tap <b>"Add to Home Screen"</b>.';
+    stepsEl.innerHTML = '1. Open this link in <b>Safari</b>.<br>2. Tap the <b>⋮ menu</b> button (may be at top right or bottom).<br>3. Tap <b>Share ↑</b>.<br>4. Scroll down in the menu.<br>5. Tap <b>"Add to Home Screen"</b>';
   } else {
     return false;
   }
