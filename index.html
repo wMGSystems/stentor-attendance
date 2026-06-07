@@ -60,11 +60,12 @@ body {
 .bg-layer { position: fixed; inset: 0; z-index: -1; transition: opacity 0.8s ease-in-out; }
 
 /* Adjusted Gradients to match spec perfectly */
-.bg-chandarana { background: linear-gradient(135deg, rgba(26, 115, 232, 0.28) 0%, #52c234 35%, #52c234 100%); opacity: 1; }
+/* Made Chandarana's top-left blue solid so it covers the screen cleanly without transparency */
+.bg-chandarana { background: linear-gradient(135deg, #bed7f7 0%, #52c234 35%, #52c234 100%); opacity: 1; }
 .bg-carrefour { background: linear-gradient(135deg, #1a73e8 0%, #1a73e8 65%, rgba(82, 194, 52, 0.5) 100%); opacity: 0; }
 
 @media (prefers-color-scheme: dark) {
-  .bg-chandarana { background: linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, #0d5a45 40%, #064e3b 100%); }
+  .bg-chandarana { background: linear-gradient(135deg, #24396a 0%, #0d5a45 40%, #064e3b 100%); }
   .bg-carrefour { background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 65%, rgba(16, 185, 129, 0.4) 100%); }
 }
 
@@ -305,10 +306,30 @@ let currentTerminal = localStorage.getItem('selected_terminal') || 'chandarana';
 let staff = [], branches = [], coords = null, staffName = "", photo = null;
 let isRestoring = false, activeFetchId = 0;
 
-document.addEventListener('DOMContentLoaded', () => { updateTerminalUI(); initApp(); });
+document.addEventListener('DOMContentLoaded', () => { 
+  updateTerminalUI(); 
+  initApp(); 
+
+  // Ensures OS status bar adapts instantly when user changes system theme mode
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
+  }
+});
 
 function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
+  
+  // Dynamically update theme-color meta tag to match the active gradient's top color.
+  // This physically colors the iOS/Android status bar so the background beautifully covers the whole screen.
+  const isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) {
+    if (currentTerminal === 'chandarana') {
+      themeMeta.setAttribute('content', isDark ? '#24396a' : '#bed7f7');
+    } else {
+      themeMeta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
+    }
+  }
   
   // Update Title Text & Trigger Cartoon Shake
   const title = document.getElementById('formTitle');
