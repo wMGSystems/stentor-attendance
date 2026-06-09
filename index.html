@@ -134,7 +134,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 .success-emoji { font-size: 72px; margin-bottom: 16px; animation: bounceIn 0.6s ease; }
 .success-badge { background: var(--dynamic-primary); color: #ffffff; font-size: 13px; font-weight: 800; text-transform: uppercase; padding: 8px 24px; border-radius: 999px; margin-bottom: 24px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0, 0.15); }
 .success-card { background: var(--success-card-bg); border: 1.5px solid var(--success-card-border); border-radius: 16px; padding: 24px 20px; width: 100%; margin-bottom: 18px; animation: bounceIn 0.7s ease 0.1s backwards; }
-.success-msg { font-size: 17px; font-weight: 800; color: var(--dynamic-primary); line-height: 1.5; }
+.success-name { font-size: 28px; font-weight: 800; color: var(--dynamic-primary); margin-bottom: 12px; }
+.success-msg { font-size: 15px; font-weight: 600; color: var(--text-secondary); line-height: 1.6; }
 .success-warning { background: var(--warning-bg); border: 1.5px solid var(--warning-border); border-left: 4px solid var(--error-color); border-radius: 12px; padding: 14px 16px; width: 100%; text-align: left; font-size: 13px; font-weight: 700; color: var(--warning-text); display: none; animation: bounceIn 0.7s ease 0.2s backwards; }
 .success-back { width: 100%; height: 48px; background: var(--button-secondary-bg); color: var(--dynamic-primary); border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
 
@@ -235,6 +236,8 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
     <div class="success-emoji" id="successEmoji">😊</div>
     <div class="success-badge" id="successBadge">Submitted</div>
     <div class="success-card">
+      <!-- Restored Original Name Heading Layout -->
+      <div class="success-name" id="successName"></div>
       <div class="success-msg" id="successMsg"></div>
     </div>
     <div class="success-warning" id="successWarning"></div>
@@ -456,6 +459,8 @@ function restoreFromCache() {
     }
     if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput.call(document.getElementById('staffID')); }
     if (d.lat && d.lng) { coords = { latitude: d.lat, longitude: d.lng }; showSuccess('gpsMsg', 'Location Verified'); activateStep(4); }
+    
+    // CRASH RECOVERY: Bypasses the camera requirement if the phone's memory killed the browser tab
     if (d.capturing === true) {
       photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
       const p = document.getElementById('preview'); p.src = photo; p.style.display = 'block'; p.classList.add('recovered-photo');
@@ -574,8 +579,19 @@ function verifyGPS() {
       const R = 6371e3; const dLat = (b[1] - coords.latitude) * Math.PI / 180; const dLon = (b[2] - coords.longitude) * Math.PI / 180;
       const a = Math.sin(dLat/2)**2 + Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)**2;
       const dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      if (dist > 250) { showError('gpsMsg', 'Too far (' + Math.round(dist) + 'm). Move closer.'); } 
-      else { showSuccess('gpsMsg', 'Location Verified'); activateStep(4); autoSave(); }
+      
+      if (dist > 250) { 
+        if (dist > 1000) {
+          // If more than 1000m, format as km and remove "Move closer"
+          let distKm = (dist / 1000).toFixed(1);
+          showError('gpsMsg', 'Too far (' + distKm + 'km).');
+        } else {
+          showError('gpsMsg', 'Too far (' + Math.round(dist) + 'm). Move closer.');
+        }
+      } 
+      else { 
+        showSuccess('gpsMsg', 'Location Verified'); activateStep(4); autoSave(); 
+      }
     },
     err => { 
       if (err.code === 1) { showError('gpsMsg', 'Location permissions blocked!'); showGuideModal('gps'); } 
@@ -692,18 +708,19 @@ function finishSubmission(action, staffID) {
   let emoji = '✅', badge = 'Submitted', msg = '', warning = null;
   
   if (isClockIn) {
-    if (mins < 450) { emoji = '🌟'; badge = 'On Time!'; msg = `${firstName}, fantastic start — you're early today keep it up!`; }
-    else if (mins < 660) { emoji = '⏰'; badge = 'Clocked In'; msg = `${firstName}, you are late for the morning shift.`; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
-    else if (mins < 900) { emoji = '✅'; badge = 'On Time!'; msg = `Good afternoon ${firstName}, have a productive second shift!`; }
-    else { emoji = '⏰'; badge = 'Clocked In'; msg = `${firstName}, you are late for the afternoon shift.`; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
+    if (mins < 450) { emoji = '🌟'; badge = 'On Time!'; msg = "Fantastic start — you're early today! keep it up"; }
+    else if (mins < 660) { emoji = '⏰'; badge = 'Clocked In'; msg = "You are late for the morning shift."; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
+    else if (mins < 900) { emoji = '✅'; badge = 'On Time!'; msg = "Good afternoon, have a productive second shift!"; }
+    else { emoji = '⏰'; badge = 'Clocked In'; msg = "You are late for the afternoon shift."; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
   } else {
-    if (new Date().getHours() < 16) { emoji = '👋'; badge = 'Clocked Out'; msg = `Have a wonderful afternoon, ${firstName}!`; }
-    else if (new Date().getHours() >= 18) { emoji = '🌙'; badge = 'Clocked Out'; msg = `Have a restful night, ${firstName} — and remember to place your order!`; }
-    else { emoji = '🌅'; badge = 'Clocked Out'; msg = `Have a wonderful evening, ${firstName}!`; }
+    if (new Date().getHours() < 16) { emoji = '👋'; badge = 'Clocked Out'; msg = "Have a wonderful afternoon!"; }
+    else if (new Date().getHours() >= 18) { emoji = '🌙'; badge = 'Clocked Out'; msg = "Have a restful night — and remember to place your order!"; }
+    else { emoji = '🌅'; badge = 'Clocked Out'; msg = "Have a wonderful evening!"; }
   }
 
   document.getElementById('successEmoji').textContent = emoji; 
   document.getElementById('successBadge').textContent = badge; 
+  document.getElementById('successName').textContent = firstName; // Sets original big header name styling
   document.getElementById('successMsg').textContent = msg;
   
   const warnEl = document.getElementById('successWarning');
