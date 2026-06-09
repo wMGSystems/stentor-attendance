@@ -4,20 +4,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<!-- Dynamic Theme Color: Matches the top-left color of the active gradient -->
 <meta name="theme-color" id="theme-color-meta" content="#52c234">
 <script>
   (function() {
-    var savedTerm = localStorage.getItem('selected_terminal') || 'chandarana';
-    var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var meta = document.getElementById('theme-color-meta');
-    if (meta) {
-      if (savedTerm === 'carrefour') {
-        meta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
-      } else {
-        meta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
+    try {
+      var savedTerm = localStorage.getItem('selected_terminal') || 'chandarana';
+      var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var meta = document.getElementById('theme-color-meta');
+      if (meta) {
+        if (savedTerm === 'carrefour') {
+          meta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
+        } else {
+          meta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
+        }
       }
-    }
+    } catch(e) {} // Fail-safe for extreme legacy browsers
   })();
 </script>
 <title>Store Attendance</title>
@@ -35,7 +36,6 @@
   --modal-overlay: rgba(0, 0, 0, 0.72); --shadow-color: rgba(0, 0, 0, 0.14);
   --label-text: #666666;
   
-  /* Dynamic Theme Colors */
   --theme-chan: #059669; 
   --theme-carr: #1a73e8; 
   --dynamic-primary: var(--theme-chan);
@@ -148,8 +148,15 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
 <body class="theme-chandarana">
 <script>
+  // Safe Storage Wrapper to prevent low-end phones from breaking on Memory Errors
+  const Storage = {
+    set: function(key, val) { try { localStorage.setItem(key, val); } catch(e) {} },
+    get: function(key) { try { return localStorage.getItem(key); } catch(e) { return null; } },
+    remove: function(key) { try { localStorage.removeItem(key); } catch(e) {} }
+  };
+
   (function() {
-    var savedTerm = localStorage.getItem('selected_terminal') || 'chandarana';
+    var savedTerm = Storage.get('selected_terminal') || 'chandarana';
     document.body.className = 'theme-' + savedTerm;
   })();
 </script>
@@ -249,7 +256,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 <script>
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec";
 
-let currentTerminal = localStorage.getItem('selected_terminal') || 'chandarana';
+let currentTerminal = Storage.get('selected_terminal') || 'chandarana';
 let staff = [], branches = [], coords = null, staffName = "", photo = null;
 let isRestoring = false, activeFetchId = 0, isSyncing = false;
 let offlineQueue = [];
@@ -322,7 +329,7 @@ function updateTerminalUI() {
 function switchTerminal(term) {
   if (currentTerminal === term) return;
   currentTerminal = term;
-  localStorage.setItem('selected_terminal', term);
+  Storage.set('selected_terminal', term);
   updateTerminalUI();
   resetToStart();
 }
@@ -330,13 +337,14 @@ function switchTerminal(term) {
 // ── SILENT OFFLINE QUEUE MANAGEMENT ────────────────────────────
 function loadOfflineQueue() {
   try {
-    const q = localStorage.getItem('attendance_offline_queue');
+    const q = Storage.get('attendance_offline_queue');
     if (q) offlineQueue = JSON.parse(q);
   } catch(e) { offlineQueue = []; }
 }
 
 function saveOfflineQueue() {
-  localStorage.setItem('attendance_offline_queue', JSON.stringify(offlineQueue));
+  try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); } 
+  catch(e) { /* Fails silently if phone memory is out */ }
 }
 
 async function syncOfflineData() {
@@ -384,7 +392,7 @@ function initApp() {
   let loadedFromCache = false;
 
   try {
-    const cachedData = localStorage.getItem(cacheKey);
+    const cachedData = Storage.get(cacheKey);
     if (cachedData) {
       const parsed = JSON.parse(cachedData);
       if (parsed && Array.isArray(parsed.branches)) {
@@ -405,7 +413,7 @@ function initApp() {
       const branchesChanged = JSON.stringify(branches) !== JSON.stringify(data.branches);
       staff = data.staff || []; branches = data.branches || [];
 
-      try { localStorage.setItem(cacheKey, JSON.stringify({ staff, branches })); } catch(e) {} 
+      try { Storage.set(cacheKey, JSON.stringify({ staff, branches })); } catch(e) {} 
       
       if (!loadedFromCache) {
         populateBranches(branches);
@@ -432,12 +440,12 @@ function getFormCacheKey() { return currentTerminal + "_attendance_cache"; }
 function autoSave(isCapturing = false) {
   if (isRestoring) return;
   try {
-    localStorage.setItem(getFormCacheKey(), JSON.stringify({ branch: document.getElementById('branch').value, staffID: document.getElementById('staffID').value, capturing: isCapturing, lat: coords ? coords.latitude : null, lng: coords ? coords.longitude : null }));
+    Storage.set(getFormCacheKey(), JSON.stringify({ branch: document.getElementById('branch').value, staffID: document.getElementById('staffID').value, capturing: isCapturing, lat: coords ? coords.latitude : null, lng: coords ? coords.longitude : null }));
   } catch(e) {}
 }
 
 function restoreFromCache() {
-  const cached = localStorage.getItem(getFormCacheKey()); if (!cached) return;
+  const cached = Storage.get(getFormCacheKey()); if (!cached) return;
   isRestoring = true; 
   try {
     const d = JSON.parse(cached);
@@ -473,7 +481,7 @@ function resetStepsFrom(n) {
 function resetToStart() {
   document.getElementById('successScreen').style.display = 'none'; document.getElementById('mainForm').style.display = 'block';
   document.getElementById('branch').value = ''; clearMsg('branchMsg'); resetStepsFrom(2); document.getElementById('step1').classList.add('activeStep');
-  localStorage.removeItem(getFormCacheKey()); 
+  Storage.remove(getFormCacheKey()); 
 }
 
 function showSuccess(id, txt) { const e = document.getElementById(id); e.innerHTML = '<span class="dot"></span> ' + txt; e.className = 'msg success'; }
@@ -483,14 +491,14 @@ function clearMsg(id) { const e = document.getElementById(id); e.innerText = '';
 function handleBranchChange() {
   const val = document.getElementById('branch').value;
   if (!val) {
-    if (document.getElementById('step2').classList.contains('activeStep')) resetStepsFrom(2);
-    clearMsg('branchMsg');
+    resetStepsFrom(2);
     return;
   }
   showSuccess('branchMsg', 'Branch Selected');
   
-  if (document.getElementById('step3').classList.contains('activeStep')) {
-    resetStepsFrom(3); // Invalidate GPS and beyond if branch changes
+  // Hard Reset: If the user has already entered an ID or moved past it, reset ID and everything below
+  if (document.getElementById('step2').classList.contains('activeStep') && document.getElementById('staffID').value !== '') {
+    resetStepsFrom(2); 
   }
   
   if (!document.getElementById('step2').classList.contains('activeStep')) { activateStep(2); }
@@ -511,10 +519,10 @@ function handleStaffInput() {
   const match = (staff || []).find(s => s.id === val);
   if (match) { 
     staffName = match.name; 
-    showSuccess('staffMsg', 'Welcome ' + staffName); // Full name in the welcome message
+    showSuccess('staffMsg', 'Welcome ' + staffName); 
     
     if (document.getElementById('step4').classList.contains('activeStep')) {
-       resetStepsFrom(4); // Invalidate photo and beyond if staff changes
+       resetStepsFrom(4); 
     }
 
     if (!document.getElementById('step3').classList.contains('activeStep')) { activateStep(3); }
@@ -585,10 +593,50 @@ document.getElementById('cameraInput').onchange = function(e) {
   const imgURL = URL.createObjectURL(file); const img = new Image();
   img.onload = () => {
     try {
-      const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
-      if (w > 600) { h = Math.floor(h * (600 / w)); w = 600; }
-      canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      photo = canvas.toDataURL('image/jpeg', 0.65);
+      // 4-TIER HARDWARE ASSESSMENT & COMPRESSION
+      let mem = navigator.deviceMemory || 4; // Defaults to 4GB if unsupported (iOS)
+      let cores = navigator.hardwareConcurrency || 4; 
+      let isApple = /(Mac|iPhone|iPod|iPad)/i.test(navigator.userAgent);
+      
+      let maxDim, qual;
+
+      if (mem >= 8 && cores >= 8) {
+        // TIER 1: Very High End (Flagship Androids, Samsung Ultra, etc)
+        maxDim = 1080; qual = 0.8;
+      } else if ((mem >= 4 && cores >= 6) || isApple) {
+        // TIER 2: High End (Standard Modern Phones & Apple Devices)
+        maxDim = 800; qual = 0.7;
+      } else if (mem > 2) {
+        // TIER 3: Mid Range (Older standard phones, Budget Androids)
+        maxDim = 600; qual = 0.6;
+      } else {
+        // TIER 4: Very Low End (Strict memory limit, Entry-level devices)
+        maxDim = 400; qual = 0.5;
+      }
+
+      const canvas = document.createElement('canvas'); 
+      let w = img.width, h = img.height;
+
+      // Handle massive Samsung 100MP dimensions properly (scale by the largest side)
+      if (w > maxDim || h > maxDim) { 
+        if (w > h) {
+          h = Math.floor(h * (maxDim / w)); 
+          w = maxDim; 
+        } else {
+          w = Math.floor(w * (maxDim / h));
+          h = maxDim;
+        }
+      }
+
+      canvas.width = w; 
+      canvas.height = h; 
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      photo = canvas.toDataURL('image/jpeg', qual);
+      
+      // GARBAGE COLLECTION TRIGGER: 
+      // Instantly free the massive raw image buffer from the phone's memory to prevent Samsung Tab crashes
+      canvas.width = 0; canvas.height = 0;
+      
       const p = document.getElementById('preview'); p.src = photo; p.style.display = 'block'; p.classList.remove('recovered-photo');
       showSuccess('cameraMsg', 'Identity Captured'); activateStep(5);
     } catch (err) { showError('cameraMsg', 'Error processing photo.'); showGuideModal('camera'); } 
@@ -616,9 +664,15 @@ async function submitAttendance() {
     finishSubmission(action, staffID);
   } catch (err) { 
     if (err.message === 'OFFLINE' || err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.name === 'TypeError') {
-      // Silently push to background sync queue
-      offlineQueue.push({ data: payloadData, terminal: currentTerminal });
-      saveOfflineQueue();
+      
+      // Deduplication check: Prevents memory flooding if user hits submit multiple times offline for same action
+      const isDuplicate = offlineQueue.some(item => item.data.id === staffID && item.data.action === action);
+      
+      if (!isDuplicate) {
+        offlineQueue.push({ data: payloadData, terminal: currentTerminal });
+        saveOfflineQueue();
+      }
+      
       // Pretend everything worked normally for the user
       finishSubmission(action, staffID);
     } else {
@@ -629,17 +683,16 @@ async function submitAttendance() {
 }
 
 function finishSubmission(action, staffID) {
-  localStorage.removeItem(getFormCacheKey());
+  Storage.remove(getFormCacheKey());
   
   const match = (staff || []).find(s => s.id === staffID); if(match) match.status = action; 
-  const firstName = staffName.split(' ')[0] || staffName; // Only use first name here for conversational tone
+  const firstName = staffName.split(' ')[0] || staffName; 
   const isClockIn = action === 'Clock In'; const mins = (new Date().getHours() * 60) + new Date().getMinutes();
   
   let emoji = '✅', badge = 'Submitted', msg = '', warning = null;
   
-  // Interpolating the First Name smoothly into the responses dynamically styled via CSS variables
   if (isClockIn) {
-    if (mins < 450) { emoji = '🌟'; badge = 'On Time!'; msg = `${firstName}, fantastic start — you're early today! keep it up`; }
+    if (mins < 450) { emoji = '🌟'; badge = 'On Time!'; msg = `${firstName}, fantastic start — you're early today keep it up!`; }
     else if (mins < 660) { emoji = '⏰'; badge = 'Clocked In'; msg = `${firstName}, you are late for the morning shift.`; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
     else if (mins < 900) { emoji = '✅'; badge = 'On Time!'; msg = `Good afternoon ${firstName}, have a productive second shift!`; }
     else { emoji = '⏰'; badge = 'Clocked In'; msg = `${firstName}, you are late for the afternoon shift.`; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
@@ -661,7 +714,6 @@ function finishSubmission(action, staffID) {
   const btn = document.getElementById('submitBtn');
   btn.textContent = 'SUBMIT ATTENDANCE'; btn.disabled = false;
   
-  // Auto-attempt sync incase it was an offline catch
   syncOfflineData();
 }
 </script>
