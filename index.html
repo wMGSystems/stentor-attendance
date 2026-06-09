@@ -329,12 +329,14 @@ function updateTerminalUI() {
   });
 }
 
+// FIX: Added initApp() so switching terminal actually fetches the correct shop list immediately!
 function switchTerminal(term) {
   if (currentTerminal === term) return;
   currentTerminal = term;
   Storage.set('selected_terminal', term);
   updateTerminalUI();
   resetToStart();
+  initApp(); // <-- This line fetches the new branches instantly
 }
 
 // ── SILENT OFFLINE QUEUE MANAGEMENT ────────────────────────────
@@ -708,7 +710,7 @@ function finishSubmission(action, staffID) {
   let emoji = '✅', badge = 'Submitted', msg = '', warning = null;
   
   if (isClockIn) {
-    if (mins < 450) { emoji = '🌟'; badge = 'On Time!'; msg = "Fantastic start — you're early today! keep it up"; }
+    if (mins < 450) { emoji = '🌟'; badge = 'On Time!'; msg = "Fantastic start — you're early today keep it up!"; }
     else if (mins < 660) { emoji = '⏰'; badge = 'Clocked In'; msg = "You are late for the morning shift."; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
     else if (mins < 900) { emoji = '✅'; badge = 'On Time!'; msg = "Good afternoon, have a productive second shift!"; }
     else { emoji = '⏰'; badge = 'Clocked In'; msg = "You are late for the afternoon shift."; warning = "⚠️ Warning: Consistent late clock-ins are logged automatically and forwarded to management for review."; }
