@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
@@ -141,13 +141,32 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 #guideModal .modal-box { background: var(--bg-primary); padding: 28px; border-radius: 16px; text-align: center; max-width: 350px; width: 100%; }
 #guideModal .modal-box h3 { color: var(--error-color); margin: 10px 0 16px; font-size: 20px; }
 .modal-instructions { background: var(--input-bg); color: var(--text-secondary); padding: 16px; border-radius: 10px; margin-bottom: 14px; font-size: 13px; line-height: 1.6; text-align: left; }
+
+/* In-Browser Camera Styles */
+#videoContainer {
+  position: relative; width: 100%; aspect-ratio: 4/3; border-radius: 12px; overflow: hidden; background: #000; display: none; margin-bottom: 10px;
+}
+#cameraVideo {
+  width: 100%; height: 100%; object-fit: cover;
+}
+#captureBtn {
+  position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+  width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 255, 255, 0.4);
+  border: 4px solid white; cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+#captureBtn::after {
+  content: ''; width: 44px; height: 44px; background: white; border-radius: 50%;
+}
+#captureBtn:active::after {
+  transform: scale(0.9);
+}
 </style>
 </head>
 
 <body class="theme-chandarana">
 <script>
   const Storage = {
-    set: function(key, val) { try { localStorage.setItem(key, val); } catch(e) {} },
+    set: function(key, val) { try { localStorage.setItem(key, val); } catch(e) { throw e; } },
     get: function(key) { try { return localStorage.getItem(key); } catch(e) { return null; } },
     remove: function(key) { try { localStorage.removeItem(key); } catch(e) {} }
   };
@@ -200,8 +219,16 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
       <div id="step4" class="step">
         <label>Identity</label>
-        <button onclick="openCamera()">Take a Selfie</button>
+        
+        <!-- Live Video Preview directly in the browser -->
+        <div id="videoContainer">
+          <video id="cameraVideo" autoplay playsinline></video>
+          <div id="captureBtn" onclick="capturePhoto()"></div>
+        </div>
+        
+        <button id="openCameraBtn" onclick="startCamera()">Take a Selfie</button>
         <input type="file" accept="image/*" capture="user" id="cameraInput" style="display:none">
+        
         <div id="cameraMsg" class="msg"></div>
       </div>
 
@@ -249,12 +276,14 @@ button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 </div>
 
 <script>
+// IMPORTANT: Update this URL to your newly deployed Google Apps Script URL
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec";
 
 let currentTerminal = Storage.get('selected_terminal') || 'chandarana';
 let staff = [], branches = [], coords = null, staffName = "", photo = null;
 let isRestoring = false, activeFetchId = 0, isSyncing = false;
 let offlineQueue = [];
+let videoStream = null;
 
 document.addEventListener('DOMContentLoaded', () => { 
   updateTerminalUI(); 
@@ -334,7 +363,15 @@ function loadOfflineQueue() {
 }
 
 function saveOfflineQueue() {
-  try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); } catch(e) {}
+  try { 
+    Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); 
+  } catch(e) {
+    // Failsafe: if device storage gets completely full, clear the oldest half of the queue
+    if (offlineQueue.length > 0) {
+       offlineQueue = offlineQueue.slice(Math.floor(offlineQueue.length / 2));
+       try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); } catch(e2) {}
+    }
+  }
 }
 
 async function syncOfflineData() {
@@ -407,6 +444,7 @@ function initApp() {
 }
 
 function getFormCacheKey() { return currentTerminal + "_attendance_cache"; }
+
 function autoSave(isCapturing = false) {
   if (isRestoring) return;
   try {
@@ -442,7 +480,14 @@ function resetStepsFrom(n) {
   if (n <= 1) { document.getElementById('branch').value = ''; clearMsg('branchMsg'); }
   if (n <= 2) { staffName = ''; document.getElementById('staffID').value = ''; clearMsg('staffMsg'); }
   if (n <= 3) { coords = null; clearMsg('gpsMsg'); }
-  if (n <= 4) { photo = null; const p = document.getElementById('preview'); p.style.display = 'none'; p.src = ''; p.classList.remove('recovered-photo'); clearMsg('cameraMsg'); document.getElementById('cameraInput').value = ''; }
+  if (n <= 4) { 
+    photo = null; 
+    stopCamera();
+    const p = document.getElementById('preview'); p.style.display = 'none'; p.src = ''; p.classList.remove('recovered-photo'); 
+    clearMsg('cameraMsg'); 
+    document.getElementById('cameraInput').value = ''; 
+    document.getElementById('openCameraBtn').innerText = 'Take a Selfie';
+  }
   if (n <= 5) { document.getElementById('actionChoice').value = ''; clearMsg('actionMsg'); }
   clearMsg('submitMsg'); autoSave();
 }
@@ -467,7 +512,8 @@ function handleBranchChange() {
 }
 
 document.getElementById('branch').onchange = handleBranchChange;
-document.getElementById('staffID').oninput = function() {
+
+function handleStaffInput() {
   const val = this.value.trim();
   if (val.length < 1) { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); clearMsg('staffMsg'); return; }
   const match = (staff || []).find(s => s.id === val);
@@ -477,7 +523,8 @@ document.getElementById('staffID').oninput = function() {
     if (!document.getElementById('step3').classList.contains('activeStep')) activateStep(3);
     autoSave(); 
   } else { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); showError('staffMsg', 'Invalid Staff ID. Please check.'); }
-};
+}
+document.getElementById('staffID').oninput = handleStaffInput;
 
 document.getElementById('actionChoice').onchange = function() {
   clearMsg('submitMsg'); if (!this.value) { clearMsg('actionMsg'); resetStepsFrom(6); return; }
@@ -488,7 +535,7 @@ function showGuideModal(type) {
   const modal = document.getElementById('guideModal'), title = document.getElementById('guideTitle'), text = document.getElementById('guideText'), icon = document.getElementById('guideIcon');
   if (type === 'gps') { icon.textContent = '📍'; title.textContent = 'Location Blocked'; title.style.color = 'var(--error-color)'; text.innerHTML = `<p>We need your location to verify you are at the branch.</p><p style="margin-top:8px;"><strong>🍎 iPhone:</strong><br>Settings ⚙️ → Privacy & Security → Location Services → Allow Safari/Chrome.</p><p style="margin-top:8px;"><strong>🤖 Android:</strong><br>⋮ Menu → Settings → Site settings → Location → Allow.</p>`; }
   else if (type === 'gps_signal') { icon.textContent = '📡'; title.textContent = 'Weak GPS Signal'; title.style.color = 'var(--warning-text)'; text.innerHTML = `<p>We couldn't get an accurate location reading.</p><ul style="margin-top:8px; padding-left:20px;"><li>Step outside or near a window.</li><li>Turn WiFi ON (helps GPS lock faster).</li></ul>`; }
-  else if (type === 'camera') { icon.textContent = '📸'; title.textContent = 'Camera Error'; title.style.color = 'var(--error-color)'; text.innerHTML = `<p>Error accessing camera.</p><p>Check your browser settings and try again.</p>`; }
+  else if (type === 'camera') { icon.textContent = '📸'; title.textContent = 'Camera Fallback'; title.style.color = 'var(--warning-text)'; text.innerHTML = `<p>Live video feed is unavailable on this device.</p><p>Opening normal camera app instead.</p>`; }
   modal.style.display = 'flex';
 }
 
@@ -511,14 +558,76 @@ function verifyGPS() {
   );
 }
 
-function openCamera() { autoSave(true); document.getElementById('cameraInput').click(); }
+async function startCamera() {
+  const videoContainer = document.getElementById('videoContainer');
+  const videoElement = document.getElementById('cameraVideo');
+  const openBtn = document.getElementById('openCameraBtn');
+  
+  try {
+    document.getElementById('cameraMsg').innerText = 'Starting camera...';
+    document.getElementById('cameraMsg').className = 'msg';
+    
+    // Request camera access for a live feed in the browser
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
+      audio: false
+    });
+    
+    videoElement.srcObject = videoStream;
+    videoContainer.style.display = 'block';
+    openBtn.style.display = 'none';
+    clearMsg('cameraMsg');
+  } catch (err) {
+    console.error("Camera access failed", err);
+    // Fallback to the old file input method if WebRTC fails (e.g. on older phones)
+    showGuideModal('camera');
+    document.getElementById('cameraInput').click();
+  }
+}
+
+function capturePhoto() {
+  const videoElement = document.getElementById('cameraVideo');
+  const canvas = document.createElement('canvas');
+  
+  // Create a 640x480 snapshot instantly without freezing
+  canvas.width = videoElement.videoWidth || 640;
+  canvas.height = videoElement.videoHeight || 480;
+  
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+  
+  photo = canvas.toDataURL('image/jpeg', 0.6);
+  
+  stopCamera();
+  
+  const p = document.getElementById('preview'); 
+  p.src = photo; 
+  p.style.display = 'block'; 
+  p.classList.remove('recovered-photo');
+  
+  showSuccess('cameraMsg', 'Identity Captured'); 
+  activateStep(5);
+  autoSave(false);
+}
+
+function stopCamera() {
+  if (videoStream) {
+    videoStream.getTracks().forEach(track => track.stop());
+    videoStream = null;
+  }
+  document.getElementById('videoContainer').style.display = 'none';
+  document.getElementById('openCameraBtn').style.display = 'block';
+  document.getElementById('openCameraBtn').innerText = 'Retake Selfie';
+}
+
+// Fallback logic for devices that don't support the live video feed
 document.getElementById('cameraInput').onchange = function(e) {
   const file = e.target.files[0]; if (!file) return;
-  autoSave(false); showSuccess('cameraMsg', 'Processing...');
+  autoSave(true); showSuccess('cameraMsg', 'Processing...');
   const imgURL = URL.createObjectURL(file); const img = new Image();
   img.onload = () => {
     try {
-      let maxDim = 800, qual = 0.7;
+      let maxDim = 640, qual = 0.6;
       const canvas = document.createElement('canvas'); 
       let w = img.width, h = img.height;
       if (w > maxDim || h > maxDim) { if (w > h) { h = Math.floor(h * (maxDim / w)); w = maxDim; } else { w = Math.floor(w * (maxDim / h)); h = maxDim; } }
@@ -527,6 +636,7 @@ document.getElementById('cameraInput').onchange = function(e) {
       photo = canvas.toDataURL('image/jpeg', qual);
       const p = document.getElementById('preview'); p.src = photo; p.style.display = 'block'; p.classList.remove('recovered-photo');
       showSuccess('cameraMsg', 'Identity Captured'); activateStep(5);
+      autoSave(false);
     } catch (err) { showError('cameraMsg', 'Error processing photo.'); } 
     finally { URL.revokeObjectURL(imgURL); }
   };
