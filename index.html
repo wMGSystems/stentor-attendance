@@ -32,7 +32,7 @@
   --label-text:#666666;
   --theme-chan:#059669; --theme-carr:#1a73e8;
   --dynamic-primary:var(--theme-chan);
-  --fallback-cam-bg: #ffffff;
+  --fallback-cam-bg: #ffffff; 
 }
 @media (prefers-color-scheme:dark) {
   :root {
@@ -46,7 +46,7 @@
     --modal-overlay:rgba(0,0,0,0.88); --shadow-color:rgba(0,0,0,0.4);
     --label-text:#a0a0a0;
     --theme-chan:#10b981; --theme-carr:#3b82f6;
-    --fallback-cam-bg: #000000;
+    --fallback-cam-bg: #000000; 
   }
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -261,6 +261,31 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
 }
 #previewOverlay.show{opacity:1}
 
+/* The X Close Button styling above the enlarged picture */
+#closePreviewBtn {
+  position: absolute;
+  top: max(24px, env(safe-area-inset-top, 24px));
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.8);
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+}
+#closePreviewBtn:active {
+  background: rgba(255,255,255,0.4);
+}
+
 /* ═══════════════════════════════════════
    MESSAGES / SUCCESS
 ═══════════════════════════════════════ */
@@ -345,8 +370,10 @@ var Storage={
 
 <!-- Tap-outside backdrop for camera -->
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
-<!-- Tap overlay for photo zoom -->
-<div id="previewOverlay" onclick="collapsePreview()"></div>
+<!-- Tap overlay for photo zoom with Close Button -->
+<div id="previewOverlay" onclick="collapsePreview()">
+  <button id="closePreviewBtn" onclick="collapsePreview(); event.stopPropagation();">✕</button>
+</div>
 
 <div class="container">
   <div id="networkIndicator" class="network-indicator"></div>
@@ -701,15 +728,20 @@ document.getElementById('actionChoice').onchange = function() {
   
   var staffID = document.getElementById('staffID').value;
   var lastAction = getStaffLocalStatus(staffID);
-  var firstName = staffName.split(' ')[0] || staffName;
 
   if (action === 'Clock In' && lastAction === 'Clock In') {
-    showError('actionMsg', firstName + ' is already clocked in. Please Clock Out.');
+    showError('actionMsg', 'You are already clocked in. Please Clock Out.');
     resetStepsFrom(6); return;
   }
-  if (action === 'Clock Out' && lastAction !== 'Clock In') {
-    showError('actionMsg', firstName + ' has not clocked in yet. Please Clock In first.');
-    resetStepsFrom(6); return;
+  if (action === 'Clock Out') {
+    if (!lastAction) {
+      showError('actionMsg', 'You have not clocked in yet. Please Clock In first.');
+      resetStepsFrom(6); return;
+    }
+    if (lastAction === 'Clock Out') {
+      showError('actionMsg', 'You have already clocked out today.');
+      resetStepsFrom(6); return;
+    }
   }
 
   showSuccess('actionMsg','Ready for Submission'); activateStep(6);
@@ -958,15 +990,19 @@ function submitAttendance() {
   var action  = document.getElementById('actionChoice').value;
   if (!branch||!staffID||!action) { showError('submitMsg','Complete all steps.'); return; }
 
-  var firstName = staffName.split(' ')[0] || staffName;
   var lastAction = getStaffLocalStatus(staffID);
 
   // Redundant safety check right at submission time
   if (action === 'Clock In' && lastAction === 'Clock In') {
-    showError('submitMsg', firstName+' has already clocked in today.'); return;
+    showError('submitMsg', 'You have already clocked in today.'); return;
   }
-  if (action === 'Clock Out' && lastAction !== 'Clock In') {
-    showError('submitMsg', firstName+' must Clock In first before Clocking Out.'); return;
+  if (action === 'Clock Out') {
+    if (!lastAction) {
+      showError('submitMsg', 'You must Clock In first before Clocking Out.'); return;
+    }
+    if (lastAction === 'Clock Out') {
+      showError('submitMsg', 'You have already clocked out today.'); return;
+    }
   }
 
   var member = null;
