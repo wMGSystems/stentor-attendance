@@ -32,7 +32,7 @@
   --label-text:#666666;
   --theme-chan:#059669; --theme-carr:#1a73e8;
   --dynamic-primary:var(--theme-chan);
-  --fallback-cam-bg: #ffffff; /* Light mode default camera background */
+  --fallback-cam-bg: #ffffff;
 }
 @media (prefers-color-scheme:dark) {
   :root {
@@ -46,7 +46,7 @@
     --modal-overlay:rgba(0,0,0,0.88); --shadow-color:rgba(0,0,0,0.4);
     --label-text:#a0a0a0;
     --theme-chan:#10b981; --theme-carr:#3b82f6;
-    --fallback-cam-bg: #000000; /* Dark mode default camera background */
+    --fallback-cam-bg: #000000;
   }
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -176,7 +176,6 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
   box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
 
-/* The Blurred Background (Adapts perfectly to light/dark or user photo) */
 .fallback-bg {
   position: absolute;
   inset: -30px; 
@@ -237,21 +236,23 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
 #closeCameraBtn:active{background:rgba(0,0,0,0.75)}
 
 /* ═══════════════════════════════════════════
-   PHOTO PREVIEW
+   PHOTO PREVIEW (WHATSAPP ZOOM STYLE)
 ═══════════════════════════════════════════ */
-#preview{
-  width:58px;height:58px;object-fit:cover;border-radius:50%;
-  border:3px solid var(--success-color);
-  display:none;margin:4px auto 0;cursor:pointer;
-  transition: all 0.4s cubic-bezier(0.22,1,0.36,1);
-  position:relative;z-index:1;
+.preview-wrapper {
+  width: 58px; height: 58px; position: relative;
+  display: none; margin: 4px auto 0;
 }
-#preview.enlarged{
-  width:min(66vw,300px);height:min(66vw,300px);
-  position:fixed;top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  z-index:10000;border-width:5px;
-  box-shadow:0 16px 60px rgba(0,0,0,0.6);
+#preview {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover; border-radius: 50%;
+  border: 3px solid var(--success-color);
+  cursor: pointer; z-index: 1;
+  /* Hardware acceleration to prevent the "square ghost" layout jump glitches */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: top, left, width, height, transform, border-radius;
 }
 #previewOverlay{
   display:none;position:fixed;inset:0;
@@ -410,8 +411,10 @@ var Storage={
             <option value="Clock In">Clock In</option>
             <option value="Clock Out">Clock Out</option>
           </select>
-          <div style="flex:1;display:flex;justify-content:center;">
-            <img id="preview" alt="Selfie">
+          <div style="flex:1;display:flex;justify-content:center;align-items:center;">
+            <div id="previewWrapper" class="preview-wrapper">
+              <img id="preview" alt="Selfie">
+            </div>
           </div>
         </div>
         <div id="actionMsg" class="msg"></div>
@@ -578,6 +581,25 @@ function initApp() {
   });
 }
 
+// ─── LOCAL STATE TRACKING ──────────────────────────────────────────────────
+// Prevents incorrect sign-ins/outs even if completely offline and untransmitted.
+function getStaffLocalStatus(staffID) {
+  var todayKey = new Date().toDateString();
+  var histRaw = Storage.get('local_history_' + currentTerminal);
+  var history = histRaw ? JSON.parse(histRaw) : {};
+  
+  // Prefer the local unsynced history for TODAY
+  var localStatus = history[staffID + '_' + todayKey];
+  if (localStatus) return localStatus;
+  
+  // Fall back to server's last known state
+  var member = null;
+  for (var i = 0; i < staff.length; i++) {
+    if (staff[i].id === staffID) { member = staff[i]; break; }
+  }
+  return member ? member.status : null;
+}
+
 // ─── FORM CACHE ────────────────────────────────────────────────────────────
 function getFormCacheKey() { return currentTerminal + '_attendance_cache'; }
 function autoSave(capturing) {
@@ -602,7 +624,8 @@ function restoreFromCache() {
     if (d.lat && d.lng) { coords = {latitude:d.lat, longitude:d.lng}; showSuccess('gpsMsg','Location Verified'); activateStep(4); }
     if (d.capturing) {
       photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-      var p = document.getElementById('preview'); p.src = photo; p.style.display = 'block';
+      document.getElementById('preview').src = photo; 
+      document.getElementById('previewWrapper').style.display = 'block';
       showSuccess('cameraMsg','Identity Restored'); activateStep(4); activateStep(5); autoSave(false);
     }
   } catch(e) {}
@@ -618,7 +641,8 @@ function resetStepsFrom(n) {
   if (n<=3) { coords=null; clearMsg('gpsMsg'); }
   if (n<=4) {
     photo=null; stopCamera(); collapsePreview();
-    var p=document.getElementById('preview'); p.style.display='none'; p.src='';
+    var pWrap=document.getElementById('previewWrapper'); if(pWrap) pWrap.style.display='none'; 
+    document.getElementById('preview').src='';
     clearMsg('cameraMsg'); document.getElementById('cameraInput').value='';
   }
   if (n<=5) { document.getElementById('actionChoice').value=''; clearMsg('actionMsg'); }
@@ -669,9 +693,25 @@ function handleStaffInput() {
 }
 document.getElementById('staffID').oninput = handleStaffInput;
 
+// Instantly prevent logically incorrect selections using local history
 document.getElementById('actionChoice').onchange = function() {
   clearMsg('submitMsg');
-  if (!this.value) { clearMsg('actionMsg'); resetStepsFrom(6); return; }
+  var action = this.value;
+  if (!action) { clearMsg('actionMsg'); resetStepsFrom(6); return; }
+  
+  var staffID = document.getElementById('staffID').value;
+  var lastAction = getStaffLocalStatus(staffID);
+  var firstName = staffName.split(' ')[0] || staffName;
+
+  if (action === 'Clock In' && lastAction === 'Clock In') {
+    showError('actionMsg', firstName + ' is already clocked in. Please Clock Out.');
+    resetStepsFrom(6); return;
+  }
+  if (action === 'Clock Out' && lastAction !== 'Clock In') {
+    showError('actionMsg', firstName + ' has not clocked in yet. Please Clock In first.');
+    resetStepsFrom(6); return;
+  }
+
   showSuccess('actionMsg','Ready for Submission'); activateStep(6);
 };
 
@@ -722,23 +762,16 @@ function verifyGPS() {
 function startCamera() {
   var btn = document.getElementById('openCameraBtn');
 
-  // Fallback for missing hardware support
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     document.getElementById('cameraInput').click(); return;
   }
   
-  // Look for the user's previously saved photo
   var lastPhoto = Storage.get('attendance_last_photo');
   var bgEl = document.getElementById('fallbackBg');
   
-  // If no last photo exists, CSS instantly supplies a pure white/black blurred backdrop based on phone's theme
-  if (lastPhoto) {
-    bgEl.style.backgroundImage = "url('" + lastPhoto + "')";
-  } else {
-    bgEl.style.backgroundImage = ""; 
-  }
+  if (lastPhoto) { bgEl.style.backgroundImage = "url('" + lastPhoto + "')"; } 
+  else { bgEl.style.backgroundImage = ""; }
 
-  // Instantly expand the box
   document.getElementById('videoContainerWrapper').classList.add('expanded');
   document.getElementById('cameraBackdrop').classList.add('show');
   btn.classList.add('loading');
@@ -782,10 +815,10 @@ function capturePhoto() {
   canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
   photo = canvas.toDataURL('image/jpeg', 0.65);
   
-  // Save locally for the next time the blur background is needed
   try { Storage.set('attendance_last_photo', photo); } catch(e){}
   
-  var p = document.getElementById('preview'); p.src = photo; p.style.display = 'block';
+  var p = document.getElementById('preview'); p.src = photo; 
+  document.getElementById('previewWrapper').style.display = 'block';
   showSuccess('cameraMsg','Identity Captured');
   activateStep(5); autoSave(false);
 
@@ -826,10 +859,10 @@ document.getElementById('cameraInput').onchange = function(e) {
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       photo=canvas.toDataURL('image/jpeg',q);
       
-      // Save locally for the next time the blur background is needed
       try { Storage.set('attendance_last_photo', photo); } catch(err){}
 
-      var p=document.getElementById('preview'); p.src=photo; p.style.display='block';
+      var p=document.getElementById('preview'); p.src=photo; 
+      document.getElementById('previewWrapper').style.display='block';
       showSuccess('cameraMsg','Identity Captured'); activateStep(5); autoSave(false);
     } catch(err){ showError('cameraMsg','Error processing photo.'); }
     finally { URL.revokeObjectURL(url); }
@@ -838,17 +871,84 @@ document.getElementById('cameraInput').onchange = function(e) {
   img.src = url;
 };
 
-// ─── PHOTO PREVIEW ZOOM ────────────────────────────────────────────────────
+// ─── SMOOTH FLIP ZOOM (WHATSAPP STYLE) ─────────────────────────────────────
 document.getElementById('preview').onclick = function() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
-  if (p.classList.contains('enlarged')) { collapsePreview(); return; }
-  ov.style.display = 'block'; void ov.offsetWidth;
-  ov.classList.add('show'); p.classList.add('enlarged');
+  if (p.classList.contains('enlarged')) return; 
+
+  // Lock to the current bounding box
+  var rect = p.getBoundingClientRect();
+  p.style.transition = 'none';
+  p.style.position = 'fixed';
+  p.style.top = rect.top + 'px';
+  p.style.left = rect.left + 'px';
+  p.style.width = rect.width + 'px';
+  p.style.height = rect.height + 'px';
+  p.style.margin = '0';
+  p.style.transform = 'translate(0, 0)';
+  p.style.zIndex = '10000';
+  
+  void p.offsetWidth; // Flush CSS changes
+
+  // Smoothly animate towards center screen
+  p.style.transition = 'all 0.35s cubic-bezier(0.25, 1, 0.4, 1)';
+  p.style.top = '50%';
+  p.style.left = '50%';
+  
+  var targetSize = Math.min(window.innerWidth * 0.8, 320);
+  p.style.width = targetSize + 'px';
+  p.style.height = targetSize + 'px';
+  p.style.transform = 'translate(-50%, -50%)';
+  p.style.borderRadius = '24px'; // Convert circle to rounded square
+  p.style.borderWidth = '0px';   // Fade out the colored border ring
+  p.style.boxShadow = '0 15px 40px rgba(0,0,0,0.5)';
+  
+  p.classList.add('enlarged');
+  
+  ov.style.display = 'block'; 
+  void ov.offsetWidth; 
+  ov.classList.add('show');
 };
+
 function collapsePreview() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
-  p.classList.remove('enlarged'); ov.classList.remove('show');
-  setTimeout(function(){ ov.style.display='none'; }, 420);
+  if (!p.classList.contains('enlarged')) return;
+  
+  var wrapper = document.getElementById('previewWrapper');
+  var rect = wrapper.getBoundingClientRect();
+  
+  // Transition back to original flexbox wrapper spot
+  p.style.top = rect.top + 'px';
+  p.style.left = rect.left + 'px';
+  p.style.width = rect.width + 'px';
+  p.style.height = rect.height + 'px';
+  p.style.transform = 'translate(0, 0)';
+  p.style.borderRadius = '50%';
+  p.style.borderWidth = '3px';
+  p.style.boxShadow = 'none';
+  
+  ov.classList.remove('show');
+  
+  // Reset clean-up after transition ends
+  setTimeout(function() {
+    p.style.transition = 'none';
+    p.style.position = 'absolute';
+    p.style.top = '0';
+    p.style.left = '0';
+    p.style.width = '100%';
+    p.style.height = '100%';
+    p.style.transform = 'none';
+    p.style.zIndex = '1';
+    
+    // Clear inline states to let CSS handle it again
+    p.style.borderRadius = '';
+    p.style.borderWidth = '';
+    p.style.boxShadow = '';
+    p.style.margin = '';
+    
+    p.classList.remove('enlarged');
+    ov.style.display = 'none';
+  }, 350);
 }
 
 // ─── SUBMIT ────────────────────────────────────────────────────────────────
@@ -859,25 +959,24 @@ function submitAttendance() {
   if (!branch||!staffID||!action) { showError('submitMsg','Complete all steps.'); return; }
 
   var firstName = staffName.split(' ')[0] || staffName;
+  var lastAction = getStaffLocalStatus(staffID);
+
+  // Redundant safety check right at submission time
+  if (action === 'Clock In' && lastAction === 'Clock In') {
+    showError('submitMsg', firstName+' has already clocked in today.'); return;
+  }
+  if (action === 'Clock Out' && lastAction !== 'Clock In') {
+    showError('submitMsg', firstName+' must Clock In first before Clocking Out.'); return;
+  }
+
   var member = null;
   for (var i = 0; i < staff.length; i++) { if (staff[i].id===staffID){ member=staff[i]; break; } }
   
+  // IMMEDIATELY update local tracking so if app closes, it prevents double-signing
+  if (member) member.status = action;
   var todayKey = new Date().toDateString();
   var histRaw = Storage.get('local_history_' + currentTerminal);
   var history = histRaw ? JSON.parse(histRaw) : {};
-  var lastAction = history[staffID + '_' + todayKey] || (member ? member.status : null);
-
-  if (member) {
-    if (action === 'Clock In' && lastAction === 'Clock In') {
-      showError('submitMsg', firstName+' has already clocked in today.'); return;
-    }
-    if (action === 'Clock Out') {
-      if (!lastAction) { showError('submitMsg','Cannot Clock Out. '+firstName+' hasn\'t Clocked In today.'); return; }
-      if (lastAction === 'Clock Out') { showError('submitMsg', firstName+' has already clocked out today.'); return; }
-    }
-    member.status = action;
-  }
-  
   history[staffID + '_' + todayKey] = action;
   try { Storage.set('local_history_' + currentTerminal, JSON.stringify(history)); } catch(e){}
 
