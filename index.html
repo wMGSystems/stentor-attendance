@@ -151,36 +151,23 @@ button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
 button.loading{animation:pulse 0.9s ease-in-out infinite}
 
 /* ═══════════════════════════════════════════════════════
-   CAMERA SYSTEM
-   
-   Structure:
-   #cameraBtnWrapper  (position:relative — THE anchor)
-     #videoContainerWrapper  (position:absolute, bottom:0, right:0)
-       <video>
-       .camera-ui
-     #openCameraBtn  (normal flow button — covered by wrapper when expanded)
-   
-   The wrapper anchors to the BUTTON's bottom-right corner exactly.
-   Expanding grows UPWARD and LEFTWARD from that anchor.
-   No hide/show of button needed — wrapper z-index covers it.
+   CAMERA SYSTEM (Instant Expand + Blur)
 ═══════════════════════════════════════════════════════ */
 #step4{position:relative}
 
 #cameraBtnWrapper{
   position:relative;
-  /* height matches button so wrapper bottom:0 = button bottom */
 }
 
 #videoContainerWrapper{
   position:absolute;
-  bottom:0; right:0;       /* anchors to bottom-right of the button */
-  width:100%;              /* button width at rest */
-  height:0;                /* collapsed */
+  bottom:0; right:0;
+  width:100%;
+  height:0;
   border-radius:10px;
   overflow:hidden;
   z-index:60;
-  /* No background:black — video starts live so no black flash */
-  /* Fast spring open */
+  background: var(--dynamic-primary); /* Rectangle color fill */
   transition:
     height 0.3s cubic-bezier(0.22,1,0.36,1),
     width  0.3s cubic-bezier(0.22,1,0.36,1),
@@ -189,19 +176,23 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
   pointer-events:none;
 }
 #videoContainerWrapper.expanded{
-  width:calc(200% + 12px);  /* spans both grid columns */
+  width:calc(200% + 12px);
   height:330px;
   border-radius:14px;
   pointer-events:auto;
 }
 
-/* Video is always opacity:1 — camera ready before box opens */
 #cameraVideo{
   width:100%;height:100%;object-fit:cover;display:block;
-  background:#111;
+  opacity: 0;
+  filter: blur(12px);
+  transition: opacity 0.3s ease, filter 0.35s ease;
+}
+#cameraVideo.live {
+  opacity: 1;
+  filter: blur(0);
 }
 
-/* Tap-outside backdrop — z-index just below wrapper */
 #cameraBackdrop{
   display:none;position:fixed;inset:0;z-index:59;
 }
@@ -231,7 +222,7 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
 #closeCameraBtn:active{background:rgba(0,0,0,0.75)}
 
 /* ═══════════════════════════════════════════
-   PHOTO PREVIEW — 50% bigger, smooth zoom
+   PHOTO PREVIEW
 ═══════════════════════════════════════════ */
 #preview{
   width:58px;height:58px;object-fit:cover;border-radius:50%;
@@ -385,11 +376,6 @@ var Storage={
 
       <div id="step4" class="step">
         <label>Identity</label>
-        <!--
-          cameraBtnWrapper is position:relative — the EXACT anchor for the camera box.
-          bottom:0 on the wrapper aligns to the button's bottom edge.
-          No ghost: we never hide the button, the expanding wrapper covers it.
-        -->
         <div id="cameraBtnWrapper">
           <div id="videoContainerWrapper">
             <button id="closeCameraBtn" onclick="stopCamera()">✕</button>
@@ -722,26 +708,17 @@ function verifyGPS() {
 }
 
 // ─── CAMERA ────────────────────────────────────────────────────────────────
-/*
-  SEQUENCE (no black, no ghosting):
-  1. User taps button → button shows "Opening..." pulse (instant feedback)
-  2. getUserMedia starts (usually 100–400ms)
-  3. onloadedmetadata fires → camera feed is actually ready
-  4. ONLY THEN expand the wrapper → user sees real feed from the very first frame
-  5. Button is simply covered by the expanding wrapper (z-index 60) — no hiding = no ghost
-*/
 function startCamera() {
   var btn = document.getElementById('openCameraBtn');
 
-  // Old/fake phone — straight to native picker, no WebRTC
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     document.getElementById('cameraInput').click(); return;
   }
 
-  // Immediate tactile feedback — button pulses while camera warms up
-  btn.textContent = 'Opening…';
+  // INSTANT EXPANSION (Creates theme colored blur effect before feed starts)
+  document.getElementById('videoContainerWrapper').classList.add('expanded');
+  document.getElementById('cameraBackdrop').classList.add('show');
   btn.classList.add('loading');
-  btn.disabled = true;
   clearMsg('cameraMsg');
 
   navigator.mediaDevices.getUserMedia({
@@ -753,27 +730,23 @@ function startCamera() {
     var video = document.getElementById('cameraVideo');
     video.srcObject = stream;
 
-    // Wait for the first real frame before expanding
     video.onloadedmetadata = function() {
       video.play().catch(function(){});
-
-      // One rAF ensures the frame is actually painted on screen
+      // Feed fades in cleanly taking over the blur block
       requestAnimationFrame(function() {
-        // NOW expand — user sees live feed from frame 1, no black
-        document.getElementById('videoContainerWrapper').classList.add('expanded');
-        document.getElementById('cameraBackdrop').classList.add('show');
+        video.classList.add('live');
         btn.classList.remove('loading');
-        // btn is now physically covered by the wrapper — no need to hide it
       });
     };
   })
   .catch(function(err) {
     console.warn('Camera failed:', err);
+    document.getElementById('videoContainerWrapper').classList.remove('expanded');
+    document.getElementById('cameraBackdrop').classList.remove('show');
     btn.textContent = 'Take a Selfie';
     btn.classList.remove('loading');
-    btn.disabled = false;
     showGuideModal('camera');
-    document.getElementById('cameraInput').click(); // graceful fallback
+    document.getElementById('cameraInput').click();
   });
 }
 
@@ -791,21 +764,29 @@ function capturePhoto() {
 }
 
 function stopCamera() {
-  if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
-  document.getElementById('videoContainerWrapper').classList.remove('expanded');
-  document.getElementById('cameraBackdrop').classList.remove('show');
+  var wrapper = document.getElementById('videoContainerWrapper');
+  var backdrop = document.getElementById('cameraBackdrop');
+  var video = document.getElementById('cameraVideo');
   var btn = document.getElementById('openCameraBtn');
+
+  // Shrink visually back to the colored blur box first
+  wrapper.classList.remove('expanded');
+  backdrop.classList.remove('show');
+  video.classList.remove('live');
+
   if (btn) {
     btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
     btn.classList.remove('loading');
     btn.disabled = false;
   }
-  // Reset video src so next open starts fresh
-  var video = document.getElementById('cameraVideo');
-  video.srcObject = null;
+  
+  // Wait to allow collapse transition finish before severing the video tracks, eliminating the black flash
+  setTimeout(function() {
+    if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
+    video.srcObject = null;
+  }, 350); 
 }
 
-// Fallback: native camera for very old/fake phones
 document.getElementById('cameraInput').onchange = function(e) {
   var file = e.target.files[0]; if (!file) return;
   autoSave(true); showSuccess('cameraMsg','Processing…');
@@ -839,7 +820,7 @@ function collapsePreview() {
   setTimeout(function(){ ov.style.display='none'; }, 420);
 }
 
-// ─── SUBMIT (optimistic + client-side pre-validation) ─────────────────────
+// ─── SUBMIT ────────────────────────────────────────────────────────────────
 function submitAttendance() {
   var branch  = document.getElementById('branch').value;
   var staffID = document.getElementById('staffID').value;
@@ -847,23 +828,31 @@ function submitAttendance() {
   if (!branch||!staffID||!action) { showError('submitMsg','Complete all steps.'); return; }
 
   var firstName = staffName.split(' ')[0] || staffName;
-
-  // ⚡ Instant client-side validation — catches 99% of errors in 0ms
   var member = null;
   for (var i = 0; i < staff.length; i++) { if (staff[i].id===staffID){ member=staff[i]; break; } }
+  
+  // Cache to remember actions locally so refreshing browser doesn't permit identical dual submissions
+  var todayKey = new Date().toDateString();
+  var histRaw = Storage.get('local_history_' + currentTerminal);
+  var history = histRaw ? JSON.parse(histRaw) : {};
+  var lastAction = history[staffID + '_' + todayKey] || (member ? member.status : null);
+
   if (member) {
-    if (action==='Clock In' && member.status==='Clock In') {
+    if (action === 'Clock In' && lastAction === 'Clock In') {
       showError('submitMsg', firstName+' has already clocked in today.'); return;
     }
-    if (action==='Clock Out') {
-      if (!member.status) { showError('submitMsg','Cannot Clock Out. '+firstName+' hasn\'t Clocked In today.'); return; }
-      if (member.status==='Clock Out') { showError('submitMsg', firstName+' has already clocked out today.'); return; }
+    if (action === 'Clock Out') {
+      if (!lastAction) { showError('submitMsg','Cannot Clock Out. '+firstName+' hasn\'t Clocked In today.'); return; }
+      if (lastAction === 'Clock Out') { showError('submitMsg', firstName+' has already clocked out today.'); return; }
     }
-    // Lock local status immediately so a second tap is caught without server
+    // Lock local states 
     member.status = action;
   }
+  
+  // Save Local Cache strictly
+  history[staffID + '_' + todayKey] = action;
+  try { Storage.set('local_history_' + currentTerminal, JSON.stringify(history)); } catch(e){}
 
-  // ⚡ Optimistic: success screen appears INSTANTLY
   finishSubmission(action);
 
   var payload = {
@@ -876,9 +865,7 @@ function submitAttendance() {
     offlineQueue.push({data:payload,terminal:currentTerminal}); saveOfflineQueue(); return;
   }
 
-  // Fire-and-forget — server saves in background
   fetchFromServer('recordAttendance', payload).catch(function(err) {
-    // Network drop or OFFLINE signal → queue silently
     offlineQueue.push({data:payload,terminal:currentTerminal}); saveOfflineQueue();
   });
 }
@@ -887,14 +874,30 @@ function submitAttendance() {
 function finishSubmission(action) {
   Storage.remove(getFormCacheKey());
   var firstName = staffName.split(' ')[0] || staffName;
-  var isIn = (action === 'Clock In'), hrs = new Date().getHours();
+  var isIn = (action === 'Clock In');
+  var now = new Date();
+  var hrs = now.getHours();
+  var mins = now.getMinutes();
+  
+  // Calculate precise time as decimal (e.g., 6:30 -> 6.5,  7:40 -> 7.666)
+  var timeVal = hrs + (mins / 60.0);
+  
   var emoji='✅', badge='Submitted', msg='', warning=null;
 
   if (isIn) {
-    if      (hrs < 8)  { emoji='🌟'; badge='On Time!';   msg="Fantastic start — you're early today! keep it up"; }
-    else if (hrs < 11) { emoji='⏰'; badge='Clocked In'; msg="Late for morning shift."; warning="⚠️ Warning: Consistent late clock-ins are reviewed by management."; }
-    else if (hrs < 15) { emoji='✅'; badge='On Time!';   msg="Have a productive second shift!"; }
-    else               { emoji='⏰'; badge='Clocked In'; msg="Late for afternoon shift."; warning="⚠️ Warning: Late clock-ins are reviewed by management."; }
+    if (timeVal < 6.5) { 
+      emoji='🌟'; badge='On Time!'; msg="Fantastic start — you're early today! keep it up"; 
+    } else if (timeVal <= 7.6667) { 
+      emoji='✅'; badge='On Time!'; msg="Great, you are on time for the morning shift."; 
+    } else if (timeVal < 11.0) { 
+      emoji='⏰'; badge='Clocked In'; msg="Late for morning shift."; warning="⚠️ Warning: Consistent late clock-ins are reviewed by management."; 
+    } else if (timeVal < 14.0) { 
+      emoji='🌟'; badge='On Time!'; msg="Early for the second shift. Great job!"; 
+    } else if (timeVal <= 14.6667) { 
+      emoji='✅'; badge='On Time!'; msg="On time for the second shift. Have a productive afternoon!"; 
+    } else { 
+      emoji='⏰'; badge='Clocked In'; msg="Late for afternoon shift."; warning="⚠️ Warning: Late clock-ins are reviewed by management."; 
+    }
   } else {
     if (hrs < 16) { emoji='👋'; badge='Clocked Out'; msg="Have a wonderful afternoon!"; }
     else          { emoji='🌙'; badge='Clocked Out'; msg="Have a restful night!"; }
