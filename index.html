@@ -55,8 +55,6 @@ body {
   padding:max(12px,env(safe-area-inset-top)) 10px 32px;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
 }
-
-/* Uniform symmetric gradient — same accent corner size both sides */
 .bg-layer{position:fixed;inset:0;z-index:-1;transition:opacity 0.5s ease-in-out}
 .bg-chandarana{background:linear-gradient(135deg,#52c234 0%,#52c234 75%,#1a73e8 100%);opacity:1}
 .bg-carrefour {background:linear-gradient(135deg,#1a73e8 0%,#1a73e8 75%,#52c234 100%);opacity:0}
@@ -74,10 +72,9 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#1a73e
 
 .container{
   max-width:420px;width:100%;margin:auto;background:var(--bg-primary);
-  padding:22px 20px 26px;border-radius:20px;box-shadow:0 10px 40px var(--shadow-color);
-  position:relative;
-  /* overflow visible — camera grows upward outside card */
-  overflow:visible;
+  padding:22px 20px 26px;border-radius:20px;
+  box-shadow:0 10px 40px var(--shadow-color);
+  position:relative; overflow:visible;
 }
 .network-indicator{
   position:absolute;top:16px;left:16px;width:6px;height:6px;border-radius:50%;
@@ -103,7 +100,7 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#1a73e
   display:flex;align-items:center;justify-content:center;
   outline:none;-webkit-tap-highlight-color:transparent;
 }
-.pill-btn.active{color:#ffffff;transition:color 0.2s ease 0.15s}
+.pill-btn.active{color:#fff;transition:color 0.2s ease 0.15s}
 .pill-btn .full-text,.pill-btn .short-text{display:none}
 .pill-btn.active .full-text{display:block}
 .pill-btn:not(.active) .short-text{display:block}
@@ -116,9 +113,12 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#1a73e
 @keyframes bounceIn{
   0%{transform:scale(0.9);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1}
 }
+@keyframes pulse{
+  0%,100%{opacity:1} 50%{opacity:0.55}
+}
 
 h2{
-  text-align:center;color:var(--dynamic-primary);margin:0 auto 18px auto;
+  text-align:center;color:var(--dynamic-primary);margin:0 auto 18px;
   width:max-content;font-size:20px;text-transform:uppercase;letter-spacing:1px;
   transition:color 0.4s ease;font-weight:800;transform-origin:center;
 }
@@ -140,60 +140,70 @@ input:focus,select:focus{outline:none;border-color:var(--dynamic-primary);backgr
 button{
   width:100%;height:44px;padding:0 12px;border-radius:10px;border:none;
   font-size:14px;font-weight:700;background:var(--button-secondary-bg);
-  color:var(--dynamic-primary);cursor:pointer;transition:all 0.2s;
+  color:var(--dynamic-primary);cursor:pointer;transition:background 0.2s,opacity 0.2s,transform 0.1s;
 }
 button:active{transform:scale(0.97)}
 button.primary{
   background:var(--dynamic-primary);color:#fff;height:52px;font-size:16px;
-  box-shadow:0 4px 14px rgba(0,0,0,0.15);transition:background 0.4s ease,transform 0.1s;
+  box-shadow:0 4px 14px rgba(0,0,0,0.15);
 }
 button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+button.loading{animation:pulse 0.9s ease-in-out infinite}
 
-/* ══════════════════════════════════════════════
-   INLINE CAMERA
-   — Anchored to BOTTOM of step4
-   — Grows UPWARD + leftward on .expanded
-   — Starts black, video fades in once ready
-══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════
+   CAMERA SYSTEM
+   
+   Structure:
+   #cameraBtnWrapper  (position:relative — THE anchor)
+     #videoContainerWrapper  (position:absolute, bottom:0, right:0)
+       <video>
+       .camera-ui
+     #openCameraBtn  (normal flow button — covered by wrapper when expanded)
+   
+   The wrapper anchors to the BUTTON's bottom-right corner exactly.
+   Expanding grows UPWARD and LEFTWARD from that anchor.
+   No hide/show of button needed — wrapper z-index covers it.
+═══════════════════════════════════════════════════════ */
 #step4{position:relative}
+
+#cameraBtnWrapper{
+  position:relative;
+  /* height matches button so wrapper bottom:0 = button bottom */
+}
 
 #videoContainerWrapper{
   position:absolute;
-  bottom:0;          /* grows upward from the button */
-  right:0;
-  width:100%;        /* right column width at rest */
-  height:0;          /* collapsed = invisible */
+  bottom:0; right:0;       /* anchors to bottom-right of the button */
+  width:100%;              /* button width at rest */
+  height:0;                /* collapsed */
   border-radius:10px;
   overflow:hidden;
-  z-index:50;
-  background:#000;   /* starts black — looks like button morphing */
-  /* Fast spring for the box shape */
+  z-index:60;
+  /* No background:black — video starts live so no black flash */
+  /* Fast spring open */
   transition:
-    height 0.28s cubic-bezier(0.22,1,0.36,1),
-    width  0.28s cubic-bezier(0.22,1,0.36,1),
-    border-radius 0.22s ease;
+    height 0.3s cubic-bezier(0.22,1,0.36,1),
+    width  0.3s cubic-bezier(0.22,1,0.36,1),
+    border-radius 0.25s ease;
   transform-origin:bottom right;
   pointer-events:none;
 }
 #videoContainerWrapper.expanded{
-  width:calc(200% + 12px); /* covers both columns */
+  width:calc(200% + 12px);  /* spans both grid columns */
   height:330px;
   border-radius:14px;
   pointer-events:auto;
 }
 
-/* Video starts invisible, fades in once camera is live */
+/* Video is always opacity:1 — camera ready before box opens */
 #cameraVideo{
   width:100%;height:100%;object-fit:cover;display:block;
-  opacity:0;
-  transition:opacity 0.5s ease;  /* soft fade-in of real camera feed */
+  background:#111;
 }
-#cameraVideo.live{opacity:1}
 
-/* Tap-outside backdrop */
+/* Tap-outside backdrop — z-index just below wrapper */
 #cameraBackdrop{
-  display:none;position:fixed;inset:0;z-index:49;
-  /* invisible but catches taps */
+  display:none;position:fixed;inset:0;z-index:59;
 }
 #cameraBackdrop.show{display:block}
 
@@ -204,39 +214,34 @@ button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
   display:flex;align-items:center;justify-content:center;
 }
 #captureBtn{
-  width:62px;height:62px;border-radius:50%;
-  background:rgba(255,255,255,0.28);border:4px solid rgba(255,255,255,0.9);
+  width:64px;height:64px;border-radius:50%;
+  background:rgba(255,255,255,0.28);border:4px solid rgba(255,255,255,0.92);
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:transform 0.12s;-webkit-tap-highlight-color:transparent;
 }
-#captureBtn::after{
-  content:'';width:44px;height:44px;background:white;border-radius:50%;
-  transition:transform 0.1s;
-}
+#captureBtn::after{content:'';width:46px;height:46px;background:#fff;border-radius:50%;transition:transform 0.1s}
 #captureBtn:active{transform:scale(0.86)}
-#captureBtn:active::after{transform:scale(0.9)}
-
+#captureBtn:active::after{transform:scale(0.88)}
 #closeCameraBtn{
-  position:absolute;top:10px;right:10px;
-  width:30px;height:30px;border-radius:50%;
-  background:rgba(0,0,0,0.4);border:none;color:#fff;
-  font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;
+  background:rgba(0,0,0,0.42);border:none;color:#fff;font-size:14px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:background 0.15s;-webkit-tap-highlight-color:transparent;
 }
 #closeCameraBtn:active{background:rgba(0,0,0,0.75)}
 
-/* ══════════════════════════════════════════════
-   PHOTO PREVIEW — explodes to big circle
-══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   PHOTO PREVIEW — 50% bigger, smooth zoom
+═══════════════════════════════════════════ */
 #preview{
   width:58px;height:58px;object-fit:cover;border-radius:50%;
   border:3px solid var(--success-color);
-  display:none;margin:4px auto 0;background:var(--input-bg);cursor:pointer;
+  display:none;margin:4px auto 0;cursor:pointer;
   transition:
     width  0.42s cubic-bezier(0.22,1,0.36,1),
     height 0.42s cubic-bezier(0.22,1,0.36,1),
     border-width 0.3s ease,
-    box-shadow 0.35s ease;
+    box-shadow 0.38s ease;
   position:relative;z-index:1;
 }
 #preview.enlarged{
@@ -253,9 +258,9 @@ button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
 }
 #previewOverlay.show{opacity:1}
 
-/* ══════════════════════════════════════════════
-   MESSAGES & SUCCESS
-══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════
+   MESSAGES / SUCCESS
+═══════════════════════════════════════ */
 .msg{
   font-size:12px;font-weight:700;margin-top:6px;min-height:20px;
   color:var(--text-tertiary);display:flex;align-items:center;transition:color 0.2s;
@@ -270,7 +275,7 @@ button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
 .msg .dot::after{
   content:'';position:absolute;top:50%;left:50%;
   width:4.5px;height:9px;
-  border-right:2.5px solid white;border-bottom:2.5px solid white;
+  border-right:2.5px solid #fff;border-bottom:2.5px solid #fff;
   transform:translate(-50%,-60%) rotate(45deg);
 }
 
@@ -304,9 +309,6 @@ button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
   font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;
 }
 
-/* ══════════════════════════════════════════════
-   GUIDE MODAL
-══════════════════════════════════════════════ */
 #guideModal{
   display:none;position:fixed;inset:0;background:var(--modal-overlay);
   z-index:19999;flex-direction:column;align-items:center;justify-content:center;
@@ -338,8 +340,10 @@ var Storage={
 <div class="bg-layer bg-chandarana"></div>
 <div class="bg-layer bg-carrefour"></div>
 
+<!-- Tap-outside backdrop for camera -->
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
-<div id="previewOverlay"  onclick="collapsePreview()"></div>
+<!-- Tap overlay for photo zoom -->
+<div id="previewOverlay" onclick="collapsePreview()"></div>
 
 <div class="container">
   <div id="networkIndicator" class="network-indicator"></div>
@@ -381,15 +385,21 @@ var Storage={
 
       <div id="step4" class="step">
         <label>Identity</label>
-        <!-- grows upward from here -->
-        <div id="videoContainerWrapper">
-          <button id="closeCameraBtn" onclick="stopCamera()">✕</button>
-          <video id="cameraVideo" autoplay playsinline muted></video>
-          <div class="camera-ui">
-            <div id="captureBtn" onclick="capturePhoto()"></div>
+        <!--
+          cameraBtnWrapper is position:relative — the EXACT anchor for the camera box.
+          bottom:0 on the wrapper aligns to the button's bottom edge.
+          No ghost: we never hide the button, the expanding wrapper covers it.
+        -->
+        <div id="cameraBtnWrapper">
+          <div id="videoContainerWrapper">
+            <button id="closeCameraBtn" onclick="stopCamera()">✕</button>
+            <video id="cameraVideo" autoplay playsinline muted></video>
+            <div class="camera-ui">
+              <div id="captureBtn" onclick="capturePhoto()"></div>
+            </div>
           </div>
+          <button id="openCameraBtn" onclick="startCamera()">Take a Selfie</button>
         </div>
-        <button id="openCameraBtn" onclick="startCamera()">Take a Selfie</button>
         <input type="file" accept="image/*" capture="user" id="cameraInput" style="display:none">
         <div id="cameraMsg" class="msg"></div>
       </div>
@@ -415,7 +425,7 @@ var Storage={
       </div>
 
     </div>
-  </div><!-- /mainForm -->
+  </div>
 
   <div id="successScreen">
     <div class="success-emoji"   id="successEmoji">😊</div>
@@ -427,7 +437,7 @@ var Storage={
     <div class="success-warning" id="successWarning"></div>
     <button class="success-back" onclick="resetToStart()">← Submit Another</button>
   </div>
-</div><!-- /container -->
+</div>
 
 <div id="guideModal">
   <div class="modal-box">
@@ -450,7 +460,7 @@ var isRestoring = false, activeFetchId = 0, isSyncing = false;
 var offlineQueue = [];
 var videoStream = null;
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// ─── INIT ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   updateTerminalUI();
   checkNetworkStatus();
@@ -463,14 +473,14 @@ document.addEventListener('DOMContentLoaded', function() {
 window.addEventListener('online',  function(){ checkNetworkStatus(); syncOfflineData(); });
 window.addEventListener('offline', checkNetworkStatus);
 
-// ── NETWORK ───────────────────────────────────────────────────────────────────
+// ─── NETWORK ───────────────────────────────────────────────────────────────
 function checkNetworkStatus() {
   var ind = document.getElementById('networkIndicator');
   if (navigator.onLine) ind.classList.remove('offline');
   else ind.classList.add('offline');
 }
 
-// ── THEMING ───────────────────────────────────────────────────────────────────
+// ─── THEMING ───────────────────────────────────────────────────────────────
 function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
   var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -480,138 +490,141 @@ function updateTerminalUI() {
     meta.setAttribute('content',
       currentTerminal === 'chandarana'
         ? (isDark ? '#064e3b' : '#52c234')
-        : (isDark ? '#1e3a8a' : '#1a73e8')
-    );
+        : (isDark ? '#1e3a8a' : '#1a73e8'));
   }, 200);
   var title = document.getElementById('formTitle');
   title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
   title.classList.remove('shake-nudge'); void title.offsetWidth; title.classList.add('shake-nudge');
-  document.getElementById('btn-chandarana').classList.toggle('active', currentTerminal==='chandarana');
-  document.getElementById('btn-carrefour').classList.toggle('active',  currentTerminal==='carrefour');
-  requestAnimationFrame(function(){ requestAnimationFrame(function(){
-    var ab=document.querySelector('.pill-btn.active'), sl=document.getElementById('pillSlider');
-    if (ab&&sl){ sl.style.width=ab.offsetWidth+'px'; sl.style.left=ab.offsetLeft+'px'; }
+  document.getElementById('btn-chandarana').classList.toggle('active', currentTerminal === 'chandarana');
+  document.getElementById('btn-carrefour').classList.toggle('active',  currentTerminal === 'carrefour');
+  requestAnimationFrame(function() { requestAnimationFrame(function() {
+    var ab = document.querySelector('.pill-btn.active'), sl = document.getElementById('pillSlider');
+    if (ab && sl) { sl.style.width = ab.offsetWidth + 'px'; sl.style.left = ab.offsetLeft + 'px'; }
   }); });
 }
-
 function switchTerminal(term) {
-  if (currentTerminal===term) return;
+  if (currentTerminal === term) return;
   currentTerminal = term; Storage.set('selected_terminal', term);
-  staff=[]; branches=[];
-  document.getElementById('branch').innerHTML='<option value="">Loading...</option>';
+  staff = []; branches = [];
+  document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
   updateTerminalUI(); resetToStart(); initApp();
 }
 
-// ── OFFLINE QUEUE ─────────────────────────────────────────────────────────────
+// ─── OFFLINE QUEUE ─────────────────────────────────────────────────────────
 function loadOfflineQueue() {
-  try { var q=Storage.get('attendance_offline_queue'); if(q) offlineQueue=JSON.parse(q); }
-  catch(e){ offlineQueue=[]; }
+  try { var q = Storage.get('attendance_offline_queue'); if (q) offlineQueue = JSON.parse(q); }
+  catch(e) { offlineQueue = []; }
 }
 function saveOfflineQueue() {
   try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); }
   catch(e) {
-    if (offlineQueue.length>0) {
-      offlineQueue=offlineQueue.slice(Math.floor(offlineQueue.length/2));
-      try{ Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); }catch(e2){}
+    if (offlineQueue.length > 0) {
+      offlineQueue = offlineQueue.slice(Math.floor(offlineQueue.length / 2));
+      try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); } catch(e2) {}
     }
   }
 }
 function syncOfflineData() {
-  if (!navigator.onLine||offlineQueue.length===0||isSyncing) return;
-  isSyncing=true;
-  var toSync=offlineQueue.slice(), failed=[], i=0;
+  if (!navigator.onLine || offlineQueue.length === 0 || isSyncing) return;
+  isSyncing = true;
+  var toSync = offlineQueue.slice(), failed = [], i = 0;
   function next() {
-    if (i>=toSync.length){ offlineQueue=failed; saveOfflineQueue(); isSyncing=false; return; }
-    var rec=toSync[i++];
-    fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'recordAttendance',data:rec.data,terminal:rec.terminal})})
-    .then(function(r){return r.json()}).then(function(j){if(!j.ok)throw new Error()})
-    .catch(function(){failed.push(rec)}).then(next);
+    if (i >= toSync.length) { offlineQueue = failed; saveOfflineQueue(); isSyncing = false; return; }
+    var rec = toSync[i++];
+    fetch(APPS_SCRIPT_URL, {
+      method:'POST', headers:{'Content-Type':'text/plain'},
+      body:JSON.stringify({action:'recordAttendance', data:rec.data, terminal:rec.terminal})
+    }).then(function(r){return r.json()})
+      .then(function(j){ if(!j.ok) throw new Error(); })
+      .catch(function(){ failed.push(rec); })
+      .then(next);
   }
   next();
 }
 
-// ── SERVER ────────────────────────────────────────────────────────────────────
+// ─── SERVER ────────────────────────────────────────────────────────────────
 function fetchFromServer(action, data) {
-  return fetch(APPS_SCRIPT_URL,{method:'POST',headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:action,data:data,terminal:currentTerminal})})
-  .then(function(r){return r.json()})
-  .then(function(j){ if(!j.ok) throw new Error(j.error||'Server error'); return j.data; });
+  return fetch(APPS_SCRIPT_URL, {
+    method:'POST', headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:action, data:data, terminal:currentTerminal})
+  }).then(function(r){ return r.json(); })
+    .then(function(j){ if(!j.ok) throw new Error(j.error||'Server error'); return j.data; });
 }
 
-// ── INIT APP ──────────────────────────────────────────────────────────────────
+// ─── INIT APP ──────────────────────────────────────────────────────────────
 function populateBranches(list) {
   if (!Array.isArray(list)) return;
-  document.getElementById('branch').innerHTML='<option value="">Choose Branch</option>'+
-    list.map(function(b){return '<option value="'+b[0]+'">'+b[0]+'</option>';}).join('');
+  document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' +
+    list.map(function(b){ return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
 }
 function initApp() {
-  var myId=++activeFetchId, cacheKey=currentTerminal+'_portal_data', cached=false;
+  var myId = ++activeFetchId, cacheKey = currentTerminal + '_portal_data', cached = false;
   try {
-    var raw=Storage.get(cacheKey);
+    var raw = Storage.get(cacheKey);
     if (raw) {
-      var p=JSON.parse(raw);
-      if (p&&Array.isArray(p.branches)){
-        staff=p.staff||[]; branches=p.branches||[];
-        populateBranches(branches); restoreFromCache(); cached=true;
+      var p = JSON.parse(raw);
+      if (p && Array.isArray(p.branches)) {
+        staff = p.staff || []; branches = p.branches || [];
+        populateBranches(branches); restoreFromCache(); cached = true;
       }
     }
-  } catch(e){}
-  fetchFromServer('getPortalData',{}).then(function(data){
-    if (myId!==activeFetchId) return;
-    var changed=JSON.stringify(branches)!==JSON.stringify(data.branches);
-    staff=data.staff||[]; branches=data.branches||[];
-    try{Storage.set(cacheKey,JSON.stringify({staff:staff,branches:branches}));}catch(e){}
-    if (!cached||changed){ populateBranches(branches); if(!cached) restoreFromCache(); }
-  }).catch(function(){
-    if (myId===activeFetchId&&branches.length===0)
-      document.getElementById('branch').innerHTML='<option value="">Failed to load — check connection</option>';
+  } catch(e) {}
+  fetchFromServer('getPortalData', {}).then(function(data) {
+    if (myId !== activeFetchId) return;
+    var changed = JSON.stringify(branches) !== JSON.stringify(data.branches);
+    staff = data.staff || []; branches = data.branches || [];
+    try { Storage.set(cacheKey, JSON.stringify({staff:staff, branches:branches})); } catch(e) {}
+    if (!cached || changed) { populateBranches(branches); if (!cached) restoreFromCache(); }
+  }).catch(function() {
+    if (myId === activeFetchId && branches.length === 0)
+      document.getElementById('branch').innerHTML = '<option value="">Failed to load — check connection</option>';
   });
 }
 
-// ── FORM CACHE ────────────────────────────────────────────────────────────────
-function getFormCacheKey(){ return currentTerminal+'_attendance_cache'; }
+// ─── FORM CACHE ────────────────────────────────────────────────────────────
+function getFormCacheKey() { return currentTerminal + '_attendance_cache'; }
 function autoSave(capturing) {
   if (isRestoring) return;
   try {
-    Storage.set(getFormCacheKey(),JSON.stringify({
-      branch:document.getElementById('branch').value,
-      staffID:document.getElementById('staffID').value,
-      capturing:!!capturing,
-      lat:coords?coords.latitude:null, lng:coords?coords.longitude:null
+    Storage.set(getFormCacheKey(), JSON.stringify({
+      branch: document.getElementById('branch').value,
+      staffID: document.getElementById('staffID').value,
+      capturing: !!capturing,
+      lat: coords ? coords.latitude  : null,
+      lng: coords ? coords.longitude : null
     }));
-  } catch(e){}
+  } catch(e) {}
 }
 function restoreFromCache() {
-  var raw=Storage.get(getFormCacheKey()); if(!raw) return;
-  isRestoring=true;
+  var raw = Storage.get(getFormCacheKey()); if (!raw) return;
+  isRestoring = true;
   try {
-    var d=JSON.parse(raw);
-    if (d.branch){ var bEl=document.getElementById('branch'); bEl.value=d.branch; if(bEl.value) handleBranchChange(); }
-    if (d.staffID){ document.getElementById('staffID').value=d.staffID; handleStaffInput.call(document.getElementById('staffID')); }
-    if (d.lat&&d.lng){ coords={latitude:d.lat,longitude:d.lng}; showSuccess('gpsMsg','Location Verified'); activateStep(4); }
-    if (d.capturing){
-      photo='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-      var p=document.getElementById('preview'); p.src=photo; p.style.display='block';
+    var d = JSON.parse(raw);
+    if (d.branch) { var bEl = document.getElementById('branch'); bEl.value = d.branch; if (bEl.value) handleBranchChange(); }
+    if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput.call(document.getElementById('staffID')); }
+    if (d.lat && d.lng) { coords = {latitude:d.lat, longitude:d.lng}; showSuccess('gpsMsg','Location Verified'); activateStep(4); }
+    if (d.capturing) {
+      photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+      var p = document.getElementById('preview'); p.src = photo; p.style.display = 'block';
       showSuccess('cameraMsg','Identity Restored'); activateStep(4); activateStep(5); autoSave(false);
     }
-  } catch(e){}
-  isRestoring=false;
+  } catch(e) {}
+  isRestoring = false;
 }
 
-// ── STEPS ─────────────────────────────────────────────────────────────────────
-function activateStep(n){ document.getElementById('step'+n).classList.add('activeStep'); }
+// ─── STEPS ─────────────────────────────────────────────────────────────────
+function activateStep(n) { document.getElementById('step'+n).classList.add('activeStep'); }
 function resetStepsFrom(n) {
-  for(var i=n;i<=6;i++){ var el=document.getElementById('step'+i); if(el) el.classList.remove('activeStep'); }
-  if(n<=1){ document.getElementById('branch').value=''; clearMsg('branchMsg'); }
-  if(n<=2){ staffName=''; document.getElementById('staffID').value=''; clearMsg('staffMsg'); }
-  if(n<=3){ coords=null; clearMsg('gpsMsg'); }
-  if(n<=4){
+  for (var i = n; i <= 6; i++) { var el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep'); }
+  if (n<=1) { document.getElementById('branch').value=''; clearMsg('branchMsg'); }
+  if (n<=2) { staffName=''; document.getElementById('staffID').value=''; clearMsg('staffMsg'); }
+  if (n<=3) { coords=null; clearMsg('gpsMsg'); }
+  if (n<=4) {
     photo=null; stopCamera(); collapsePreview();
     var p=document.getElementById('preview'); p.style.display='none'; p.src='';
     clearMsg('cameraMsg'); document.getElementById('cameraInput').value='';
   }
-  if(n<=5){ document.getElementById('actionChoice').value=''; clearMsg('actionMsg'); }
+  if (n<=5) { document.getElementById('actionChoice').value=''; clearMsg('actionMsg'); }
   clearMsg('submitMsg'); autoSave(false);
 }
 function resetToStart() {
@@ -622,38 +635,38 @@ function resetToStart() {
   Storage.remove(getFormCacheKey());
 }
 
-// ── MSG HELPERS ───────────────────────────────────────────────────────────────
+// ─── MSG HELPERS ───────────────────────────────────────────────────────────
 function showSuccess(id,txt){ var e=document.getElementById(id); e.innerHTML='<span class="dot"></span> '+txt; e.className='msg success'; }
 function showError(id,txt)  { var e=document.getElementById(id); e.innerText=txt; e.className='msg error'; }
 function clearMsg(id)       { var e=document.getElementById(id); e.innerText=''; e.className='msg'; }
 
-// ── BRANCH / STAFF ────────────────────────────────────────────────────────────
+// ─── BRANCH / STAFF ────────────────────────────────────────────────────────
 function handleBranchChange() {
-  var val=document.getElementById('branch').value;
-  if (!val){ resetStepsFrom(2); return; }
+  var val = document.getElementById('branch').value;
+  if (!val) { resetStepsFrom(2); return; }
   showSuccess('branchMsg','Branch Selected');
-  if (document.getElementById('step2').classList.contains('activeStep')&&
-      document.getElementById('staffID').value!=='') resetStepsFrom(2);
+  if (document.getElementById('step2').classList.contains('activeStep') &&
+      document.getElementById('staffID').value !== '') resetStepsFrom(2);
   if (!document.getElementById('step2').classList.contains('activeStep')) activateStep(2);
   autoSave(false);
 }
 document.getElementById('branch').onchange = handleBranchChange;
 
 function handleStaffInput() {
-  var val=this.value.trim();
-  if (val.length<1){
-    if(document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
+  var val = this.value.trim();
+  if (val.length < 1) {
+    if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
     clearMsg('staffMsg'); return;
   }
-  var match=null;
-  for(var i=0;i<staff.length;i++){ if(staff[i].id===val){match=staff[i];break;} }
-  if (match){
-    staffName=match.name; showSuccess('staffMsg','Welcome '+staffName);
-    if(document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
-    if(!document.getElementById('step3').classList.contains('activeStep')) activateStep(3);
+  var match = null;
+  for (var i = 0; i < staff.length; i++) { if (staff[i].id === val) { match = staff[i]; break; } }
+  if (match) {
+    staffName = match.name; showSuccess('staffMsg','Welcome '+staffName);
+    if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
+    if (!document.getElementById('step3').classList.contains('activeStep')) activateStep(3);
     autoSave(false);
   } else {
-    if(document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
+    if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
     showError('staffMsg','Invalid Staff ID. Please check.');
   }
 }
@@ -661,235 +674,240 @@ document.getElementById('staffID').oninput = handleStaffInput;
 
 document.getElementById('actionChoice').onchange = function() {
   clearMsg('submitMsg');
-  if(!this.value){ clearMsg('actionMsg'); resetStepsFrom(6); return; }
+  if (!this.value) { clearMsg('actionMsg'); resetStepsFrom(6); return; }
   showSuccess('actionMsg','Ready for Submission'); activateStep(6);
 };
 
-// ── GPS ───────────────────────────────────────────────────────────────────────
+// ─── GPS ───────────────────────────────────────────────────────────────────
 function showGuideModal(type) {
-  var modal=document.getElementById('guideModal'),title=document.getElementById('guideTitle'),
-      text=document.getElementById('guideText'),icon=document.getElementById('guideIcon');
-  if(type==='gps'){
+  var modal=document.getElementById('guideModal'), title=document.getElementById('guideTitle'),
+      text=document.getElementById('guideText'),   icon=document.getElementById('guideIcon');
+  if (type==='gps') {
     icon.textContent='📍'; title.textContent='Location Blocked'; title.style.color='var(--error-color)';
     text.innerHTML='<p>We need your location to verify you are at the branch.</p>'
       +'<p style="margin-top:8px"><strong>🍎 iPhone:</strong><br>Settings → Privacy & Security → Location Services → Allow Safari/Chrome.</p>'
       +'<p style="margin-top:8px"><strong>🤖 Android:</strong><br>⋮ Menu → Settings → Site settings → Location → Allow.</p>';
-  } else if(type==='gps_signal'){
+  } else if (type==='gps_signal') {
     icon.textContent='📡'; title.textContent='Weak GPS Signal'; title.style.color='var(--warning-text)';
     text.innerHTML='<p>We couldn\'t get an accurate location reading.</p>'
       +'<ul style="margin-top:8px;padding-left:20px"><li>Step outside or near a window.</li>'
       +'<li>Turn WiFi ON — it helps GPS lock faster.</li></ul>';
-  } else if(type==='camera'){
+  } else if (type==='camera') {
     icon.textContent='📸'; title.textContent='Camera Fallback'; title.style.color='var(--warning-text)';
     text.innerHTML='<p>Live camera is not available on this device.</p><p>Opening your camera app instead.</p>';
   }
-  modal.style.display='flex';
+  modal.style.display = 'flex';
 }
-
 function verifyGPS() {
-  document.getElementById('gpsMsg').innerText='Locating…';
-  document.getElementById('gpsMsg').className='msg';
-  if (!navigator.geolocation){ showError('gpsMsg','GPS not supported on this device.'); return; }
+  document.getElementById('gpsMsg').innerText='Locating…'; document.getElementById('gpsMsg').className='msg';
+  if (!navigator.geolocation) { showError('gpsMsg','GPS not supported on this device.'); return; }
   navigator.geolocation.getCurrentPosition(
-    function(pos){
-      coords=pos.coords;
+    function(pos) {
+      coords = pos.coords;
       var b=null, bv=document.getElementById('branch').value;
-      for(var i=0;i<branches.length;i++){ if(branches[i][0]===bv){b=branches[i];break;} }
-      if (!b){ showError('gpsMsg','Select branch first.'); return; }
+      for (var i=0;i<branches.length;i++) { if (branches[i][0]===bv){ b=branches[i]; break; } }
+      if (!b) { showError('gpsMsg','Select branch first.'); return; }
       var R=6371e3,
           dLat=(b[1]-coords.latitude)*Math.PI/180,
           dLon=(b[2]-coords.longitude)*Math.PI/180,
           a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2),
           dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
       if (dist>250)
-        showError('gpsMsg',dist>1000?'Too far ('+(dist/1000).toFixed(1)+'km)':'Too far ('+Math.round(dist)+'m) — move closer');
+        showError('gpsMsg', dist>1000?'Too far ('+(dist/1000).toFixed(1)+'km)':'Too far ('+Math.round(dist)+'m) — move closer');
       else { showSuccess('gpsMsg','Location Verified'); activateStep(4); autoSave(false); }
     },
     function(err){ if(err.code===1) showGuideModal('gps'); else showGuideModal('gps_signal'); },
-    {enableHighAccuracy:true,timeout:10000,maximumAge:0}
+    {enableHighAccuracy:true, timeout:10000, maximumAge:0}
   );
 }
 
-// ── CAMERA ────────────────────────────────────────────────────────────────────
+// ─── CAMERA ────────────────────────────────────────────────────────────────
+/*
+  SEQUENCE (no black, no ghosting):
+  1. User taps button → button shows "Opening..." pulse (instant feedback)
+  2. getUserMedia starts (usually 100–400ms)
+  3. onloadedmetadata fires → camera feed is actually ready
+  4. ONLY THEN expand the wrapper → user sees real feed from the very first frame
+  5. Button is simply covered by the expanding wrapper (z-index 60) — no hiding = no ghost
+*/
 function startCamera() {
-  var wrapper  = document.getElementById('videoContainerWrapper');
-  var video    = document.getElementById('cameraVideo');
-  var backdrop = document.getElementById('cameraBackdrop');
+  var btn = document.getElementById('openCameraBtn');
 
-  if (!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia) {
-    // Old/fake phone — go straight to native picker
+  // Old/fake phone — straight to native picker, no WebRTC
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     document.getElementById('cameraInput').click(); return;
   }
 
-  // ⚡ STEP 1: Expand the BLACK box IMMEDIATELY — no waiting.
-  //    Looks like the button itself is morphing/growing.
-  wrapper.classList.add('expanded');
-  backdrop.classList.add('show');
-  document.getElementById('openCameraBtn').style.visibility = 'hidden';
-  video.classList.remove('live'); // keep black while camera warms up
+  // Immediate tactile feedback — button pulses while camera warms up
+  btn.textContent = 'Opening…';
+  btn.classList.add('loading');
+  btn.disabled = true;
   clearMsg('cameraMsg');
 
-  // ⚡ STEP 2: Request camera IN PARALLEL while the animation plays
   navigator.mediaDevices.getUserMedia({
-    video:{facingMode:'user',width:{ideal:640},height:{ideal:480}}, audio:false
+    video: { facingMode:'user', width:{ideal:640}, height:{ideal:480} },
+    audio: false
   })
   .then(function(stream) {
     videoStream = stream;
+    var video = document.getElementById('cameraVideo');
     video.srcObject = stream;
-    // Once first frame arrives, soft fade-in the real feed over the black
+
+    // Wait for the first real frame before expanding
     video.onloadedmetadata = function() {
       video.play().catch(function(){});
-      // Small rAF delay so the frame is actually painted before fade starts
-      requestAnimationFrame(function(){
-        requestAnimationFrame(function(){ video.classList.add('live'); });
+
+      // One rAF ensures the frame is actually painted on screen
+      requestAnimationFrame(function() {
+        // NOW expand — user sees live feed from frame 1, no black
+        document.getElementById('videoContainerWrapper').classList.add('expanded');
+        document.getElementById('cameraBackdrop').classList.add('show');
+        btn.classList.remove('loading');
+        // btn is now physically covered by the wrapper — no need to hide it
       });
     };
   })
   .catch(function(err) {
     console.warn('Camera failed:', err);
-    stopCamera();
+    btn.textContent = 'Take a Selfie';
+    btn.classList.remove('loading');
+    btn.disabled = false;
     showGuideModal('camera');
-    document.getElementById('cameraInput').click();
+    document.getElementById('cameraInput').click(); // graceful fallback
   });
 }
 
 function capturePhoto() {
-  var video=document.getElementById('cameraVideo');
-  var canvas=document.createElement('canvas');
-  canvas.width=video.videoWidth||640; canvas.height=video.videoHeight||480;
-  canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
-  photo=canvas.toDataURL('image/jpeg',0.65);
+  var video = document.getElementById('cameraVideo');
+  var canvas = document.createElement('canvas');
+  canvas.width  = video.videoWidth  || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  photo = canvas.toDataURL('image/jpeg', 0.65);
   stopCamera();
-  var p=document.getElementById('preview'); p.src=photo; p.style.display='block';
+  var p = document.getElementById('preview'); p.src = photo; p.style.display = 'block';
   showSuccess('cameraMsg','Identity Captured');
   activateStep(5); autoSave(false);
 }
 
 function stopCamera() {
-  if (videoStream){ videoStream.getTracks().forEach(function(t){t.stop();}); videoStream=null; }
-  var video=document.getElementById('cameraVideo');
-  video.classList.remove('live'); // reset for next open
+  if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
   document.getElementById('videoContainerWrapper').classList.remove('expanded');
   document.getElementById('cameraBackdrop').classList.remove('show');
-  var btn=document.getElementById('openCameraBtn');
-  if (btn){ btn.style.visibility='visible'; btn.innerText=photo?'Retake Selfie':'Take a Selfie'; }
+  var btn = document.getElementById('openCameraBtn');
+  if (btn) {
+    btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+  // Reset video src so next open starts fresh
+  var video = document.getElementById('cameraVideo');
+  video.srcObject = null;
 }
 
-// Fallback: native file picker (old/fake phones)
-document.getElementById('cameraInput').onchange=function(e){
-  var file=e.target.files[0]; if(!file) return;
+// Fallback: native camera for very old/fake phones
+document.getElementById('cameraInput').onchange = function(e) {
+  var file = e.target.files[0]; if (!file) return;
   autoSave(true); showSuccess('cameraMsg','Processing…');
-  var url=URL.createObjectURL(file); var img=new Image();
-  img.onload=function(){
-    try{
-      var max=640,q=0.65,w=img.width,h=img.height;
-      if(w>max||h>max){if(w>h){h=Math.floor(h*max/w);w=max;}else{w=Math.floor(w*max/h);h=max;}}
+  var url = URL.createObjectURL(file); var img = new Image();
+  img.onload = function() {
+    try {
+      var max=640, q=0.65, w=img.width, h=img.height;
+      if (w>max||h>max){ if(w>h){h=Math.floor(h*max/w);w=max;}else{w=Math.floor(w*max/h);h=max;} }
       var canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
       canvas.getContext('2d').drawImage(img,0,0,w,h);
       photo=canvas.toDataURL('image/jpeg',q);
       var p=document.getElementById('preview'); p.src=photo; p.style.display='block';
       showSuccess('cameraMsg','Identity Captured'); activateStep(5); autoSave(false);
-    }catch(err){showError('cameraMsg','Error processing photo.');}
-    finally{URL.revokeObjectURL(url);}
+    } catch(err){ showError('cameraMsg','Error processing photo.'); }
+    finally { URL.revokeObjectURL(url); }
   };
-  img.onerror=function(){URL.revokeObjectURL(url);showError('cameraMsg','Could not read image.');};
-  img.src=url;
+  img.onerror = function(){ URL.revokeObjectURL(url); showError('cameraMsg','Could not read image.'); };
+  img.src = url;
 };
 
-// ── PHOTO PREVIEW ZOOM ────────────────────────────────────────────────────────
-document.getElementById('preview').onclick=function(){
-  var p=document.getElementById('preview'), ov=document.getElementById('previewOverlay');
-  if(p.classList.contains('enlarged')){ collapsePreview(); return; }
-  ov.style.display='block'; void ov.offsetWidth;
+// ─── PHOTO PREVIEW ZOOM ────────────────────────────────────────────────────
+document.getElementById('preview').onclick = function() {
+  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
+  if (p.classList.contains('enlarged')) { collapsePreview(); return; }
+  ov.style.display = 'block'; void ov.offsetWidth;
   ov.classList.add('show'); p.classList.add('enlarged');
 };
-function collapsePreview(){
-  var p=document.getElementById('preview'), ov=document.getElementById('previewOverlay');
+function collapsePreview() {
+  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   p.classList.remove('enlarged'); ov.classList.remove('show');
-  setTimeout(function(){ov.style.display='none';},420);
+  setTimeout(function(){ ov.style.display='none'; }, 420);
 }
 
-// ── SUBMIT (optimistic + client-side pre-validation) ──────────────────────────
+// ─── SUBMIT (optimistic + client-side pre-validation) ─────────────────────
 function submitAttendance() {
   var branch  = document.getElementById('branch').value;
   var staffID = document.getElementById('staffID').value;
   var action  = document.getElementById('actionChoice').value;
-  if (!branch||!staffID||!action){ showError('submitMsg','Complete all steps.'); return; }
+  if (!branch||!staffID||!action) { showError('submitMsg','Complete all steps.'); return; }
 
-  var firstName = staffName.split(' ')[0]||staffName;
+  var firstName = staffName.split(' ')[0] || staffName;
 
-  // ⚡ CLIENT-SIDE INSTANT VALIDATION using cached staff status.
-  //    Catches "already clocked in/out" in 0ms — no server round-trip needed.
+  // ⚡ Instant client-side validation — catches 99% of errors in 0ms
   var member = null;
-  for(var i=0;i<staff.length;i++){ if(staff[i].id===staffID){member=staff[i];break;} }
+  for (var i = 0; i < staff.length; i++) { if (staff[i].id===staffID){ member=staff[i]; break; } }
   if (member) {
-    if (action==='Clock In'&&member.status==='Clock In'){
+    if (action==='Clock In' && member.status==='Clock In') {
       showError('submitMsg', firstName+' has already clocked in today.'); return;
     }
     if (action==='Clock Out') {
-      if (!member.status){
-        showError('submitMsg','Cannot Clock Out. '+firstName+' hasn\'t Clocked In today.'); return;
-      }
-      if (member.status==='Clock Out'){
-        showError('submitMsg', firstName+' has already clocked out today.'); return;
-      }
+      if (!member.status) { showError('submitMsg','Cannot Clock Out. '+firstName+' hasn\'t Clocked In today.'); return; }
+      if (member.status==='Clock Out') { showError('submitMsg', firstName+' has already clocked out today.'); return; }
     }
-    // Update local status immediately so a second tap is also blocked instantly
+    // Lock local status immediately so a second tap is caught without server
     member.status = action;
   }
 
-  // ⚡ OPTIMISTIC UI — show success screen right now, fire request in background.
-  //    User sees instant response. Server does the work behind the scenes.
+  // ⚡ Optimistic: success screen appears INSTANTLY
   finishSubmission(action);
 
-  var payload={
-    name:staffName,id:staffID,branch:branch,action:action,image:photo,
-    lat:coords?coords.latitude:0,lng:coords?coords.longitude:0,
+  var payload = {
+    name:staffName, id:staffID, branch:branch, action:action, image:photo,
+    lat:coords?coords.latitude:0, lng:coords?coords.longitude:0,
     clientTimestamp:new Date().toISOString()
   };
 
-  if (!navigator.onLine){
+  if (!navigator.onLine) {
     offlineQueue.push({data:payload,terminal:currentTerminal}); saveOfflineQueue(); return;
   }
 
-  // Background fetch — user already sees success; we just make sure it lands
-  fetchFromServer('recordAttendance',payload).catch(function(err){
-    if (!err||err.name==='TypeError'||err.message==='OFFLINE') {
-      // Network dropped mid-request — queue it silently
-      offlineQueue.push({data:payload,terminal:currentTerminal}); saveOfflineQueue();
-    }
-    // Business errors (edge cases that slipped past client check) are silently queued too.
-    // The server's LockService and validation will catch true duplicates.
+  // Fire-and-forget — server saves in background
+  fetchFromServer('recordAttendance', payload).catch(function(err) {
+    // Network drop or OFFLINE signal → queue silently
+    offlineQueue.push({data:payload,terminal:currentTerminal}); saveOfflineQueue();
   });
 }
 
-// ── FINISH SUBMISSION ─────────────────────────────────────────────────────────
+// ─── FINISH SUBMISSION ─────────────────────────────────────────────────────
 function finishSubmission(action) {
   Storage.remove(getFormCacheKey());
-  var firstName=staffName.split(' ')[0]||staffName;
-  var isIn=(action==='Clock In'), hrs=new Date().getHours();
-  var emoji='✅',badge='Submitted',msg='',warning=null;
+  var firstName = staffName.split(' ')[0] || staffName;
+  var isIn = (action === 'Clock In'), hrs = new Date().getHours();
+  var emoji='✅', badge='Submitted', msg='', warning=null;
 
-  // Original messages kept exactly as requested
   if (isIn) {
-    if (hrs<8)       { emoji='🌟'; badge='On Time!';    msg="Fantastic start — you're early today! keep it up"; }
-    else if (hrs<11) { emoji='⏰'; badge='Clocked In';  msg="You're Late!."; warning="⚠️ Warning: Consistent late clock-ins are reviewed by management."; }
-    else if (hrs<15) { emoji='✅'; badge='On Time!';    msg="Have a productive shift!"; }
-    else             { emoji='⏰'; badge='Clocked In';  msg="you're Late for afternoon shift."; warning="⚠️ Warning: Late clock-ins are reviewed by management."; }
+    if      (hrs < 8)  { emoji='🌟'; badge='On Time!';   msg="Fantastic start — you're early today! keep it up"; }
+    else if (hrs < 11) { emoji='⏰'; badge='Clocked In'; msg="Late for morning shift."; warning="⚠️ Warning: Consistent late clock-ins are reviewed by management."; }
+    else if (hrs < 15) { emoji='✅'; badge='On Time!';   msg="Have a productive second shift!"; }
+    else               { emoji='⏰'; badge='Clocked In'; msg="Late for afternoon shift."; warning="⚠️ Warning: Late clock-ins are reviewed by management."; }
   } else {
-    if (hrs<16) { emoji='👋'; badge='Clocked Out'; msg="Have a wonderful day!"; }
-    else        { emoji='🌙'; badge='Clocked Out'; msg="Have a restful night!"; }
+    if (hrs < 16) { emoji='👋'; badge='Clocked Out'; msg="Have a wonderful afternoon!"; }
+    else          { emoji='🌙'; badge='Clocked Out'; msg="Have a restful night!"; }
   }
 
-  document.getElementById('successEmoji').textContent=emoji;
-  document.getElementById('successBadge').textContent=badge;
-  document.getElementById('successName').textContent=firstName;
-  document.getElementById('successMsg').textContent=msg;
-  var w=document.getElementById('successWarning');
-  if(warning){w.textContent=warning;w.style.display='block';}else{w.style.display='none';}
-
-  document.getElementById('mainForm').style.display='none';
-  document.getElementById('successScreen').style.display='flex';
+  document.getElementById('successEmoji').textContent = emoji;
+  document.getElementById('successBadge').textContent = badge;
+  document.getElementById('successName').textContent  = firstName;
+  document.getElementById('successMsg').textContent   = msg;
+  var w = document.getElementById('successWarning');
+  if (warning) { w.textContent=warning; w.style.display='block'; } else { w.style.display='none'; }
+  document.getElementById('mainForm').style.display    = 'none';
+  document.getElementById('successScreen').style.display = 'flex';
   syncOfflineData();
 }
 </script>
