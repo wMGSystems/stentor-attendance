@@ -247,7 +247,7 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
   object-fit: cover; border-radius: 50%;
   border: 3px solid var(--success-color);
   cursor: pointer; z-index: 1;
-  /* Hardware acceleration to prevent the "square ghost" layout jump glitches */
+  /* Hardware acceleration to prevent layout jump glitches */
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
   backface-visibility: hidden;
@@ -261,17 +261,15 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
 }
 #previewOverlay.show{opacity:1}
 
-/* The X Close Button styling above the enlarged picture */
+/* The X Close Button styling - dynamically centered above the picture via JS */
 #closePreviewBtn {
-  position: absolute;
-  top: max(24px, env(safe-area-inset-top, 24px));
-  right: 20px;
-  width: 40px;
-  height: 40px;
+  position: fixed;
+  width: 36px;
+  height: 36px;
   background: rgba(255,255,255,0.2);
   border: 2px solid rgba(255,255,255,0.8);
   color: #fff;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: bold;
   border-radius: 50%;
   cursor: pointer;
@@ -281,6 +279,13 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
   z-index: 10001;
   backdrop-filter: blur(4px);
   -webkit-tap-highlight-color: transparent;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+#closePreviewBtn.show {
+  opacity: 1;
+  pointer-events: auto;
 }
 #closePreviewBtn:active {
   background: rgba(255,255,255,0.4);
@@ -370,7 +375,7 @@ var Storage={
 
 <!-- Tap-outside backdrop for camera -->
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
-<!-- Tap overlay for photo zoom with Close Button -->
+<!-- Tap overlay for photo zoom with dynamically positioned Close Button -->
 <div id="previewOverlay" onclick="collapsePreview()">
   <button id="closePreviewBtn" onclick="collapsePreview(); event.stopPropagation();">✕</button>
 </div>
@@ -484,21 +489,18 @@ var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm
 
 var currentTerminal = Storage.get('selected_terminal') || 'chandarana';
 var staff = [], branches = [], coords = null, staffName = "", photo = null;
-var isRestoring = false, activeFetchId = 0, isSyncing = false;
-var offlineQueue = [];
+var isRestoring = false, activeFetchId = 0;
 var videoStream = null;
 
 // ─── INIT ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   updateTerminalUI();
   checkNetworkStatus();
-  loadOfflineQueue();
   initApp();
-  syncOfflineData();
   if (window.matchMedia)
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
 });
-window.addEventListener('online',  function(){ checkNetworkStatus(); syncOfflineData(); });
+window.addEventListener('online',  function(){ checkNetworkStatus(); });
 window.addEventListener('offline', checkNetworkStatus);
 
 // ─── NETWORK ───────────────────────────────────────────────────────────────
@@ -535,38 +537,6 @@ function switchTerminal(term) {
   staff = []; branches = [];
   document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
   updateTerminalUI(); resetToStart(); initApp();
-}
-
-// ─── OFFLINE QUEUE ─────────────────────────────────────────────────────────
-function loadOfflineQueue() {
-  try { var q = Storage.get('attendance_offline_queue'); if (q) offlineQueue = JSON.parse(q); }
-  catch(e) { offlineQueue = []; }
-}
-function saveOfflineQueue() {
-  try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); }
-  catch(e) {
-    if (offlineQueue.length > 0) {
-      offlineQueue = offlineQueue.slice(Math.floor(offlineQueue.length / 2));
-      try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); } catch(e2) {}
-    }
-  }
-}
-function syncOfflineData() {
-  if (!navigator.onLine || offlineQueue.length === 0 || isSyncing) return;
-  isSyncing = true;
-  var toSync = offlineQueue.slice(), failed = [], i = 0;
-  function next() {
-    if (i >= toSync.length) { offlineQueue = failed; saveOfflineQueue(); isSyncing = false; return; }
-    var rec = toSync[i++];
-    fetch(APPS_SCRIPT_URL, {
-      method:'POST', headers:{'Content-Type':'text/plain'},
-      body:JSON.stringify({action:'recordAttendance', data:rec.data, terminal:rec.terminal})
-    }).then(function(r){return r.json()})
-      .then(function(j){ if(!j.ok) throw new Error(); })
-      .catch(function(){ failed.push(rec); })
-      .then(next);
-  }
-  next();
 }
 
 // ─── SERVER ────────────────────────────────────────────────────────────────
@@ -609,13 +579,13 @@ function initApp() {
 }
 
 // ─── LOCAL STATE TRACKING ──────────────────────────────────────────────────
-// Prevents incorrect sign-ins/outs even if completely offline and untransmitted.
+// Prevents incorrect sign-ins/outs safely.
 function getStaffLocalStatus(staffID) {
   var todayKey = new Date().toDateString();
   var histRaw = Storage.get('local_history_' + currentTerminal);
   var history = histRaw ? JSON.parse(histRaw) : {};
   
-  // Prefer the local unsynced history for TODAY
+  // Prefer the local history for TODAY
   var localStatus = history[staffID + '_' + todayKey];
   if (localStatus) return localStatus;
   
@@ -770,6 +740,8 @@ function showGuideModal(type) {
 function verifyGPS() {
   document.getElementById('gpsMsg').innerText='Locating…'; document.getElementById('gpsMsg').className='msg';
   if (!navigator.geolocation) { showError('gpsMsg','GPS not supported on this device.'); return; }
+  
+  // Relaxed timing & caching prevents unresponsiveness / failures if reconnecting
   navigator.geolocation.getCurrentPosition(
     function(pos) {
       coords = pos.coords;
@@ -786,7 +758,7 @@ function verifyGPS() {
       else { showSuccess('gpsMsg','Location Verified'); activateStep(4); autoSave(false); }
     },
     function(err){ if(err.code===1) showGuideModal('gps'); else showGuideModal('gps_signal'); },
-    {enableHighAccuracy:true, timeout:10000, maximumAge:0}
+    {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
   );
 }
 
@@ -908,7 +880,6 @@ document.getElementById('preview').onclick = function() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (p.classList.contains('enlarged')) return; 
 
-  // Lock to the current bounding box
   var rect = p.getBoundingClientRect();
   p.style.transition = 'none';
   p.style.position = 'fixed';
@@ -922,7 +893,6 @@ document.getElementById('preview').onclick = function() {
   
   void p.offsetWidth; // Flush CSS changes
 
-  // Smoothly animate towards center screen
   p.style.transition = 'all 0.35s cubic-bezier(0.25, 1, 0.4, 1)';
   p.style.top = '50%';
   p.style.left = '50%';
@@ -931,8 +901,8 @@ document.getElementById('preview').onclick = function() {
   p.style.width = targetSize + 'px';
   p.style.height = targetSize + 'px';
   p.style.transform = 'translate(-50%, -50%)';
-  p.style.borderRadius = '24px'; // Convert circle to rounded square
-  p.style.borderWidth = '0px';   // Fade out the colored border ring
+  p.style.borderRadius = '24px'; 
+  p.style.borderWidth = '0px';   
   p.style.boxShadow = '0 15px 40px rgba(0,0,0,0.5)';
   
   p.classList.add('enlarged');
@@ -940,16 +910,24 @@ document.getElementById('preview').onclick = function() {
   ov.style.display = 'block'; 
   void ov.offsetWidth; 
   ov.classList.add('show');
+  
+  // Center close button perfectly right above the newly sized square
+  var closeBtn = document.getElementById('closePreviewBtn');
+  closeBtn.style.top = 'calc(50% - ' + (targetSize/2 + 32) + 'px)';
+  closeBtn.style.left = '50%';
+  closeBtn.style.transform = 'translate(-50%, -50%)';
+  closeBtn.classList.add('show');
 };
 
 function collapsePreview() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (!p.classList.contains('enlarged')) return;
   
+  document.getElementById('closePreviewBtn').classList.remove('show');
+  
   var wrapper = document.getElementById('previewWrapper');
   var rect = wrapper.getBoundingClientRect();
   
-  // Transition back to original flexbox wrapper spot
   p.style.top = rect.top + 'px';
   p.style.left = rect.left + 'px';
   p.style.width = rect.width + 'px';
@@ -961,7 +939,6 @@ function collapsePreview() {
   
   ov.classList.remove('show');
   
-  // Reset clean-up after transition ends
   setTimeout(function() {
     p.style.transition = 'none';
     p.style.position = 'absolute';
@@ -972,7 +949,6 @@ function collapsePreview() {
     p.style.transform = 'none';
     p.style.zIndex = '1';
     
-    // Clear inline states to let CSS handle it again
     p.style.borderRadius = '';
     p.style.borderWidth = '';
     p.style.boxShadow = '';
@@ -990,9 +966,15 @@ function submitAttendance() {
   var action  = document.getElementById('actionChoice').value;
   if (!branch||!staffID||!action) { showError('submitMsg','Complete all steps.'); return; }
 
+  // Prevent offline-clunkiness: if not connected, instantly fail safely.
+  if (!navigator.onLine) {
+    showError('submitMsg', 'No internet connection. Please connect to network and try again.'); 
+    return;
+  }
+
   var lastAction = getStaffLocalStatus(staffID);
 
-  // Redundant safety check right at submission time
+  // Redundant safety check at submission time
   if (action === 'Clock In' && lastAction === 'Clock In') {
     showError('submitMsg', 'You have already clocked in today.'); return;
   }
@@ -1005,18 +987,10 @@ function submitAttendance() {
     }
   }
 
-  var member = null;
-  for (var i = 0; i < staff.length; i++) { if (staff[i].id===staffID){ member=staff[i]; break; } }
-  
-  // IMMEDIATELY update local tracking so if app closes, it prevents double-signing
-  if (member) member.status = action;
-  var todayKey = new Date().toDateString();
-  var histRaw = Storage.get('local_history_' + currentTerminal);
-  var history = histRaw ? JSON.parse(histRaw) : {};
-  history[staffID + '_' + todayKey] = action;
-  try { Storage.set('local_history_' + currentTerminal, JSON.stringify(history)); } catch(e){}
-
-  finishSubmission(action);
+  var submitBtn = document.getElementById('submitBtn');
+  var originalBtnText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'SUBMITTING...';
 
   var payload = {
     name:staffName, id:staffID, branch:branch, action:action, image:photo,
@@ -1024,12 +998,26 @@ function submitAttendance() {
     clientTimestamp:new Date().toISOString()
   };
 
-  if (!navigator.onLine) {
-    offlineQueue.push({data:payload,terminal:currentTerminal}); saveOfflineQueue(); return;
-  }
+  fetchFromServer('recordAttendance', payload).then(function() {
+    // Write local safety history ONLY after success, to ensure it doesn't wrongly lock user out later.
+    var member = null;
+    for (var i = 0; i < staff.length; i++) { if (staff[i].id===staffID){ member=staff[i]; break; } }
+    if (member) member.status = action;
+    
+    var todayKey = new Date().toDateString();
+    var histRaw = Storage.get('local_history_' + currentTerminal);
+    var history = histRaw ? JSON.parse(histRaw) : {};
+    history[staffID + '_' + todayKey] = action;
+    try { Storage.set('local_history_' + currentTerminal, JSON.stringify(history)); } catch(e){}
 
-  fetchFromServer('recordAttendance', payload).catch(function(err) {
-    offlineQueue.push({data:payload,terminal:currentTerminal}); saveOfflineQueue();
+    finishSubmission(action);
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalBtnText;
+
+  }).catch(function(err) {
+    showError('submitMsg', 'Server error. Please try again.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalBtnText;
   });
 }
 
@@ -1073,7 +1061,6 @@ function finishSubmission(action) {
   if (warning) { w.textContent=warning; w.style.display='block'; } else { w.style.display='none'; }
   document.getElementById('mainForm').style.display    = 'none';
   document.getElementById('successScreen').style.display = 'flex';
-  syncOfflineData();
 }
 </script>
 </body>
