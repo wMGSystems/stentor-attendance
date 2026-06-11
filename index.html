@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -21,398 +22,255 @@
 <title>Store Attendance</title>
 <style>
 :root {
-  --bg-primary:#ffffff; --bg-secondary:#f9f9f9;
-  --text-primary:#1a1a1a; --text-secondary:#666666; --text-tertiary:#999999;
-  --border-color:#dddddd; --input-bg:#f9f9f9; --input-border:#ddd;
-  --button-secondary-bg:#e8f0fe;
-  --success-color:#28a745; --error-color:#dc3545;
-  --warning-bg:#fff4f3; --warning-border:#fbc9c4; --warning-text:#b71c1c;
-  --success-card-bg:#f6faff; --success-card-border:#d0e4ff;
-  --modal-overlay:rgba(0,0,0,0.72); --shadow-color:rgba(0,0,0,0.14);
-  --label-text:#666666;
-  --theme-chan:#059669; --theme-carr:#1a73e8;
+  --bg-primary:#ffffff; --bg-secondary:#f7f9fa;
+  --text-primary:#111827; --text-secondary:#4b5563; --text-tertiary:#9ca3af;
+  --border-color:#e5e7eb; --input-bg:#f9fafb; --input-border:#d1d5db;
+  --button-secondary-bg:#eff6ff;
+  --success-color:#10b981; --error-color:#ef4444;
+  --warning-bg:#fef2f2; --warning-border:#fecaca; --warning-text:#b91c1c;
+  --success-card-bg:#f0fdf4; --success-card-border:#bbf7d0;
+  --modal-overlay:rgba(0,0,0,0.65); --shadow-color:rgba(0,0,0,0.1);
+  --label-text:#6b7280;
+  --theme-chan:#059669; --theme-carr:#2563eb;
   --dynamic-primary:var(--theme-chan);
-  --fallback-cam-bg: #ffffff; 
 }
 @media (prefers-color-scheme:dark) {
   :root {
-    --bg-primary:#1a1a2e; --bg-secondary:#16213e;
-    --text-primary:#f5f5f5; --text-secondary:#b0b0b0; --text-tertiary:#808080;
-    --border-color:#404040; --input-bg:#2d2d44; --input-border:#404040;
-    --button-secondary-bg:#1e3a5f;
-    --success-color:#4ade80; --error-color:#ff6b6b;
-    --warning-bg:#3d2620; --warning-border:#6b4423; --warning-text:#ffb3a0;
-    --success-card-bg:#1e3a5f; --success-card-border:#2d5a8c;
-    --modal-overlay:rgba(0,0,0,0.88); --shadow-color:rgba(0,0,0,0.4);
-    --label-text:#a0a0a0;
+    --bg-primary:#1f2937; --bg-secondary:#111827;
+    --text-primary:#f9fafb; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
+    --border-color:#374151; --input-bg:#374151; --input-border:#4b5563;
+    --button-secondary-bg:#1e3a8a;
+    --success-color:#34d399; --error-color:#f87171;
+    --warning-bg:#450a0a; --warning-border:#7f1d1d; --warning-text:#fca5a5;
+    --success-card-bg:#064e3b; --success-card-border:#065f46;
+    --modal-overlay:rgba(0,0,0,0.85); --shadow-color:rgba(0,0,0,0.5);
+    --label-text:#9ca3af;
     --theme-chan:#10b981; --theme-carr:#3b82f6;
-    --fallback-cam-bg: #000000; 
   }
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body {
-  font-family:'Segoe UI',Tahoma,sans-serif; color:var(--text-primary);
+  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+  color:var(--text-primary); background-color: var(--dynamic-primary);
   min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
   align-items:center; justify-content:flex-start;
-  padding:max(12px,env(safe-area-inset-top)) 10px 32px;
+  padding:max(20px,env(safe-area-inset-top)) 12px 32px;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
+  transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.bg-layer{position:fixed;inset:0;z-index:-1;transition:opacity 0.5s ease-in-out}
-.bg-chandarana{background:linear-gradient(135deg,#52c234 0%,#52c234 75%,#1a73e8 100%);opacity:1}
-.bg-carrefour {background:linear-gradient(135deg,#1a73e8 0%,#1a73e8 75%,#52c234 100%);opacity:0}
+.bg-layer{
+  position:fixed; inset:-100px; z-index:-1; 
+  transition:opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  background-size: cover; background-position: center;
+}
+.bg-chandarana{background:linear-gradient(135deg,#52c234 0%,#1a73e8 100%);opacity:1}
+.bg-carrefour {background:linear-gradient(135deg,#1a73e8 0%,#52c234 100%);opacity:0}
 @media (prefers-color-scheme:dark){
-  .bg-chandarana{background:linear-gradient(135deg,#064e3b 0%,#064e3b 75%,#1e3a8a 100%)}
-  .bg-carrefour {background:linear-gradient(135deg,#1e3a8a 0%,#1e3a8a 75%,#064e3b 100%)}
+  .bg-chandarana{background:linear-gradient(135deg,#064e3b 0%,#1e3a8a 100%)}
+  .bg-carrefour {background:linear-gradient(135deg,#1e3a8a 0%,#064e3b 100%)}
 }
 body.theme-chandarana .bg-chandarana{opacity:1}
 body.theme-chandarana .bg-carrefour {opacity:0}
 body.theme-carrefour  .bg-chandarana{opacity:0}
 body.theme-carrefour  .bg-carrefour {opacity:1}
 body.theme-chandarana{--dynamic-primary:var(--theme-chan)}
-body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#1a73e8}
-@media (prefers-color-scheme:dark){body.theme-carrefour{--success-color:#3b82f6}}
+body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f6}
 
 .container{
-  max-width:420px;width:100%;margin:auto;background:var(--bg-primary);
-  padding:22px 20px 26px;border-radius:20px;
-  box-shadow:0 10px 40px var(--shadow-color);
+  max-width:400px;width:100%;margin:auto;background:var(--bg-primary);
+  padding:24px 22px 28px;border-radius:24px;
+  box-shadow:0 15px 35px var(--shadow-color);
   position:relative; overflow:visible;
 }
 .network-indicator{
-  position:absolute;top:16px;left:16px;width:6px;height:6px;border-radius:50%;
-  background:var(--success-color);opacity:0.6;transition:background 0.4s ease;
+  position:absolute;top:18px;left:18px;width:8px;height:8px;border-radius:50%;
+  background:var(--success-color);opacity:0.8;transition:background 0.4s ease;
+  box-shadow: 0 0 6px var(--success-color);
 }
-.network-indicator.offline{background:var(--text-tertiary);opacity:0.4}
+.network-indicator.offline{background:var(--text-tertiary);opacity:0.4; box-shadow:none;}
 
 .top-bar{display:flex;justify-content:flex-end;margin-bottom:8px}
 .terminal-pill-wrapper{
   position:relative;display:inline-flex;background:var(--input-bg);
-  border:1px solid var(--border-color);border-radius:50px;padding:4px;height:42px;
-  box-shadow:inset 0 2px 5px rgba(0,0,0,0.08);align-items:center;
+  border:1px solid var(--border-color);border-radius:50px;padding:4px;height:40px;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.04);align-items:center;
 }
 .pill-slider{
   position:absolute;top:4px;bottom:4px;left:4px;border-radius:50px;
-  background:var(--dynamic-primary);box-shadow:0 2px 6px rgba(0,0,0,0.2);
+  background:var(--dynamic-primary);box-shadow:0 2px 6px rgba(0,0,0,0.15);
   transition:all 0.35s cubic-bezier(0.25,1,0.5,1);z-index:1;
 }
 .pill-btn{
   position:relative;z-index:2;background:transparent;border:none;
-  padding:0 16px;height:100%;font-size:13.5px;font-weight:800;
-  color:var(--text-secondary);cursor:pointer;transition:color 0.15s ease;
-  display:flex;align-items:center;justify-content:center;
-  outline:none;-webkit-tap-highlight-color:transparent;
+  padding:0 16px;height:100%;font-size:13px;font-weight:700;
+  color:var(--text-secondary);cursor:pointer;transition:color 0.2s ease;
+  display:flex;align-items:center;justify-content:center; outline:none;
+  -webkit-tap-highlight-color:transparent;
 }
-.pill-btn.active{color:#fff;transition:color 0.2s ease 0.15s}
+.pill-btn.active{color:#fff;}
 .pill-btn .full-text,.pill-btn .short-text{display:none}
 .pill-btn.active .full-text{display:block}
 .pill-btn:not(.active) .short-text{display:block}
 
-@keyframes bounceIn{
-  0%{transform:scale(0.9);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1}
-}
-@keyframes pulse{
-  0%,100%{opacity:1} 50%{opacity:0.55}
-}
+@keyframes bounceIn{ 0%{transform:scale(0.94);opacity:0} 100%{transform:scale(1);opacity:1} }
+@keyframes spin{ to { transform: rotate(360deg); } }
 
 h2{
-  text-align:center;color:var(--dynamic-primary);margin:0 auto 18px;
-  width:max-content;font-size:20px;text-transform:uppercase;letter-spacing:1px;
-  font-weight:800;
+  text-align:center;color:var(--dynamic-primary);margin:0 auto 20px;
+  font-size:22px;letter-spacing:0.5px;font-weight:800;
 }
 
-.step-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.step{opacity:0.28;pointer-events:none;transition:opacity 0.4s ease}
-.step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.45s ease}
+.step-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px}
+.step{opacity:0.3;pointer-events:none;transition:opacity 0.4s ease}
+.step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)}
 .full-width{grid-column:span 2}
 
-label{font-weight:700;font-size:11px;display:block;margin-bottom:5px;color:var(--label-text);text-transform:uppercase}
+label{font-weight:600;font-size:12px;display:block;margin-bottom:6px;color:var(--label-text);text-transform:uppercase;letter-spacing:0.5px}
 input,select{
-  width:100%;height:44px;padding:0 12px;border-radius:10px;
-  border:1px solid var(--input-border);font-size:14px;background:var(--input-bg);
-  color:var(--text-primary);transition:border 0.2s,background 0.2s;
-  -webkit-appearance:none;cursor:pointer;
+  width:100%;height:46px;padding:0 14px;border-radius:12px;
+  border:1px solid var(--input-border);font-size:15px;background:var(--input-bg);
+  color:var(--text-primary);transition:all 0.2s; -webkit-appearance:none; outline:none;
 }
-input:focus,select:focus{outline:none;border-color:var(--dynamic-primary);background:var(--bg-secondary)}
+input:focus,select:focus{border-color:var(--dynamic-primary);background:var(--bg-primary);box-shadow:0 0 0 3px rgba(16, 185, 129, 0.1)}
+body.theme-carrefour input:focus, body.theme-carrefour select:focus {box-shadow:0 0 0 3px rgba(59, 130, 246, 0.1)}
+
 button{
-  width:100%;height:44px;padding:0 12px;border-radius:10px;border:none;
-  font-size:14px;font-weight:700;background:var(--button-secondary-bg);
-  color:var(--dynamic-primary);cursor:pointer;transition:background 0.2s,opacity 0.2s,transform 0.1s;
+  width:100%;height:46px;border-radius:12px;border:none; font-size:14px;font-weight:700;
+  background:var(--button-secondary-bg);color:var(--dynamic-primary);
+  cursor:pointer;transition:transform 0.1s, opacity 0.2s, background 0.2s;
 }
 button:active{transform:scale(0.97)}
 button.primary{
   background:var(--dynamic-primary);color:#fff;height:52px;font-size:16px;
-  box-shadow:0 4px 14px rgba(0,0,0,0.15);
+  box-shadow:0 4px 12px rgba(0,0,0,0.15); letter-spacing: 0.5px;
 }
-button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-button.loading{animation:pulse 0.9s ease-in-out infinite}
+button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 
-/* ══════════════════════════════════════════════════
-   SUBMIT BUTTON — progress ring style
-══════════════════════════════════════════════════ */
-#submitBtn {
-  position: relative;
-  overflow: hidden;
-  letter-spacing: 0.5px;
-}
-#submitBtn .btn-label { transition: opacity 0.2s; }
+/* Animated Submit State */
+#submitBtn { position: relative; overflow: hidden; }
 #submitBtn.submitting .btn-label { opacity: 0; }
-
-/* Animated shimmer fill for in-progress state */
-#submitBtn.submitting::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg,
-    rgba(255,255,255,0) 0%,
-    rgba(255,255,255,0.25) 50%,
-    rgba(255,255,255,0) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.1s linear infinite;
-}
-@keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position:  200% 0; }
-}
-#submitBtn .spinner {
-  display: none;
-  position: absolute;
-  top: 50%; left: 50%;
+#submitBtn .btn-spinner {
+  display: none; position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   width: 22px; height: 22px;
-  border: 2.5px solid rgba(255,255,255,0.35);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
+  border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin 0.6s linear infinite;
 }
-@keyframes spin { to { transform: translate(-50%,-50%) rotate(360deg); } }
-#submitBtn.submitting .spinner { display: block; }
+#submitBtn.submitting .btn-spinner { display: block; }
 
-/* ═══════════════════════════════════════════════════════
-   CAMERA SYSTEM
-═══════════════════════════════════════════════════════ */
+/* Camera */
 #step4{position:relative}
-
-#cameraBtnWrapper{
-  position:relative;
-}
-
+#cameraBtnWrapper{position:relative;}
 #videoContainerWrapper{
-  position:absolute;
-  bottom:0; right:0;
-  width:100%;
-  height:0;
-  border-radius:10px;
-  overflow:hidden;
-  z-index:60;
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  transform-origin:bottom right;
-  pointer-events:none;
+  position:absolute; bottom:0; right:0;
+  width:100%; height:0; border-radius:14px;
+  overflow:hidden; z-index:60;
+  transition: all 0.4s cubic-bezier(0.25, 1, 0.4, 1);
+  transform-origin:bottom right; opacity:0; pointer-events:none;
+  transform: scale(0.95);
 }
-
 #videoContainerWrapper.expanded{
-  width:calc(200% + 12px);
-  height:330px;
-  border-radius:14px;
-  pointer-events:auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+  width:calc(200% + 12px); height:330px;
+  pointer-events:auto; opacity:1; transform: scale(1);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
-
-.fallback-bg {
-  position: absolute;
-  inset: -30px; 
-  background-color: var(--fallback-cam-bg);
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  filter: blur(15px);
-  z-index: 1;
-}
-
-#cameraVideo{
-  position:relative;
-  z-index: 2;
-  width:100%;height:100%;object-fit:cover;display:block;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-#cameraVideo.live {
-  opacity: 1;
-}
-
-#cameraBackdrop{
-  display:none;position:fixed;inset:0;z-index:59;
-}
-#cameraBackdrop.show{display:block}
-
+#cameraVideo{ width:100%;height:100%;object-fit:cover;display:block; }
+#cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; }
+#cameraBackdrop.show{ display:block; }
 .camera-ui{
-  position:absolute;bottom:0;left:0;right:0;
-  padding:12px 16px 18px;
-  background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 100%);
-  display:flex;align-items:center;justify-content:center;
-  z-index: 3;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  position:absolute;bottom:0;left:0;right:0; padding:12px 16px 20px;
+  background:linear-gradient(to top,rgba(0,0,0,0.6) 0%,transparent 100%);
+  display:flex;align-items:center;justify-content:center; z-index:3;
 }
-#cameraVideo.live ~ .camera-ui { opacity: 1; }
-
 #captureBtn{
-  width:64px;height:64px;border-radius:50%;
-  background:rgba(255,255,255,0.28);border:4px solid rgba(255,255,255,0.92);
+  width:60px;height:60px;border-radius:50%;
+  background:rgba(255,255,255,0.3);border:4px solid rgba(255,255,255,0.95);
   cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:transform 0.12s;-webkit-tap-highlight-color:transparent;
+  transition:transform 0.1s;-webkit-tap-highlight-color:transparent;
 }
-#captureBtn::after{content:'';width:46px;height:46px;background:#fff;border-radius:50%;transition:transform 0.1s}
-#captureBtn:active{transform:scale(0.86)}
-#captureBtn:active::after{transform:scale(0.88)}
+#captureBtn::after{content:'';width:44px;height:44px;background:#fff;border-radius:50%;transition:transform 0.1s}
+#captureBtn:active{transform:scale(0.88)}
+#captureBtn:active::after{transform:scale(0.9)}
 
-/* Close camera button — no X weirdness, pure symbol */
 #closeCameraBtn{
-  position:absolute;top:10px;right:10px;
-  width:32px;height:32px;border-radius:50%;
-  background:rgba(0,0,0,0.45);border:1.5px solid rgba(255,255,255,0.4);
-  color:#fff;font-size:15px;line-height:1;
-  cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  z-index:4;
-  transition:background 0.15s, opacity 0.3s ease;
-  -webkit-tap-highlight-color:transparent;
-  opacity:0;
-  pointer-events:none;
-  /* Force consistent glyph rendering cross-platform */
-  font-family: -apple-system, system-ui, sans-serif;
-  font-style: normal;
-  font-weight: 300;
-  padding: 0;
-  text-rendering: geometricPrecision;
+  position:absolute;top:10px;right:10px; width:32px;height:32px;border-radius:50%;
+  background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);
+  color:#fff;font-size:14px; cursor:pointer; display:flex;align-items:center;justify-content:center;
+  z-index:4; -webkit-tap-highlight-color:transparent;
 }
-#cameraVideo.live ~ #closeCameraBtn { opacity: 1; pointer-events:auto; }
-#closeCameraBtn:active{background:rgba(0,0,0,0.75)}
 
-/* ═══════════════════════════════════════
-   PHOTO PREVIEW (WHATSAPP ZOOM STYLE)
-═══════════════════════════════════════ */
-.preview-wrapper {
-  width: 58px; height: 58px; position: relative;
-  display: none; margin: 4px auto 0;
+/* Pre-determined Action Badge */
+#actionBadge {
+  flex:2; height:46px; display:flex; align-items:center; padding:0 14px;
+  border-radius:12px; background:var(--bg-secondary); border:1px solid var(--input-border);
+  font-weight:700; color:var(--dynamic-primary); font-size:15px; letter-spacing:0.5px;
 }
+
+/* Photo Preview Overlay */
+.preview-wrapper { width: 56px; height: 56px; position: relative; display: none; margin: 0 auto; }
 #preview {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  object-fit: cover; border-radius: 50%;
-  border: 3px solid var(--success-color);
-  cursor: pointer; z-index: 1;
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
+  object-fit: cover; border-radius: 50%; border: 3px solid var(--success-color);
+  cursor: pointer; z-index: 1; transform: translateZ(0);
   will-change: top, left, width, height, transform, border-radius, opacity;
 }
 #previewOverlay{
-  display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,0.85);z-index:9999;
-  opacity:0;transition:opacity 0.38s ease;
+  display:none;position:fixed;inset:0; background:rgba(0,0,0,0.85);
+  z-index:9999; opacity:0; transition:opacity 0.3s ease; cursor:pointer;
 }
 #previewOverlay.show{opacity:1}
 
-/* ─── Close preview button — sits INSIDE overlay, no position weirdness ─── */
-#closePreviewBtn {
-  position: fixed;
-  /* positioned dynamically via JS — just define its look */
-  width: 36px; height: 36px;
-  background: rgba(0,0,0,0.45);
-  border: 1.5px solid rgba(255,255,255,0.55);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 300;
-  font-family: -apple-system, system-ui, sans-serif;
-  font-style: normal;
-  text-rendering: geometricPrecision;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  z-index: 10001;
-  backdrop-filter: blur(4px);
-  -webkit-tap-highlight-color: transparent;
-  opacity: 0;
-  transition: opacity 0.25s ease;
-  pointer-events: none;
-  /* No transform — JS places it precisely */
-}
-#closePreviewBtn.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-#closePreviewBtn:active {
-  background: rgba(255,255,255,0.25);
-}
-
-/* ═══════════════════════════════════════
-   MESSAGES / SUCCESS
-═══════════════════════════════════════ */
-.msg{
-  font-size:12px;font-weight:700;margin-top:6px;min-height:20px;
-  color:var(--text-tertiary);display:flex;align-items:center;transition:color 0.2s;
-}
+/* Messages */
+.msg{ font-size:12px;font-weight:600;margin-top:6px;min-height:20px; color:var(--text-tertiary);display:flex;align-items:center; }
 .msg.success{color:var(--success-color);font-size:13px}
 .msg.error  {color:var(--error-color)}
 .msg .dot{
   display:inline-flex;justify-content:center;align-items:center;
-  width:18px;height:18px;background:var(--success-color);border-radius:50%;
-  margin-right:8px;flex-shrink:0;position:relative;
+  width:16px;height:16px;background:var(--success-color);border-radius:50%;
+  margin-right:6px;flex-shrink:0;position:relative;
 }
 .msg .dot::after{
-  content:'';position:absolute;top:50%;left:50%;
-  width:4.5px;height:9px;
-  border-right:2.5px solid #fff;border-bottom:2.5px solid #fff;
-  transform:translate(-50%,-60%) rotate(45deg);
+  content:'';position:absolute;top:45%;left:50%; width:3.5px;height:7px;
+  border-right:2px solid #fff;border-bottom:2px solid #fff;
+  transform:translate(-50%,-50%) rotate(45deg);
 }
 
-#successScreen{
-  display:none;flex-direction:column;align-items:center;
-  padding:32px 24px 24px;text-align:center;width:100%;
-}
-.success-emoji{font-size:72px;margin-bottom:16px;animation:bounceIn 0.6s ease}
+/* Success Screen */
+#successScreen{ display:none;flex-direction:column;align-items:center; padding:24px 16px;text-align:center;width:100%; }
+.success-emoji{font-size:72px;margin-bottom:12px;animation:bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)}
 .success-badge{
   background:var(--dynamic-primary);color:#fff;font-size:13px;font-weight:800;
-  text-transform:uppercase;padding:8px 24px;border-radius:999px;
-  margin-bottom:24px;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,0.15);
+  text-transform:uppercase;padding:6px 20px;border-radius:999px;
+  margin-bottom:24px;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);
 }
 .success-card{
-  background:var(--success-card-bg);border:1.5px solid var(--success-card-border);
-  border-radius:16px;padding:24px 20px;width:100%;margin-bottom:18px;
-  animation:bounceIn 0.7s ease 0.1s backwards;
+  background:var(--success-card-bg);border:1px solid var(--success-card-border);
+  border-radius:20px;padding:24px 20px;width:100%;margin-bottom:20px;
+  animation:bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s backwards;
 }
-.success-name{font-size:28px;font-weight:800;color:var(--dynamic-primary);margin-bottom:12px}
-.success-msg {font-size:15px;font-weight:600;color:var(--text-secondary);line-height:1.6}
-.success-warning{
-  background:var(--warning-bg);border:1.5px solid var(--warning-border);
-  border-left:4px solid var(--error-color);border-radius:12px;
-  padding:14px 16px;width:100%;text-align:left;
-  font-size:13px;font-weight:700;color:var(--warning-text);
-  display:none;animation:bounceIn 0.7s ease 0.2s backwards;
-}
+.success-name{font-size:26px;font-weight:800;color:var(--dynamic-primary);margin-bottom:8px}
+.success-msg {font-size:15px;font-weight:600;color:var(--text-secondary);line-height:1.5}
 .success-back{
   width:100%;height:48px;background:var(--button-secondary-bg);
   color:var(--dynamic-primary);border:none;border-radius:12px;
-  font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;
+  font-size:15px;font-weight:700;cursor:pointer;
 }
 
+/* Modal */
 #guideModal{
   display:none;position:fixed;inset:0;background:var(--modal-overlay);
   z-index:19999;flex-direction:column;align-items:center;justify-content:center;
-  padding:20px;backdrop-filter:blur(4px);
+  padding:20px;backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
 }
 #guideModal .modal-box{
-  background:var(--bg-primary);padding:28px;border-radius:16px;
-  text-align:center;max-width:350px;width:100%;
+  background:var(--bg-primary);padding:28px;border-radius:20px;
+  text-align:center;max-width:340px;width:100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
 }
 #guideModal .modal-box h3{color:var(--error-color);margin:10px 0 16px;font-size:20px}
 .modal-instructions{
   background:var(--input-bg);color:var(--text-secondary);
-  padding:16px;border-radius:10px;margin-bottom:14px;
-  font-size:13px;line-height:1.6;text-align:left;
+  padding:16px;border-radius:12px;margin-bottom:18px;
+  font-size:13px;line-height:1.6;text-align:left; border: 1px solid var(--border-color);
 }
 </style>
 </head>
@@ -420,7 +278,7 @@ button.loading{animation:pulse 0.9s ease-in-out infinite}
 <body class="theme-chandarana">
 <script>
 var Storage={
-  set:function(k,v){try{localStorage.setItem(k,v)}catch(e){throw e}},
+  set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}},
   get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
   remove:function(k){try{localStorage.removeItem(k)}catch(e){}}
 };
@@ -431,10 +289,7 @@ var Storage={
 <div class="bg-layer bg-carrefour"></div>
 
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
-<div id="previewOverlay" onclick="collapsePreview()">
-  <!-- X button: no text content, uses ::before pseudo for the × glyph to avoid font rendering issues -->
-  <button id="closePreviewBtn" aria-label="Close preview" onclick="collapsePreview(); event.stopPropagation();">&#x2715;</button>
-</div>
+<div id="previewOverlay" onclick="collapsePreview()"></div>
 
 <div class="container">
   <div id="networkIndicator" class="network-indicator"></div>
@@ -478,7 +333,6 @@ var Storage={
         <label>Identity</label>
         <div id="cameraBtnWrapper">
           <div id="videoContainerWrapper">
-            <div class="fallback-bg" id="fallbackBg"></div>
             <video id="cameraVideo" autoplay playsinline muted></video>
             <button id="closeCameraBtn" onclick="stopCamera()" aria-label="Close camera">&#x2715;</button>
             <div class="camera-ui">
@@ -487,32 +341,25 @@ var Storage={
           </div>
           <button id="openCameraBtn" onclick="startCamera()">Take a Selfie</button>
         </div>
-        <!-- file input only used as fallback when camera permission denied -->
-        <input type="file" accept="image/*" id="cameraInput" style="display:none">
         <div id="cameraMsg" class="msg"></div>
       </div>
 
       <div id="step5" class="step full-width">
-        <label>Action</label>
-        <div style="display:flex;gap:10px;align-items:center;">
-          <select id="actionChoice" style="flex:2">
-            <option value="">Select...</option>
-            <option value="Clock In">Clock In</option>
-            <option value="Clock Out">Clock Out</option>
-          </select>
+        <label>Today's Action</label>
+        <div style="display:flex;gap:12px;align-items:center;">
+          <div id="actionBadge">...</div>
           <div style="flex:1;display:flex;justify-content:center;align-items:center;">
             <div id="previewWrapper" class="preview-wrapper">
               <img id="preview" alt="Selfie">
             </div>
           </div>
         </div>
-        <div id="actionMsg" class="msg"></div>
       </div>
 
       <div id="step6" class="step full-width">
         <button id="submitBtn" class="primary" onclick="submitAttendance()">
           <span class="btn-label">SUBMIT ATTENDANCE</span>
-          <div class="spinner"></div>
+          <div class="btn-spinner"></div>
         </button>
         <div id="submitMsg" class="msg" style="justify-content:center;text-align:center;"></div>
       </div>
@@ -527,7 +374,6 @@ var Storage={
       <div class="success-name"  id="successName"></div>
       <div class="success-msg"   id="successMsg"></div>
     </div>
-    <div class="success-warning" id="successWarning"></div>
     <button class="success-back" onclick="resetToStart()">← Submit Another</button>
   </div>
 </div>
@@ -538,7 +384,7 @@ var Storage={
     <h3 id="guideTitle">Action Blocked</h3>
     <div class="modal-instructions" id="guideText"></div>
     <button onclick="document.getElementById('guideModal').style.display='none'"
-      style="background:var(--dynamic-primary);color:#fff;border:none;padding:14px;border-radius:8px;width:100%;font-weight:700;cursor:pointer;">
+      style="background:var(--dynamic-primary);color:#fff;border:none;padding:14px;border-radius:12px;width:100%;font-weight:700;cursor:pointer;">
       GOT IT
     </button>
   </div>
@@ -549,111 +395,56 @@ var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm
 
 var currentTerminal = Storage.get('selected_terminal') || 'chandarana';
 var staff = [], branches = [], coords = null, staffName = "", photo = null;
-var isRestoring = false, activeFetchId = 0;
-var videoStream = null;
+var activeFetchId = 0, currentAction = "", videoStream = null;
 
-// ─── DEVICE TIER DETECTION ──────────────────────────────────────────────────
-// Returns 0=very-low, 1=low-mid, 2=mid, 3=high, 4=high-megapixel, 5=iphone
-var deviceTier = (function() {
-  var ua = navigator.userAgent || '';
-  var isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-  if (isIOS) return 5;
-
-  // Estimate RAM if available (Chrome only)
-  var ram = navigator.deviceMemory || 0; // 0 = unknown
-
-  // Estimate CPU
-  var cores = navigator.hardwareConcurrency || 0;
-
-  // Screen pixel ratio / resolution as proxy
-  var dpr   = window.devicePixelRatio || 1;
-  var sw    = window.screen.width  * dpr;
-  var sh    = window.screen.height * dpr;
-  var mpx   = (sw * sh) / 1e6; // Megapixels of screen — correlates with camera capability
-
-  if (ram <= 1 || cores <= 2) return 0;       // Very low-end
-  if (ram <= 2 || cores <= 4) return 1;       // Low-mid
-  if (mpx > 9 && ram >= 6)   return 4;       // High-end + large sensor phones
-  if (ram >= 4 || cores >= 6) return 3;       // High-end
-  return 2;                                   // Mid-range
-})();
-
-// Camera constraints per tier
-function getCameraConstraints() {
-  switch (deviceTier) {
-    case 0: // Very low — minimal, keep browser alive
-      return { video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }, audio: false };
-    case 1: // Low-mid
-      return { video: { facingMode: 'user', width: { ideal: 480 }, height: { ideal: 360 } }, audio: false };
-    case 2: // Mid-range
-      return { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
-    case 3: // High-end
-      return { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
-    case 4: // High-end large sensor
-      return { video: { facingMode: 'user', width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false };
-    case 5: // iPhone — uses exact constraints Safari handles best
-      return { video: { facingMode: { ideal: 'user' }, width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false };
-    default:
-      return { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
+// Clean old daily cache
+function cleanOldHistory() {
+  var today = new Date().toDateString();
+  var histRaw = Storage.get('local_history_' + currentTerminal);
+  if (histRaw) {
+    try {
+      var history = JSON.parse(histRaw); var updated = false;
+      for (var key in history) { if (!key.endsWith(today)) { delete history[key]; updated = true; } }
+      if (updated) Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
+    } catch(e){}
   }
 }
 
-// Capture quality + dimensions per tier
-function getCaptureConfig() {
-  switch (deviceTier) {
-    case 0: return { maxDim: 320, quality: 0.55 };
-    case 1: return { maxDim: 480, quality: 0.60 };
-    case 2: return { maxDim: 640, quality: 0.70 };
-    case 3: return { maxDim: 960, quality: 0.80 };
-    case 4: return { maxDim: 1280, quality: 0.85 };
-    case 5: return { maxDim: 1080, quality: 0.82 }; // iPhones — great encoder, keep reasonable
-    default:return { maxDim: 640, quality: 0.70 };
-  }
+// Ensure offline queue is processed
+function processSyncQueue() {
+  if (!navigator.onLine) return;
+  var qRaw = Storage.get('sync_queue'); if (!qRaw) return;
+  try {
+    var queue = JSON.parse(qRaw);
+    if (queue.length === 0) return;
+    var item = queue[0];
+    fetchFromServer('recordAttendance', item).then(function() {
+      var currentQ = JSON.parse(Storage.get('sync_queue') || '[]');
+      currentQ.shift(); Storage.set('sync_queue', JSON.stringify(currentQ));
+      processSyncQueue();
+    }).catch(function(e) { console.warn("Background sync delay", e); });
+  } catch(e) {}
 }
 
-// file input fallback: same quality tiers applied when processing uploaded image
-function getFileFallbackConfig() {
-  switch (deviceTier) {
-    case 0: return { maxDim: 320, quality: 0.55 };
-    case 1: return { maxDim: 480, quality: 0.60 };
-    case 2: return { maxDim: 640, quality: 0.70 };
-    case 3: return { maxDim: 960, quality: 0.78 };
-    case 4: return { maxDim: 1280, quality: 0.82 };
-    case 5: return { maxDim: 1080, quality: 0.80 };
-    default:return { maxDim: 640, quality: 0.70 };
-  }
-}
-
-// ─── INIT ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  updateTerminalUI();
-  checkNetworkStatus();
-  initApp();
-  if (window.matchMedia)
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
+  updateTerminalUI(); checkNetworkStatus(); cleanOldHistory(); initApp(); processSyncQueue();
+  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
 });
-window.addEventListener('online',  function(){ checkNetworkStatus(); });
+window.addEventListener('online', function(){ checkNetworkStatus(); processSyncQueue(); });
 window.addEventListener('offline', checkNetworkStatus);
 
-// ─── NETWORK ───────────────────────────────────────────────────────────────
 function checkNetworkStatus() {
   var ind = document.getElementById('networkIndicator');
-  if (navigator.onLine) ind.classList.remove('offline');
-  else ind.classList.add('offline');
+  if (navigator.onLine) ind.classList.remove('offline'); else ind.classList.add('offline');
 }
 
-// ─── THEMING ───────────────────────────────────────────────────────────────
 function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
   var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  var hexColor = currentTerminal === 'chandarana' ? (isDark ? '#064e3b' : '#52c234') : (isDark ? '#1e3a8a' : '#1a73e8');
   var meta = document.getElementById('theme-color-meta');
-  setTimeout(function() {
-    if (!meta) return;
-    meta.setAttribute('content',
-      currentTerminal === 'chandarana'
-        ? (isDark ? '#064e3b' : '#52c234')
-        : (isDark ? '#1e3a8a' : '#1a73e8'));
-  }, 200);
+  if (meta) meta.setAttribute('content', hexColor);
+  
   var title = document.getElementById('formTitle');
   title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
   document.getElementById('btn-chandarana').classList.toggle('active', currentTerminal === 'chandarana');
@@ -663,15 +454,15 @@ function updateTerminalUI() {
     if (ab && sl) { sl.style.width = ab.offsetWidth + 'px'; sl.style.left = ab.offsetLeft + 'px'; }
   }); });
 }
+
 function switchTerminal(term) {
   if (currentTerminal === term) return;
   currentTerminal = term; Storage.set('selected_terminal', term);
   staff = []; branches = [];
   document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
-  updateTerminalUI(); resetToStart(); initApp();
+  updateTerminalUI(); resetToStart(); cleanOldHistory(); initApp();
 }
 
-// ─── SERVER ────────────────────────────────────────────────────────────────
 function fetchFromServer(action, data) {
   return fetch(APPS_SCRIPT_URL, {
     method:'POST', headers:{'Content-Type':'text/plain'},
@@ -680,167 +471,102 @@ function fetchFromServer(action, data) {
     .then(function(j){ if(!j.ok) throw new Error(j.error||'Server error'); return j.data; });
 }
 
-// ─── INIT APP ──────────────────────────────────────────────────────────────
 function populateBranches(list) {
   if (!Array.isArray(list)) return;
-  document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' +
-    list.map(function(b){ return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
+  var options = '<option value="">Choose Branch</option>' + list.map(function(b){ return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
+  document.getElementById('branch').innerHTML = options;
+  
+  var savedBranch = Storage.get('last_branch_' + currentTerminal);
+  if (savedBranch) { document.getElementById('branch').value = savedBranch; handleBranchChange(); }
 }
+
 function initApp() {
   var myId = ++activeFetchId, cacheKey = currentTerminal + '_portal_data', cached = false;
   try {
     var raw = Storage.get(cacheKey);
-    if (raw) {
-      var p = JSON.parse(raw);
-      if (p && Array.isArray(p.branches)) {
-        staff = p.staff || []; branches = p.branches || [];
-        populateBranches(branches); restoreFromCache(); cached = true;
-      }
-    }
+    if (raw) { var p = JSON.parse(raw); if (p && Array.isArray(p.branches)) { staff = p.staff || []; branches = p.branches || []; populateBranches(branches); cached = true; } }
   } catch(e) {}
   fetchFromServer('getPortalData', {}).then(function(data) {
     if (myId !== activeFetchId) return;
     var changed = JSON.stringify(branches) !== JSON.stringify(data.branches);
     staff = data.staff || []; branches = data.branches || [];
     try { Storage.set(cacheKey, JSON.stringify({staff:staff, branches:branches})); } catch(e) {}
-    if (!cached || changed) { populateBranches(branches); if (!cached) restoreFromCache(); }
+    if (!cached || changed) { populateBranches(branches); }
   }).catch(function() {
     if (myId === activeFetchId && branches.length === 0)
-      document.getElementById('branch').innerHTML = '<option value="">Failed to load — check connection</option>';
+      document.getElementById('branch').innerHTML = '<option value="">Offline — waiting for connection</option>';
   });
 }
 
-// ─── LOCAL STATE TRACKING ──────────────────────────────────────────────────
-function getStaffLocalStatus(staffID) {
-  var todayKey = new Date().toDateString();
-  var histRaw = Storage.get('local_history_' + currentTerminal);
-  var history = histRaw ? JSON.parse(histRaw) : {};
-  var localStatus = history[staffID + '_' + todayKey];
-  if (localStatus) return localStatus;
-  var member = null;
-  for (var i = 0; i < staff.length; i++) {
-    if (staff[i].id === staffID) { member = staff[i]; break; }
-  }
-  return member ? member.status : null;
-}
-
-// ─── FORM CACHE ────────────────────────────────────────────────────────────
-function getFormCacheKey() { return currentTerminal + '_attendance_cache'; }
-function autoSave(capturing) {
-  if (isRestoring) return;
-  try {
-    Storage.set(getFormCacheKey(), JSON.stringify({
-      branch: document.getElementById('branch').value,
-      staffID: document.getElementById('staffID').value,
-      capturing: !!capturing,
-      lat: coords ? coords.latitude  : null,
-      lng: coords ? coords.longitude : null
-    }));
-  } catch(e) {}
-}
-function restoreFromCache() {
-  var raw = Storage.get(getFormCacheKey()); if (!raw) return;
-  isRestoring = true;
-  try {
-    var d = JSON.parse(raw);
-    if (d.branch) { var bEl = document.getElementById('branch'); bEl.value = d.branch; if (bEl.value) handleBranchChange(); }
-    if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput.call(document.getElementById('staffID')); }
-    if (d.lat && d.lng) { coords = {latitude:d.lat, longitude:d.lng}; showSuccess('gpsMsg','Location Verified'); activateStep(4); }
-    if (d.capturing) {
-      photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-      document.getElementById('preview').src = photo; 
-      document.getElementById('previewWrapper').style.display = 'block';
-      showSuccess('cameraMsg','Identity Restored'); activateStep(4); activateStep(5); autoSave(false);
-    }
-  } catch(e) {}
-  isRestoring = false;
-}
-
-// ─── STEPS ─────────────────────────────────────────────────────────────────
+// Steps Reset Logic
 function activateStep(n) { document.getElementById('step'+n).classList.add('activeStep'); }
 function resetStepsFrom(n) {
   for (var i = n; i <= 6; i++) { var el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep'); }
-  if (n<=1) { document.getElementById('branch').value=''; clearMsg('branchMsg'); }
   if (n<=2) { staffName=''; document.getElementById('staffID').value=''; clearMsg('staffMsg'); }
   if (n<=3) { coords=null; clearMsg('gpsMsg'); }
   if (n<=4) {
     photo=null; stopCamera(); collapsePreview();
     var pWrap=document.getElementById('previewWrapper'); if(pWrap) pWrap.style.display='none'; 
-    document.getElementById('preview').src='';
-    clearMsg('cameraMsg'); document.getElementById('cameraInput').value='';
+    document.getElementById('preview').src=''; clearMsg('cameraMsg');
   }
-  if (n<=5) { document.getElementById('actionChoice').value=''; clearMsg('actionMsg'); }
-  clearMsg('submitMsg'); autoSave(false);
+  if (n<=5) { currentAction=''; document.getElementById('actionBadge').textContent='...'; }
+  clearMsg('submitMsg');
 }
 function resetToStart() {
   document.getElementById('successScreen').style.display='none';
   document.getElementById('mainForm').style.display='block';
-  document.getElementById('branch').value=''; clearMsg('branchMsg');
-  resetStepsFrom(2); document.getElementById('step1').classList.add('activeStep');
-  Storage.remove(getFormCacheKey());
+  resetStepsFrom(2); 
+  document.getElementById('step1').classList.add('activeStep');
+  // Re-trigger branch change so it jumps straight to step 2 if a branch is already populated
+  handleBranchChange();
 }
 
-// ─── MSG HELPERS ───────────────────────────────────────────────────────────
 function showSuccess(id,txt){ var e=document.getElementById(id); e.innerHTML='<span class="dot"></span> '+txt; e.className='msg success'; }
 function showError(id,txt)  { var e=document.getElementById(id); e.innerText=txt; e.className='msg error'; }
 function clearMsg(id)       { var e=document.getElementById(id); e.innerText=''; e.className='msg'; }
 
-// ─── BRANCH / STAFF ────────────────────────────────────────────────────────
+// Interactions
 function handleBranchChange() {
   var val = document.getElementById('branch').value;
   if (!val) { resetStepsFrom(2); return; }
+  Storage.set('last_branch_' + currentTerminal, val);
   showSuccess('branchMsg','Branch Selected');
-  if (document.getElementById('step2').classList.contains('activeStep') &&
-      document.getElementById('staffID').value !== '') resetStepsFrom(2);
+  if (document.getElementById('step2').classList.contains('activeStep') && document.getElementById('staffID').value !== '') resetStepsFrom(2);
   if (!document.getElementById('step2').classList.contains('activeStep')) activateStep(2);
-  autoSave(false);
 }
 document.getElementById('branch').onchange = handleBranchChange;
 
 function handleStaffInput() {
   var val = this.value.trim();
-  if (val.length < 1) {
-    if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
-    clearMsg('staffMsg'); return;
-  }
+  if (val.length < 2) { resetStepsFrom(3); clearMsg('staffMsg'); return; }
+  
   var match = null;
   for (var i = 0; i < staff.length; i++) { if (staff[i].id === val) { match = staff[i]; break; } }
+  
   if (match) {
-    staffName = match.name; showSuccess('staffMsg','Welcome '+staffName);
+    staffName = match.name;
+    var todayKey = new Date().toDateString();
+    var historyRaw = Storage.get('local_history_' + currentTerminal);
+    var history = historyRaw ? JSON.parse(historyRaw) : {};
+    var lastAction = history[match.id + '_' + todayKey] || match.status;
+
+    if (lastAction === 'Clock Out') {
+      showError('staffMsg', 'You have completed today\'s attendance.');
+      resetStepsFrom(3); return;
+    }
+    
+    currentAction = (lastAction === 'Clock In') ? 'Clock Out' : 'Clock In';
+    document.getElementById('actionBadge').textContent = currentAction;
+    
+    showSuccess('staffMsg','Welcome '+staffName);
     if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
     if (!document.getElementById('step3').classList.contains('activeStep')) activateStep(3);
-    autoSave(false);
   } else {
-    if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
-    showError('staffMsg','Invalid Staff ID. Please check.');
+    resetStepsFrom(3); showError('staffMsg','Invalid Staff ID. Please check.');
   }
 }
 document.getElementById('staffID').oninput = handleStaffInput;
 
-document.getElementById('actionChoice').onchange = function() {
-  clearMsg('submitMsg');
-  var action = this.value;
-  if (!action) { clearMsg('actionMsg'); resetStepsFrom(6); return; }
-  var staffID = document.getElementById('staffID').value;
-  var lastAction = getStaffLocalStatus(staffID);
-  if (action === 'Clock In' && lastAction === 'Clock In') {
-    showError('actionMsg', 'You are already clocked in. Please Clock Out.');
-    resetStepsFrom(6); return;
-  }
-  if (action === 'Clock Out') {
-    if (!lastAction) {
-      showError('actionMsg', 'You have not clocked in yet. Please Clock In first.');
-      resetStepsFrom(6); return;
-    }
-    if (lastAction === 'Clock Out') {
-      showError('actionMsg', 'You have already clocked out today.');
-      resetStepsFrom(6); return;
-    }
-  }
-  showSuccess('actionMsg','Ready for Submission'); activateStep(6);
-};
-
-// ─── GPS ───────────────────────────────────────────────────────────────────
 function showGuideModal(type) {
   var modal=document.getElementById('guideModal'), title=document.getElementById('guideTitle'),
       text=document.getElementById('guideText'),   icon=document.getElementById('guideIcon');
@@ -852,16 +578,16 @@ function showGuideModal(type) {
   } else if (type==='gps_signal') {
     icon.textContent='📡'; title.textContent='Weak GPS Signal'; title.style.color='var(--warning-text)';
     text.innerHTML='<p>We couldn\'t get an accurate location reading.</p>'
-      +'<ul style="margin-top:8px;padding-left:20px"><li>Step outside or near a window.</li>'
-      +'<li>Turn WiFi ON — it helps GPS lock faster.</li></ul>';
+      +'<ul style="margin-top:8px;padding-left:20px"><li>Step outside or near a window.</li><li>Turn WiFi ON — it helps GPS lock faster.</li></ul>';
   } else if (type==='camera') {
-    icon.textContent='📸'; title.textContent='Camera Access Denied'; title.style.color='var(--warning-text)';
-    text.innerHTML='<p>Camera permission was not granted. Your device camera app will open so you can take a photo instead.</p>'
+    icon.textContent='📸'; title.textContent='Camera Access Denied'; title.style.color='var(--error-color)';
+    text.innerHTML='<p>Camera permission is required to capture your identity securely.</p>'
       +'<p style="margin-top:8px"><strong>🍎 iPhone:</strong> Settings → Safari/Chrome → Camera → Allow.</p>'
       +'<p style="margin-top:8px"><strong>🤖 Android:</strong> Site settings → Camera → Allow.</p>';
   }
   modal.style.display = 'flex';
 }
+
 function verifyGPS() {
   document.getElementById('gpsMsg').innerText='Locating…'; document.getElementById('gpsMsg').className='msg';
   if (!navigator.geolocation) { showError('gpsMsg','GPS not supported on this device.'); return; }
@@ -871,377 +597,185 @@ function verifyGPS() {
       var b=null, bv=document.getElementById('branch').value;
       for (var i=0;i<branches.length;i++) { if (branches[i][0]===bv){ b=branches[i]; break; } }
       if (!b) { showError('gpsMsg','Select branch first.'); return; }
-      var R=6371e3,
-          dLat=(b[1]-coords.latitude)*Math.PI/180,
-          dLon=(b[2]-coords.longitude)*Math.PI/180,
+      var R=6371e3, dLat=(b[1]-coords.latitude)*Math.PI/180, dLon=(b[2]-coords.longitude)*Math.PI/180,
           a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2),
           dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
       if (dist>250)
         showError('gpsMsg', dist>1000?'Too far ('+(dist/1000).toFixed(1)+'km)':'Too far ('+Math.round(dist)+'m) — move closer');
-      else { showSuccess('gpsMsg','Location Verified'); activateStep(4); autoSave(false); }
+      else { showSuccess('gpsMsg','Location Verified'); activateStep(4); }
     },
     function(err){ if(err.code===1) showGuideModal('gps'); else showGuideModal('gps_signal'); },
     {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
   );
 }
 
-// ─── CAMERA ─────────────────────────────────────────────────────────────────
+// Camera Optimization
 function startCamera() {
   var btn = document.getElementById('openCameraBtn');
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
 
-  // No getUserMedia support — skip straight to file fallback, no modal
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    openFileFallback();
-    return;
-  }
-
-  var lastPhoto = Storage.get('attendance_last_photo');
-  var bgEl = document.getElementById('fallbackBg');
-  if (lastPhoto) { bgEl.style.backgroundImage = "url('" + lastPhoto + "')"; }
-  else { bgEl.style.backgroundImage = ""; }
-
-  document.getElementById('videoContainerWrapper').classList.add('expanded');
-  document.getElementById('cameraBackdrop').classList.add('show');
   btn.classList.add('loading');
-  btn.textContent = 'Loading Camera...';
+  btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; position:relative; transform:none; width:16px; height:16px; margin-right:8px; vertical-align:middle; border-width:2px; top:auto; left:auto;"></span><span style="vertical-align:middle;">Starting Camera...</span>';
   clearMsg('cameraMsg');
 
-  navigator.mediaDevices.getUserMedia(getCameraConstraints())
+  var constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
+  navigator.mediaDevices.getUserMedia(constraints)
     .then(function(stream) {
       videoStream = stream;
       var video = document.getElementById('cameraVideo');
       video.srcObject = stream;
       video.onloadedmetadata = function() {
         video.play().catch(function(){});
-        requestAnimationFrame(function() {
-          video.classList.add('live');
-          btn.classList.remove('loading');
-        });
+        document.getElementById('videoContainerWrapper').classList.add('expanded');
+        document.getElementById('cameraBackdrop').classList.add('show');
+        btn.classList.remove('loading');
+        btn.innerText = 'Take a Selfie';
       };
     })
     .catch(function(err) {
-      console.warn('Camera failed:', err.name, err.message);
-      document.getElementById('videoContainerWrapper').classList.remove('expanded');
-      document.getElementById('cameraBackdrop').classList.remove('show');
-      btn.textContent = 'Take a Selfie';
+      console.warn('Camera failed:', err);
       btn.classList.remove('loading');
-
-      // Permission denied → show guide then open file picker (no capture attr = gallery)
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        showGuideModal('camera');
-        // Delay file open so the modal appears first; user sees it and taps Got It,
-        // then we still need to open picker. We hook the Got It button once.
-        var gotItBtn = document.querySelector('#guideModal button');
-        var origClick = gotItBtn.onclick;
-        gotItBtn.onclick = function() {
-          gotItBtn.onclick = origClick;
-          openFileFallback();
-        };
-      } else {
-        // Other failure (e.g. device busy) — open file fallback immediately
-        openFileFallback();
-      }
+      btn.innerText = 'Take a Selfie';
+      showGuideModal('camera');
     });
-}
-
-// Opens file picker WITHOUT capture="user" so native camera is NOT forced
-// (user chose or was forced to deny camera; we don't open their native camera app)
-function openFileFallback() {
-  var inp = document.getElementById('cameraInput');
-  inp.removeAttribute('capture');
-  inp.click();
 }
 
 function capturePhoto() {
   var video = document.getElementById('cameraVideo');
-  var cfg   = getCaptureConfig();
-  var vw    = video.videoWidth  || 640;
-  var vh    = video.videoHeight || 480;
-
-  // Scale down if larger than our tier's max
-  var scale = 1;
-  if (vw > cfg.maxDim || vh > cfg.maxDim) {
-    scale = cfg.maxDim / Math.max(vw, vh);
-  }
-  var w = Math.round(vw * scale);
-  var h = Math.round(vh * scale);
-
+  var vw = video.videoWidth || 640, vh = video.videoHeight || 480;
+  var maxDim = 640, scale = (vw > maxDim || vh > maxDim) ? (maxDim / Math.max(vw, vh)) : 1;
   var canvas = document.createElement('canvas');
-  canvas.width  = w;
-  canvas.height = h;
-
+  canvas.width = Math.round(vw * scale); canvas.height = Math.round(vh * scale);
   var ctx = canvas.getContext('2d');
-  // For very-low-end devices disable image smoothing to reduce CPU load
-  if (deviceTier === 0) {
-    ctx.imageSmoothingEnabled = false;
-  } else {
-    ctx.imageSmoothingEnabled  = true;
-    ctx.imageSmoothingQuality  = deviceTier >= 3 ? 'high' : 'medium';
-  }
-  ctx.drawImage(video, 0, 0, w, h);
-
-  photo = canvas.toDataURL('image/jpeg', cfg.quality);
-  try { Storage.set('attendance_last_photo', photo); } catch(e){}
-
-  var p = document.getElementById('preview'); p.src = photo;
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'medium';
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  photo = canvas.toDataURL('image/jpeg', 0.70);
+  document.getElementById('preview').src = photo;
   document.getElementById('previewWrapper').style.display = 'block';
   showSuccess('cameraMsg','Identity Captured');
-  activateStep(5); autoSave(false);
+  
+  // Instantly enable steps 5 and 6
+  activateStep(5);
+  showSuccess('submitMsg', 'Ready for Submission');
+  activateStep(6);
+  
   stopCamera();
 }
 
 function stopCamera() {
-  var wrapper  = document.getElementById('videoContainerWrapper');
-  var backdrop = document.getElementById('cameraBackdrop');
-  var video    = document.getElementById('cameraVideo');
-  var btn      = document.getElementById('openCameraBtn');
-
-  wrapper.classList.remove('expanded');
-  backdrop.classList.remove('show');
-  video.classList.remove('live');
-
-  if (btn) {
-    btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
-    btn.classList.remove('loading');
-    btn.disabled = false;
-  }
-
+  var wrapper = document.getElementById('videoContainerWrapper'), backdrop = document.getElementById('cameraBackdrop');
+  wrapper.classList.remove('expanded'); backdrop.classList.remove('show');
+  var btn = document.getElementById('openCameraBtn');
+  if (btn && !btn.classList.contains('loading')) btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
+  
   setTimeout(function() {
     if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
-    video.srcObject = null;
-  }, 300);
+    document.getElementById('cameraVideo').srcObject = null;
+  }, 400);
 }
 
-// File input fallback — respects device tier quality settings
-document.getElementById('cameraInput').onchange = function(e) {
-  var file = e.target.files[0]; if (!file) return;
-  autoSave(true); showSuccess('cameraMsg','Processing…');
-  var url = URL.createObjectURL(file); var img = new Image();
-  img.onload = function() {
-    try {
-      var cfg = getFileFallbackConfig();
-      var max = cfg.maxDim;
-      var q   = cfg.quality;
-      var w = img.width, h = img.height;
-      if (w > max || h > max) {
-        if (w > h) { h = Math.floor(h * max / w); w = max; }
-        else       { w = Math.floor(w * max / h); h = max; }
-      }
-      var canvas = document.createElement('canvas'); canvas.width=w; canvas.height=h;
-      var ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = deviceTier > 0;
-      ctx.imageSmoothingQuality = deviceTier >= 3 ? 'high' : 'medium';
-      ctx.drawImage(img, 0, 0, w, h);
-      photo = canvas.toDataURL('image/jpeg', q);
-      try { Storage.set('attendance_last_photo', photo); } catch(err){}
-      var p = document.getElementById('preview'); p.src = photo;
-      document.getElementById('previewWrapper').style.display = 'block';
-      showSuccess('cameraMsg','Identity Captured'); activateStep(5); autoSave(false);
-    } catch(err){ showError('cameraMsg','Error processing photo.'); }
-    finally { URL.revokeObjectURL(url); }
-  };
-  img.onerror = function(){ URL.revokeObjectURL(url); showError('cameraMsg','Could not read image.'); };
-  img.src = url;
-};
-
-// ─── SMOOTH ZOOM + FADE-OUT COLLAPSE ──────────────────────────────────────
+// Photo Zoom - simplified closing
 document.getElementById('preview').onclick = function() {
-  var p  = document.getElementById('preview');
-  var ov = document.getElementById('previewOverlay');
-  if (p.classList.contains('enlarged')) return;
-
+  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
+  if (p.classList.contains('enlarged')) return collapsePreview();
   var rect = p.getBoundingClientRect();
-  p.style.transition = 'none';
-  p.style.position   = 'fixed';
-  p.style.top        = rect.top + 'px';
-  p.style.left       = rect.left + 'px';
-  p.style.width      = rect.width + 'px';
-  p.style.height     = rect.height + 'px';
-  p.style.margin     = '0';
-  p.style.transform  = 'translate(0,0)';
-  p.style.zIndex     = '10000';
-  p.style.opacity    = '1';
-
+  p.style.transition = 'none'; p.style.position = 'fixed';
+  p.style.top = rect.top + 'px'; p.style.left = rect.left + 'px';
+  p.style.width = rect.width + 'px'; p.style.height = rect.height + 'px';
+  p.style.margin = '0'; p.style.transform = 'translate(0,0)';
+  p.style.zIndex = '10000'; p.style.opacity = '1';
   void p.offsetWidth;
-
-  p.style.transition   = 'all 0.35s cubic-bezier(0.25,1,0.4,1)';
-  p.style.top          = '50%';
-  p.style.left         = '50%';
-  var targetSize       = Math.min(window.innerWidth * 0.8, 320);
-  p.style.width        = targetSize + 'px';
-  p.style.height       = targetSize + 'px';
-  p.style.transform    = 'translate(-50%,-50%)';
-  p.style.borderRadius = '24px';
-  p.style.borderWidth  = '0px';
-  p.style.boxShadow    = '0 15px 40px rgba(0,0,0,0.5)';
-
+  
+  p.style.transition = 'all 0.35s cubic-bezier(0.25,1,0.4,1)';
+  p.style.top = '50%'; p.style.left = '50%';
+  var targetSize = Math.min(window.innerWidth * 0.8, 320);
+  p.style.width = targetSize + 'px'; p.style.height = targetSize + 'px';
+  p.style.transform = 'translate(-50%,-50%)'; p.style.borderRadius = '24px';
+  p.style.borderWidth = '0px'; p.style.boxShadow = '0 20px 40px rgba(0,0,0,0.5)';
   p.classList.add('enlarged');
-
-  ov.style.display = 'block';
-  void ov.offsetWidth;
-  ov.classList.add('show');
-
-  // Position close button above the photo, centered
-  var closeBtn = document.getElementById('closePreviewBtn');
-  closeBtn.style.top       = 'calc(50% - ' + (targetSize / 2 + 28) + 'px)';
-  closeBtn.style.left      = '50%';
-  closeBtn.style.transform = 'translateX(-50%)';
-  closeBtn.classList.add('show');
+  
+  ov.style.display = 'block'; void ov.offsetWidth; ov.classList.add('show');
 };
 
 function collapsePreview() {
-  var p  = document.getElementById('preview');
-  var ov = document.getElementById('previewOverlay');
+  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (!p.classList.contains('enlarged')) return;
-
-  document.getElementById('closePreviewBtn').classList.remove('show');
-
-  var wrapper = document.getElementById('previewWrapper');
-  var rect    = wrapper.getBoundingClientRect();
-
-  // Phase 1: animate back toward the circle, AND fade out halfway through
-  p.style.transition   = 'top 0.32s cubic-bezier(0.4,0,0.2,1), left 0.32s cubic-bezier(0.4,0,0.2,1), width 0.32s cubic-bezier(0.4,0,0.2,1), height 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s ease, opacity 0.18s ease 0.12s';
-  p.style.top          = rect.top + 'px';
-  p.style.left         = rect.left + 'px';
-  p.style.width        = rect.width + 'px';
-  p.style.height       = rect.height + 'px';
-  p.style.transform    = 'translate(0,0)';
-  p.style.borderRadius = '50%';
-  p.style.borderWidth  = '3px';
-  p.style.boxShadow    = 'none';
-  p.style.opacity      = '0';   // fades starting after 120ms delay
-
+  var wrapper = document.getElementById('previewWrapper'), rect = wrapper.getBoundingClientRect();
+  
+  p.style.transition = 'top 0.3s cubic-bezier(0.4,0,0.2,1), left 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1), height 0.3s cubic-bezier(0.4,0,0.2,1), border-radius 0.3s ease, opacity 0.15s ease 0.15s';
+  p.style.top = rect.top + 'px'; p.style.left = rect.left + 'px';
+  p.style.width = rect.width + 'px'; p.style.height = rect.height + 'px';
+  p.style.transform = 'translate(0,0)'; p.style.borderRadius = '50%'; p.style.borderWidth = '3px';
+  p.style.boxShadow = 'none'; p.style.opacity = '0';
   ov.classList.remove('show');
-
+  
   setTimeout(function() {
-    // Phase 2: snap back to natural in-flow position (invisible, so no jump)
-    p.style.transition   = 'none';
-    p.style.position     = 'absolute';
-    p.style.top          = '0';
-    p.style.left         = '0';
-    p.style.width        = '100%';
-    p.style.height       = '100%';
-    p.style.transform    = 'none';
-    p.style.zIndex       = '1';
-    p.style.borderRadius = '';
-    p.style.borderWidth  = '';
-    p.style.boxShadow    = '';
-    p.style.margin       = '';
-    // Fade back in gently so the circle reappears cleanly
-    p.style.opacity      = '0';
-    p.classList.remove('enlarged');
-    ov.style.display = 'none';
-
-    requestAnimationFrame(function() {
-      p.style.transition = 'opacity 0.18s ease';
-      p.style.opacity    = '1';
-    });
-  }, 330);
+    p.style.transition = 'none'; p.style.position = 'absolute';
+    p.style.top = '0'; p.style.left = '0'; p.style.width = '100%'; p.style.height = '100%';
+    p.style.transform = 'none'; p.style.zIndex = '1'; p.style.borderRadius = ''; p.style.borderWidth = '';
+    p.style.opacity = '0'; p.classList.remove('enlarged'); ov.style.display = 'none';
+    requestAnimationFrame(function() { p.style.transition = 'opacity 0.2s ease'; p.style.opacity = '1'; });
+  }, 320);
 }
 
-// ─── SUBMIT ────────────────────────────────────────────────────────────────
+// Background Sync Queue
+function queueSubmission(payload) {
+  var queue = JSON.parse(Storage.get('sync_queue') || '[]');
+  queue.push(payload); Storage.set('sync_queue', JSON.stringify(queue));
+  processSyncQueue();
+}
+
 function submitAttendance() {
-  var branch  = document.getElementById('branch').value;
-  var staffID = document.getElementById('staffID').value;
-  var action  = document.getElementById('actionChoice').value;
-  if (!branch||!staffID||!action) { showError('submitMsg','Complete all steps.'); return; }
-
-  if (!navigator.onLine) {
-    showError('submitMsg', 'No internet connection. Please connect and try again.');
-    return;
-  }
-
-  var lastAction = getStaffLocalStatus(staffID);
-  if (action === 'Clock In' && lastAction === 'Clock In') {
-    showError('submitMsg', 'You have already clocked in today.'); return;
-  }
-  if (action === 'Clock Out') {
-    if (!lastAction) { showError('submitMsg', 'You must Clock In first before Clocking Out.'); return; }
-    if (lastAction === 'Clock Out') { showError('submitMsg', 'You have already clocked out today.'); return; }
-  }
-
+  var branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
+  if (!branch||!staffID||!currentAction||!photo) return;
+  
   var submitBtn = document.getElementById('submitBtn');
-  submitBtn.disabled = true;
-  submitBtn.classList.add('submitting');
-
+  submitBtn.disabled = true; submitBtn.classList.add('submitting');
+  
+  // Record locally to prevent duplicates
+  var todayKey = new Date().toDateString();
+  var histRaw = Storage.get('local_history_' + currentTerminal);
+  var history = histRaw ? JSON.parse(histRaw) : {};
+  history[staffID + '_' + todayKey] = currentAction;
+  Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
+  
   var payload = {
-    name:staffName, id:staffID, branch:branch, action:action, image:photo,
-    lat:coords?coords.latitude:0, lng:coords?coords.longitude:0,
-    clientTimestamp:new Date().toISOString()
+    name: staffName, id: staffID, branch: branch, action: currentAction, image: photo,
+    lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0,
+    clientTimestamp: new Date().toISOString()
   };
-
-  fetchFromServer('recordAttendance', payload).then(function() {
-    var member = null;
-    for (var i = 0; i < staff.length; i++) { if (staff[i].id===staffID){ member=staff[i]; break; } }
-    if (member) member.status = action;
-
-    var todayKey = new Date().toDateString();
-    var histRaw  = Storage.get('local_history_' + currentTerminal);
-    var history  = histRaw ? JSON.parse(histRaw) : {};
-    history[staffID + '_' + todayKey] = action;
-    try { Storage.set('local_history_' + currentTerminal, JSON.stringify(history)); } catch(e){}
-
-    submitBtn.disabled = false;
-    submitBtn.classList.remove('submitting');
-    finishSubmission(action);
-
-  }).catch(function(err) {
-    // Surface the real error to aid debugging; user sees friendly message
-    console.error('Submit error:', err);
-    showError('submitMsg', 'Could not reach the server. Please check your connection and try again.');
-    submitBtn.disabled = false;
-    submitBtn.classList.remove('submitting');
-  });
+  
+  // Optimistic UI update instantly
+  queueSubmission(payload);
+  setTimeout(function() {
+    submitBtn.disabled = false; submitBtn.classList.remove('submitting');
+    finishSubmission(currentAction);
+  }, 300); // 300ms delay to make the click feel satisfying before changing screens
 }
 
-// ─── LOGOUT / RESET ────────────────────────────────────────────────────────
-// Note: "logout" in this app is just resetToStart + clearing session state.
-// The original "server error on logout" was because fetchFromServer('logout')
-// doesn't exist in the Apps Script. We simply reset client-side only.
-function logout() {
-  stopCamera();
-  collapsePreview();
-  Storage.remove(getFormCacheKey());
-  resetToStart();
-}
-
-// ─── FINISH SUBMISSION ─────────────────────────────────────────────────────
 function finishSubmission(action) {
-  Storage.remove(getFormCacheKey());
   var firstName = staffName.split(' ')[0] || staffName;
-  var now  = new Date();
-  var hrs  = now.getHours();
-  var mins = now.getMinutes();
-  var timeVal = hrs + (mins / 60.0);
-
-  var emoji='✅', badge='Submitted', msg='', warning=null;
+  var hrs = new Date().getHours(), mins = new Date().getMinutes(), timeVal = hrs + (mins / 60.0);
+  var emoji='✅', msg='';
 
   if (action === 'Clock In') {
-    if (timeVal < 6.5) {
-      emoji='🌟'; badge='On Time!'; msg="Fantastic start — you're early today! Keep it up.";
-    } else if (timeVal <= 7.6667) {
-      emoji='✅'; badge='On Time!'; msg="Great, you are on time for the morning shift.";
-    } else if (timeVal < 11.0) {
-      emoji='⏰'; badge='Clocked In'; msg="Late for morning shift."; warning="⚠️ Consistent late clock-ins are reviewed by management.";
-    } else if (timeVal < 14.0) {
-      emoji='🌟'; badge='On Time!'; msg="Early for the second shift. Great job!";
-    } else if (timeVal <= 14.6667) {
-      emoji='✅'; badge='On Time!'; msg="On time for the second shift. Have a productive afternoon!";
-    } else {
-      emoji='⏰'; badge='Clocked In'; msg="Late for afternoon shift."; warning="⚠️ Late clock-ins are reviewed by management.";
-    }
+    if (timeVal < 6.5)      { emoji='🌟'; msg="Fantastic start — you're early today! Keep it up."; }
+    else if (timeVal <= 7.66) { emoji='✅'; msg="Great, you are on time for the morning shift."; }
+    else if (timeVal < 11.0){ emoji='⏰'; msg="Clocked in. Note: Late for morning shift."; }
+    else if (timeVal < 14.0){ emoji='🌟'; msg="Early for the second shift. Great job!"; }
+    else if (timeVal <= 14.66){ emoji='✅'; msg="On time for the second shift. Have a productive afternoon!"; }
+    else                    { emoji='⏰'; msg="Clocked in. Note: Late for afternoon shift."; }
   } else {
-    if (hrs < 16) { emoji='👋'; badge='Clocked Out'; msg="Have a wonderful afternoon!"; }
-    else          { emoji='🌙'; badge='Clocked Out'; msg="Have a restful night!"; }
+    if (hrs < 16) { emoji='👋'; msg="Have a wonderful afternoon!"; }
+    else          { emoji='🌙'; msg="Have a restful night!"; }
   }
 
-  document.getElementById('successEmoji').textContent   = emoji;
-  document.getElementById('successBadge').textContent   = badge;
-  document.getElementById('successName').textContent    = firstName;
-  document.getElementById('successMsg').textContent     = msg;
-  var w = document.getElementById('successWarning');
-  if (warning) { w.textContent=warning; w.style.display='block'; } else { w.style.display='none'; }
-  document.getElementById('mainForm').style.display     = 'none';
+  document.getElementById('successEmoji').textContent = emoji;
+  document.getElementById('successName').textContent = firstName;
+  document.getElementById('successMsg').textContent = msg;
+  
+  document.getElementById('mainForm').style.display = 'none';
   document.getElementById('successScreen').style.display = 'flex';
 }
 </script>
