@@ -163,8 +163,8 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 #videoContainerWrapper{
   position:absolute; bottom:0; right:0;
   width:100%; height:0; border-radius:14px;
-  overflow:hidden; z-index:60;
-  transition: all 0.4s cubic-bezier(0.25, 1, 0.4, 1);
+  overflow:hidden; z-index:60; background-color: #000;
+  transition: all 0.85s cubic-bezier(0.25, 1, 0.4, 1);
   transform-origin:bottom right; opacity:0; pointer-events:none;
   transform: scale(0.95);
 }
@@ -174,7 +174,12 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
 /* transform scaleX(-1) mirrors the live preview so it acts like a real mirror */
-#cameraVideo{ width:100%;height:100%;object-fit:cover;display:block; transform: scaleX(-1); }
+#cameraVideo{ 
+  width:100%;height:100%;object-fit:cover;display:block; transform: scaleX(-1); 
+  opacity: 0; transition: opacity 0.4s ease; 
+}
+#cameraVideo.live { opacity: 1; }
+
 #cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; }
 #cameraBackdrop.show{ display:block; }
 .camera-ui{
@@ -199,14 +204,7 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   z-index:4; -webkit-tap-highlight-color:transparent;
 }
 
-/* Pre-determined Action Badge */
-#actionBadge {
-  flex:2; height:46px; display:flex; align-items:center; padding:0 14px;
-  border-radius:12px; background:var(--bg-secondary); border:1px solid var(--input-border);
-  font-weight:700; color:var(--dynamic-primary); font-size:15px; letter-spacing:0.5px;
-}
-
-/* Photo Preview Overlay */
+/* Photo Preview & Inline Name */
 .preview-wrapper { width: 56px; height: 56px; position: relative; display: none; margin: 0 auto; }
 #preview {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -216,7 +214,7 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 }
 #previewOverlay{
   display:none;position:fixed;inset:0; background:rgba(0,0,0,0.85);
-  z-index:9999; opacity:0; transition:opacity 0.4s ease; cursor:pointer;
+  z-index:9999; opacity:0; transition:opacity 0.25s ease; cursor:pointer;
 }
 #previewOverlay.show{opacity:1}
 
@@ -345,13 +343,11 @@ var Storage={
       </div>
 
       <div id="step5" class="step full-width">
-        <label>Today's Action</label>
-        <div style="display:flex;gap:12px;align-items:center;">
-          <div id="actionBadge">...</div>
-          <div style="flex:1;display:flex;justify-content:center;align-items:center;">
-            <div id="previewWrapper" class="preview-wrapper">
-              <img id="preview" alt="Selfie">
-            </div>
+        <!-- Clean, bolder inline display of Name and Photo -->
+        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-secondary); padding:10px 16px; border-radius:16px; border:1px solid var(--border-color); box-shadow:0 2px 8px rgba(0,0,0,0.02);">
+          <div id="staffNameDisplay" style="font-size:18px; font-weight:800; color:var(--dynamic-primary); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:12px;"></div>
+          <div id="previewWrapper" class="preview-wrapper" style="margin:0; flex-shrink:0;">
+            <img id="preview" alt="Selfie">
           </div>
         </div>
       </div>
@@ -511,8 +507,7 @@ function resetStepsFrom(n) {
   }
   if (n<=5) { 
     currentAction=''; 
-    document.getElementById('actionBadge').textContent='...'; 
-    document.getElementById('actionBadge').style.color='var(--dynamic-primary)';
+    document.getElementById('staffNameDisplay').textContent=''; 
   }
   clearMsg('submitMsg');
 }
@@ -561,8 +556,7 @@ function handleStaffInput() {
     }
     
     currentAction = (lastAction === 'Clock In') ? 'Clock Out' : 'Clock In';
-    document.getElementById('actionBadge').textContent = currentAction;
-    document.getElementById('actionBadge').style.color = 'var(--dynamic-primary)';
+    document.getElementById('staffNameDisplay').textContent = staffName;
     
     showSuccess('staffMsg','Welcome '+staffName);
     if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
@@ -615,10 +609,14 @@ function verifyGPS() {
   );
 }
 
-// Camera Optimization - Ask for High Definition
+// Camera Optimization - Instant slow expansion masks load time
 function startCamera() {
   var btn = document.getElementById('openCameraBtn');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
+
+  // Immediately expand container slowly to mask camera load
+  document.getElementById('videoContainerWrapper').classList.add('expanded');
+  document.getElementById('cameraBackdrop').classList.add('show');
 
   btn.classList.add('loading');
   btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; position:relative; transform:none; width:16px; height:16px; margin-right:8px; vertical-align:middle; border-width:2px; top:auto; left:auto;"></span><span style="vertical-align:middle;">Starting Camera...</span>';
@@ -633,14 +631,15 @@ function startCamera() {
       video.srcObject = stream;
       video.onloadedmetadata = function() {
         video.play().catch(function(){});
-        document.getElementById('videoContainerWrapper').classList.add('expanded');
-        document.getElementById('cameraBackdrop').classList.add('show');
+        video.classList.add('live');
         btn.classList.remove('loading');
         btn.innerText = 'Take a Selfie';
       };
     })
     .catch(function(err) {
       console.warn('Camera failed:', err);
+      document.getElementById('videoContainerWrapper').classList.remove('expanded');
+      document.getElementById('cameraBackdrop').classList.remove('show');
       btn.classList.remove('loading');
       btn.innerText = 'Take a Selfie';
       showGuideModal('camera');
@@ -649,7 +648,6 @@ function startCamera() {
 
 function capturePhoto() {
   var video = document.getElementById('cameraVideo');
-  // High quality capture bounds
   var vw = video.videoWidth || 1280, vh = video.videoHeight || 720;
   var maxDim = 1280, scale = (vw > maxDim || vh > maxDim) ? (maxDim / Math.max(vw, vh)) : 1;
   
@@ -683,16 +681,19 @@ function capturePhoto() {
 function stopCamera() {
   var wrapper = document.getElementById('videoContainerWrapper'), backdrop = document.getElementById('cameraBackdrop');
   wrapper.classList.remove('expanded'); backdrop.classList.remove('show');
+  var video = document.getElementById('cameraVideo');
+  video.classList.remove('live');
+  
   var btn = document.getElementById('openCameraBtn');
   if (btn && !btn.classList.contains('loading')) btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
   
   setTimeout(function() {
     if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
-    document.getElementById('cameraVideo').srcObject = null;
+    video.srcObject = null;
   }, 400);
 }
 
-// Smooth Photo Zoom Implementation
+// Snappier Photo Zoom Implementation
 document.getElementById('preview').onclick = function() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (p.classList.contains('enlarged')) return collapsePreview();
@@ -710,11 +711,11 @@ document.getElementById('preview').onclick = function() {
   p.style.transform = 'translate(0,0)';
   p.style.zIndex = '10000';
   
-  // Force a browser reflow to register fixed coordinates before applying transition
+  // Force a browser reflow
   void p.offsetWidth;
   
-  // Apply purely dimensional transition directly to center
-  p.style.transition = 'all 0.4s cubic-bezier(0.25, 1, 0.4, 1)';
+  // Apply faster purely dimensional transition
+  p.style.transition = 'all 0.25s cubic-bezier(0.25, 1, 0.4, 1)';
   p.style.top = '50%'; 
   p.style.left = '50%';
   var targetSize = Math.min(window.innerWidth * 0.85, 360);
@@ -738,8 +739,8 @@ function collapsePreview() {
   var wrapper = document.getElementById('previewWrapper');
   var rect = wrapper.getBoundingClientRect();
   
-  // Animate strictly physical dimensions back to root location
-  p.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+  // Snappier return animation
+  p.style.transition = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
   p.style.top = rect.top + 'px'; 
   p.style.left = rect.left + 'px';
   p.style.width = rect.width + 'px'; 
@@ -750,9 +751,9 @@ function collapsePreview() {
   p.style.boxShadow = 'none';
   ov.classList.remove('show');
   
-  // Snap back into relative DOM structure once transition visual completes
+  // Snap back after 250ms
   setTimeout(function() {
-    if (!p.classList.contains('enlarged')) return; // Safety check
+    if (!p.classList.contains('enlarged')) return;
     p.style.transition = 'none'; 
     p.style.position = 'absolute';
     p.style.top = '0'; 
@@ -765,7 +766,7 @@ function collapsePreview() {
     p.style.borderWidth = '';
     p.classList.remove('enlarged'); 
     ov.style.display = 'none';
-  }, 400); // Matches transition duration
+  }, 250);
 }
 
 // Background Sync Queue
@@ -775,12 +776,10 @@ function queueSubmission(payload) {
   processSyncQueue();
 }
 
+// INSTANT Submit implementation
 function submitAttendance() {
   var branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
   if (!branch||!staffID||!currentAction||!photo || currentAction==='Completed') return;
-  
-  var submitBtn = document.getElementById('submitBtn');
-  submitBtn.disabled = true; submitBtn.classList.add('submitting');
   
   // Record locally to prevent duplicates
   var todayKey = new Date().toDateString();
@@ -795,12 +794,10 @@ function submitAttendance() {
     clientTimestamp: new Date().toISOString()
   };
   
-  // Optimistic UI update instantly
   queueSubmission(payload);
-  setTimeout(function() {
-    submitBtn.disabled = false; submitBtn.classList.remove('submitting');
-    finishSubmission(currentAction);
-  }, 300); // 300ms delay to make the click feel satisfying before changing screens
+  
+  // Execute instantly (0 delay)
+  finishSubmission(currentAction);
 }
 
 function finishSubmission(action) {
@@ -824,6 +821,7 @@ function finishSubmission(action) {
   document.getElementById('successName').textContent = firstName;
   document.getElementById('successMsg').textContent = msg;
   
+  // Switch to success screen instantly
   document.getElementById('mainForm').style.display = 'none';
   document.getElementById('successScreen').style.display = 'flex';
 }
