@@ -8,27 +8,18 @@
 <script>
   (function() {
     try {
-      var t      = localStorage.getItem('selected_terminal') || 'chandarana';
+      var savedTerm = localStorage.getItem('selected_terminal') || 'chandarana';
       var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.className = 'theme-' + t;
       var meta = document.getElementById('theme-color-meta');
-      if (meta) meta.setAttribute('content',
-        t === 'carrefour'
-          ? (isDark ? '#1e3a8a' : '#1a73e8')
-          : (isDark ? '#064e3b' : '#52c234')
-      );
+      if (meta) {
+        if (savedTerm === 'carrefour') meta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
+        else meta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
+      }
     } catch(e) {}
   })();
 </script>
 <title>Store Attendance</title>
 <style>
-html { background: #52c234; }
-html.theme-chandarana { background: #52c234; }
-html.theme-carrefour  { background: #1a73e8; }
-@media (prefers-color-scheme: dark) {
-  html.theme-chandarana { background: #064e3b; }
-  html.theme-carrefour  { background: #1e3a8a; }
-}
 :root {
   --bg-primary:#ffffff; --bg-secondary:#f9f9f9;
   --text-primary:#1a1a1a; --text-secondary:#666666; --text-tertiary:#999999;
@@ -41,9 +32,9 @@ html.theme-carrefour  { background: #1a73e8; }
   --label-text:#666666;
   --theme-chan:#059669; --theme-carr:#1a73e8;
   --dynamic-primary:var(--theme-chan);
-  --fallback-cam-bg:#ffffff;
+  --fallback-cam-bg: #ffffff; 
 }
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme:dark) {
   :root {
     --bg-primary:#1a1a2e; --bg-secondary:#16213e;
     --text-primary:#f5f5f5; --text-secondary:#b0b0b0; --text-tertiary:#808080;
@@ -55,10 +46,10 @@ html.theme-carrefour  { background: #1a73e8; }
     --modal-overlay:rgba(0,0,0,0.88); --shadow-color:rgba(0,0,0,0.4);
     --label-text:#a0a0a0;
     --theme-chan:#10b981; --theme-carr:#3b82f6;
-    --fallback-cam-bg:#000000;
+    --fallback-cam-bg: #000000; 
   }
 }
-*,*::before,*::after { box-sizing:border-box; margin:0; padding:0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body {
   font-family:'Segoe UI',Tahoma,sans-serif; color:var(--text-primary);
   min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
@@ -66,236 +57,332 @@ body {
   padding:max(12px,env(safe-area-inset-top)) 10px 32px;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
 }
-.bg-layer { position:fixed; inset:0; transition:opacity 0.5s ease-in-out; }
-.bg-chandarana {
-  background:linear-gradient(135deg,#52c234 0%,#52c234 75%,#1a73e8 100%);
-  z-index:-2; opacity:1 !important;
+.bg-layer{position:fixed;inset:0;z-index:-1;transition:opacity 0.5s ease-in-out}
+.bg-chandarana{background:linear-gradient(135deg,#52c234 0%,#52c234 75%,#1a73e8 100%);opacity:1}
+.bg-carrefour {background:linear-gradient(135deg,#1a73e8 0%,#1a73e8 75%,#52c234 100%);opacity:0}
+@media (prefers-color-scheme:dark){
+  .bg-chandarana{background:linear-gradient(135deg,#064e3b 0%,#064e3b 75%,#1e3a8a 100%)}
+  .bg-carrefour {background:linear-gradient(135deg,#1e3a8a 0%,#1e3a8a 75%,#064e3b 100%)}
 }
-.bg-carrefour {
-  background:linear-gradient(135deg,#1a73e8 0%,#1a73e8 75%,#52c234 100%);
-  z-index:-1; opacity:0;
-}
-@media (prefers-color-scheme: dark) {
-  .bg-chandarana { background:linear-gradient(135deg,#064e3b 0%,#064e3b 75%,#1e3a8a 100%); }
-  .bg-carrefour  { background:linear-gradient(135deg,#1e3a8a 0%,#1e3a8a 75%,#064e3b 100%); }
-}
-body.theme-chandarana .bg-carrefour { opacity:0; }
-body.theme-carrefour  .bg-carrefour { opacity:1; }
-body.theme-chandarana { --dynamic-primary:var(--theme-chan); }
-body.theme-carrefour  { --dynamic-primary:var(--theme-carr); --success-color:#1a73e8; }
-@media (prefers-color-scheme: dark) { body.theme-carrefour { --success-color:#3b82f6; } }
-.container {
-  max-width:420px; width:100%; margin:auto; background:var(--bg-primary);
-  padding:22px 20px 26px; border-radius:20px;
+body.theme-chandarana .bg-chandarana{opacity:1}
+body.theme-chandarana .bg-carrefour {opacity:0}
+body.theme-carrefour  .bg-chandarana{opacity:0}
+body.theme-carrefour  .bg-carrefour {opacity:1}
+body.theme-chandarana{--dynamic-primary:var(--theme-chan)}
+body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#1a73e8}
+@media (prefers-color-scheme:dark){body.theme-carrefour{--success-color:#3b82f6}}
+
+.container{
+  max-width:420px;width:100%;margin:auto;background:var(--bg-primary);
+  padding:22px 20px 26px;border-radius:20px;
   box-shadow:0 10px 40px var(--shadow-color);
   position:relative; overflow:visible;
 }
-.network-indicator {
-  position:absolute; top:16px; left:16px; width:6px; height:6px; border-radius:50%;
-  background:var(--success-color); opacity:0.6; transition:background 0.4s ease;
+.network-indicator{
+  position:absolute;top:16px;left:16px;width:6px;height:6px;border-radius:50%;
+  background:var(--success-color);opacity:0.6;transition:background 0.4s ease;
 }
-.network-indicator.offline { background:var(--text-tertiary); opacity:0.4; }
-.top-bar { display:flex; justify-content:flex-end; margin-bottom:8px; }
-.terminal-pill-wrapper {
-  position:relative; display:inline-flex; background:var(--input-bg);
-  border:1px solid var(--border-color); border-radius:50px; padding:4px; height:42px;
-  box-shadow:inset 0 2px 5px rgba(0,0,0,0.08); align-items:center;
+.network-indicator.offline{background:var(--text-tertiary);opacity:0.4}
+
+.top-bar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.terminal-pill-wrapper{
+  position:relative;display:inline-flex;background:var(--input-bg);
+  border:1px solid var(--border-color);border-radius:50px;padding:4px;height:42px;
+  box-shadow:inset 0 2px 5px rgba(0,0,0,0.08);align-items:center;
 }
-.pill-slider {
-  position:absolute; top:4px; bottom:4px; left:4px; border-radius:50px;
-  background:var(--dynamic-primary); box-shadow:0 2px 6px rgba(0,0,0,0.2);
-  transition:all 0.35s cubic-bezier(0.25,1,0.5,1); z-index:1;
+.pill-slider{
+  position:absolute;top:4px;bottom:4px;left:4px;border-radius:50px;
+  background:var(--dynamic-primary);box-shadow:0 2px 6px rgba(0,0,0,0.2);
+  transition:all 0.35s cubic-bezier(0.25,1,0.5,1);z-index:1;
 }
-.pill-btn {
-  position:relative; z-index:2; background:transparent; border:none;
-  padding:0 16px; height:100%; font-size:13.5px; font-weight:800;
-  color:var(--text-secondary); cursor:pointer; transition:color 0.15s ease;
-  display:flex; align-items:center; justify-content:center;
-  outline:none; -webkit-tap-highlight-color:transparent;
+.pill-btn{
+  position:relative;z-index:2;background:transparent;border:none;
+  padding:0 16px;height:100%;font-size:13.5px;font-weight:800;
+  color:var(--text-secondary);cursor:pointer;transition:color 0.15s ease;
+  display:flex;align-items:center;justify-content:center;
+  outline:none;-webkit-tap-highlight-color:transparent;
 }
-.pill-btn.active { color:#fff; transition:color 0.2s ease 0.15s; }
-.pill-btn .full-text, .pill-btn .short-text { display:none; }
-.pill-btn.active .full-text { display:block; }
-.pill-btn:not(.active) .short-text { display:block; }
-@keyframes bounceIn {
-  0%   { transform:scale(0.9); opacity:0; }
-  60%  { transform:scale(1.05); }
-  100% { transform:scale(1); opacity:1; }
+.pill-btn.active{color:#fff;transition:color 0.2s ease 0.15s}
+.pill-btn .full-text,.pill-btn .short-text{display:none}
+.pill-btn.active .full-text{display:block}
+.pill-btn:not(.active) .short-text{display:block}
+
+@keyframes bounceIn{
+  0%{transform:scale(0.9);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1}
 }
-@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.55; } }
-h2 {
-  text-align:center; color:var(--dynamic-primary); margin:0 auto 18px;
-  width:max-content; font-size:20px; text-transform:uppercase;
-  letter-spacing:1px; font-weight:800;
+@keyframes pulse{
+  0%,100%{opacity:1} 50%{opacity:0.55}
 }
-.step-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-.step { opacity:0.28; pointer-events:none; transition:opacity 0.4s ease; }
-.step.activeStep { opacity:1; pointer-events:auto; animation:bounceIn 0.45s ease; }
-.full-width { grid-column:span 2; }
-label { font-weight:700; font-size:11px; display:block; margin-bottom:5px; color:var(--label-text); text-transform:uppercase; }
-input, select {
-  width:100%; height:44px; padding:0 12px; border-radius:10px;
-  border:1px solid var(--input-border); font-size:14px; background:var(--input-bg);
-  color:var(--text-primary); transition:border 0.2s, background 0.2s;
-  -webkit-appearance:none; cursor:pointer;
+
+h2{
+  text-align:center;color:var(--dynamic-primary);margin:0 auto 18px;
+  width:max-content;font-size:20px;text-transform:uppercase;letter-spacing:1px;
+  font-weight:800;
 }
-input:focus, select:focus { outline:none; border-color:var(--dynamic-primary); background:var(--bg-secondary); }
-button {
-  width:100%; height:44px; padding:0 12px; border-radius:10px; border:none;
-  font-size:14px; font-weight:700; background:var(--button-secondary-bg);
-  color:var(--dynamic-primary); cursor:pointer; transition:background 0.2s, opacity 0.2s, transform 0.1s;
+
+.step-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.step{opacity:0.28;pointer-events:none;transition:opacity 0.4s ease}
+.step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.45s ease}
+.full-width{grid-column:span 2}
+
+label{font-weight:700;font-size:11px;display:block;margin-bottom:5px;color:var(--label-text);text-transform:uppercase}
+input,select{
+  width:100%;height:44px;padding:0 12px;border-radius:10px;
+  border:1px solid var(--input-border);font-size:14px;background:var(--input-bg);
+  color:var(--text-primary);transition:border 0.2s,background 0.2s;
+  -webkit-appearance:none;cursor:pointer;
 }
-button:active { transform:scale(0.97); }
-button.primary {
-  background:var(--dynamic-primary); color:#fff; height:52px; font-size:16px;
+input:focus,select:focus{outline:none;border-color:var(--dynamic-primary);background:var(--bg-secondary)}
+button{
+  width:100%;height:44px;padding:0 12px;border-radius:10px;border:none;
+  font-size:14px;font-weight:700;background:var(--button-secondary-bg);
+  color:var(--dynamic-primary);cursor:pointer;transition:background 0.2s,opacity 0.2s,transform 0.1s;
+}
+button:active{transform:scale(0.97)}
+button.primary{
+  background:var(--dynamic-primary);color:#fff;height:52px;font-size:16px;
   box-shadow:0 4px 14px rgba(0,0,0,0.15);
 }
-button:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
-button.loading { animation:pulse 0.9s ease-in-out infinite; }
-#step4 { position:relative; }
-#cameraBtnWrapper { position:relative; }
-#videoContainerWrapper {
-  position:absolute; bottom:0; right:0; width:100%; height:0;
-  border-radius:10px; overflow:hidden; z-index:60;
-  transition:all 0.3s cubic-bezier(0.25,1,0.5,1);
-  transform-origin:bottom right; pointer-events:none;
+button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
+button.loading{animation:pulse 0.9s ease-in-out infinite}
+
+/* ═══════════════════════════════════════════════════════
+   CAMERA SYSTEM
+═══════════════════════════════════════════════════════ */
+#step4{position:relative}
+
+#cameraBtnWrapper{
+  position:relative;
 }
-#videoContainerWrapper.expanded {
-  width:calc(200% + 12px); height:330px; border-radius:14px;
-  pointer-events:auto; box-shadow:0 10px 30px rgba(0,0,0,0.3);
+
+#videoContainerWrapper{
+  position:absolute;
+  bottom:0; right:0;
+  width:100%;
+  height:0;
+  border-radius:10px;
+  overflow:hidden;
+  z-index:60;
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  transform-origin:bottom right;
+  pointer-events:none;
 }
+
+#videoContainerWrapper.expanded{
+  width:calc(200% + 12px);
+  height:330px;
+  border-radius:14px;
+  pointer-events:auto;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
 .fallback-bg {
-  position:absolute; inset:-30px; background-color:var(--fallback-cam-bg);
-  background-position:center; background-size:cover; background-repeat:no-repeat;
-  filter:blur(15px); z-index:1;
+  position: absolute;
+  inset: -30px; 
+  background-color: var(--fallback-cam-bg);
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  filter: blur(15px);
+  z-index: 1;
 }
-#cameraVideo {
-  position:relative; z-index:2; width:100%; height:100%;
-  object-fit:cover; display:block;
-  opacity:0; transition:opacity 0.4s ease;
+
+#cameraVideo{
+  position:relative;
+  z-index: 2;
+  width:100%;height:100%;object-fit:cover;display:block;
+  opacity: 0;
+  transition: opacity 0.4s ease;
 }
-#cameraVideo.live { opacity:1; }
-#cameraBackdrop { display:none; position:fixed; inset:0; z-index:59; }
-#cameraBackdrop.show { display:block; }
-.camera-ui {
-  position:absolute; bottom:0; left:0; right:0; padding:12px 16px 18px;
+#cameraVideo.live {
+  opacity: 1;
+}
+
+#cameraBackdrop{
+  display:none;position:fixed;inset:0;z-index:59;
+}
+#cameraBackdrop.show{display:block}
+
+.camera-ui{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:12px 16px 18px;
   background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 100%);
-  display:flex; align-items:center; justify-content:center; z-index:3;
-  opacity:0; transition:opacity 0.3s ease;
+  display:flex;align-items:center;justify-content:center;
+  z-index: 3;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
-#cameraVideo.live ~ .camera-ui { opacity:1; }
-#captureBtn {
-  width:64px; height:64px; border-radius:50%;
-  background:rgba(255,255,255,0.28); border:4px solid rgba(255,255,255,0.92);
-  cursor:pointer; display:flex; align-items:center; justify-content:center;
-  transition:transform 0.12s; -webkit-tap-highlight-color:transparent;
+#cameraVideo.live ~ .camera-ui { opacity: 1; }
+
+#captureBtn{
+  width:64px;height:64px;border-radius:50%;
+  background:rgba(255,255,255,0.28);border:4px solid rgba(255,255,255,0.92);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform 0.12s;-webkit-tap-highlight-color:transparent;
 }
-#captureBtn::after { content:''; width:46px; height:46px; background:#fff; border-radius:50%; transition:transform 0.1s; }
-#captureBtn:active { transform:scale(0.86); }
-#captureBtn:active::after { transform:scale(0.88); }
-#closeCameraBtn {
-  position:absolute; top:10px; right:10px; width:30px; height:30px; border-radius:50%;
-  background:rgba(0,0,0,0.42); border:none; color:#fff; font-size:14px;
-  cursor:pointer; display:flex; align-items:center; justify-content:center; z-index:3;
-  transition:background 0.15s, opacity 0.3s ease; -webkit-tap-highlight-color:transparent; opacity:0;
+#captureBtn::after{content:'';width:46px;height:46px;background:#fff;border-radius:50%;transition:transform 0.1s}
+#captureBtn:active{transform:scale(0.86)}
+#captureBtn:active::after{transform:scale(0.88)}
+
+#closeCameraBtn{
+  position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;
+  background:rgba(0,0,0,0.42);border:none;color:#fff;font-size:14px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  z-index: 3;
+  transition:background 0.15s, opacity 0.3s ease;-webkit-tap-highlight-color:transparent;
+  opacity: 0;
 }
-#cameraVideo.live ~ #closeCameraBtn { opacity:1; }
-#closeCameraBtn:active { background:rgba(0,0,0,0.75); }
+#cameraVideo.live ~ #closeCameraBtn { opacity: 1; }
+#closeCameraBtn:active{background:rgba(0,0,0,0.75)}
+
+/* ═══════════════════════════════════════════
+   PHOTO PREVIEW (WHATSAPP ZOOM STYLE)
+═══════════════════════════════════════════ */
 .preview-wrapper {
-  width:58px; height:58px; position:relative; display:none; margin:4px auto 0;
+  width: 58px; height: 58px; position: relative;
+  display: none; margin: 4px auto 0;
 }
 #preview {
-  position:absolute; top:0; left:0; width:100%; height:100%;
-  object-fit:cover; border-radius:50%; border:3px solid var(--success-color);
-  cursor:pointer; z-index:1;
-  transform:translateZ(0); -webkit-transform:translateZ(0);
-  backface-visibility:hidden; -webkit-backface-visibility:hidden;
-  will-change:top,left,width,height,transform,border-radius;
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  object-fit: cover; border-radius: 50%;
+  border: 3px solid var(--success-color);
+  cursor: pointer; z-index: 1;
+  /* Hardware acceleration to prevent layout jump glitches */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: top, left, width, height, transform, border-radius;
 }
-#previewOverlay {
-  display:none; position:fixed; inset:0;
-  background:rgba(0,0,0,0.85); z-index:9999;
-  opacity:0; transition:opacity 0.38s ease;
+#previewOverlay{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,0.85);z-index:9999;
+  opacity:0;transition:opacity 0.38s ease;
 }
-#previewOverlay.show { opacity:1; }
-.msg {
-  font-size:12px; font-weight:700; margin-top:6px; min-height:20px;
-  color:var(--text-tertiary); display:flex; align-items:center; transition:color 0.2s;
+#previewOverlay.show{opacity:1}
+
+/* The X Close Button styling - dynamically centered above the picture via JS */
+#closePreviewBtn {
+  position: fixed;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.2);
+  border: 2px solid rgba(255,255,255,0.8);
+  color: #fff;
+  font-size: 16px;
+  font-weight: bold;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  backdrop-filter: blur(4px);
+  -webkit-tap-highlight-color: transparent;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
 }
-.msg.success { color:var(--success-color); font-size:13px; }
-.msg.error   { color:var(--error-color); }
-.msg .dot {
-  display:inline-flex; justify-content:center; align-items:center;
-  width:18px; height:18px; background:var(--success-color); border-radius:50%;
-  margin-right:8px; flex-shrink:0; position:relative;
+#closePreviewBtn.show {
+  opacity: 1;
+  pointer-events: auto;
 }
-.msg .dot::after {
-  content:''; position:absolute; top:50%; left:50%;
-  width:4.5px; height:9px;
-  border-right:2.5px solid #fff; border-bottom:2.5px solid #fff;
+#closePreviewBtn:active {
+  background: rgba(255,255,255,0.4);
+}
+
+/* ═══════════════════════════════════════
+   MESSAGES / SUCCESS
+═══════════════════════════════════════ */
+.msg{
+  font-size:12px;font-weight:700;margin-top:6px;min-height:20px;
+  color:var(--text-tertiary);display:flex;align-items:center;transition:color 0.2s;
+}
+.msg.success{color:var(--success-color);font-size:13px}
+.msg.error  {color:var(--error-color)}
+.msg .dot{
+  display:inline-flex;justify-content:center;align-items:center;
+  width:18px;height:18px;background:var(--success-color);border-radius:50%;
+  margin-right:8px;flex-shrink:0;position:relative;
+}
+.msg .dot::after{
+  content:'';position:absolute;top:50%;left:50%;
+  width:4.5px;height:9px;
+  border-right:2.5px solid #fff;border-bottom:2.5px solid #fff;
   transform:translate(-50%,-60%) rotate(45deg);
 }
-#successScreen {
-  display:none; flex-direction:column; align-items:center;
-  padding:32px 24px 24px; text-align:center; width:100%;
+
+#successScreen{
+  display:none;flex-direction:column;align-items:center;
+  padding:32px 24px 24px;text-align:center;width:100%;
 }
-.success-emoji  { font-size:72px; margin-bottom:16px; animation:bounceIn 0.6s ease; }
-.success-badge  {
-  background:var(--dynamic-primary); color:#fff; font-size:13px; font-weight:800;
-  text-transform:uppercase; padding:8px 24px; border-radius:999px;
-  margin-bottom:24px; display:inline-block; box-shadow:0 4px 12px rgba(0,0,0,0.15);
+.success-emoji{font-size:72px;margin-bottom:16px;animation:bounceIn 0.6s ease}
+.success-badge{
+  background:var(--dynamic-primary);color:#fff;font-size:13px;font-weight:800;
+  text-transform:uppercase;padding:8px 24px;border-radius:999px;
+  margin-bottom:24px;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,0.15);
 }
-.success-card {
-  background:var(--success-card-bg); border:1.5px solid var(--success-card-border);
-  border-radius:16px; padding:24px 20px; width:100%; margin-bottom:18px;
+.success-card{
+  background:var(--success-card-bg);border:1.5px solid var(--success-card-border);
+  border-radius:16px;padding:24px 20px;width:100%;margin-bottom:18px;
   animation:bounceIn 0.7s ease 0.1s backwards;
 }
-.success-name { font-size:28px; font-weight:800; color:var(--dynamic-primary); margin-bottom:12px; }
-.success-msg  { font-size:15px; font-weight:600; color:var(--text-secondary); line-height:1.6; }
-.success-warning {
-  background:var(--warning-bg); border:1.5px solid var(--warning-border);
-  border-left:4px solid var(--error-color); border-radius:12px;
-  padding:14px 16px; width:100%; text-align:left;
-  font-size:13px; font-weight:700; color:var(--warning-text);
-  display:none; animation:bounceIn 0.7s ease 0.2s backwards;
+.success-name{font-size:28px;font-weight:800;color:var(--dynamic-primary);margin-bottom:12px}
+.success-msg {font-size:15px;font-weight:600;color:var(--text-secondary);line-height:1.6}
+.success-warning{
+  background:var(--warning-bg);border:1.5px solid var(--warning-border);
+  border-left:4px solid var(--error-color);border-radius:12px;
+  padding:14px 16px;width:100%;text-align:left;
+  font-size:13px;font-weight:700;color:var(--warning-text);
+  display:none;animation:bounceIn 0.7s ease 0.2s backwards;
 }
-.success-back {
-  width:100%; height:48px; background:var(--button-secondary-bg);
-  color:var(--dynamic-primary); border:none; border-radius:12px;
-  font-size:15px; font-weight:700; cursor:pointer; margin-top:8px;
+.success-back{
+  width:100%;height:48px;background:var(--button-secondary-bg);
+  color:var(--dynamic-primary);border:none;border-radius:12px;
+  font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;
 }
-#guideModal {
-  display:none; position:fixed; inset:0; background:var(--modal-overlay);
-  z-index:19999; flex-direction:column; align-items:center; justify-content:center;
-  padding:20px; backdrop-filter:blur(4px);
+
+#guideModal{
+  display:none;position:fixed;inset:0;background:var(--modal-overlay);
+  z-index:19999;flex-direction:column;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(4px);
 }
-#guideModal .modal-box {
-  background:var(--bg-primary); padding:28px; border-radius:16px;
-  text-align:center; max-width:350px; width:100%;
+#guideModal .modal-box{
+  background:var(--bg-primary);padding:28px;border-radius:16px;
+  text-align:center;max-width:350px;width:100%;
 }
-#guideModal .modal-box h3 { color:var(--error-color); margin:10px 0 16px; font-size:20px; }
-.modal-instructions {
-  background:var(--input-bg); color:var(--text-secondary);
-  padding:16px; border-radius:10px; margin-bottom:14px;
-  font-size:13.5px; line-height:1.6; text-align:left;
+#guideModal .modal-box h3{color:var(--error-color);margin:10px 0 16px;font-size:20px}
+.modal-instructions{
+  background:var(--input-bg);color:var(--text-secondary);
+  padding:16px;border-radius:10px;margin-bottom:14px;
+  font-size:13px;line-height:1.6;text-align:left;
 }
 </style>
 </head>
+
 <body class="theme-chandarana">
 <script>
-var Storage = {
-  set:    function(k,v) { try { localStorage.setItem(k,v); }    catch(e) {} },
-  get:    function(k)   { try { return localStorage.getItem(k); } catch(e) { return null; } },
-  remove: function(k)   { try { localStorage.removeItem(k); }    catch(e) {} }
+var Storage={
+  set:function(k,v){try{localStorage.setItem(k,v)}catch(e){throw e}},
+  get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
+  remove:function(k){try{localStorage.removeItem(k)}catch(e){}}
 };
-(function() { document.body.className = 'theme-' + (Storage.get('selected_terminal') || 'chandarana'); })();
+(function(){document.body.className='theme-'+(Storage.get('selected_terminal')||'chandarana')})();
 </script>
+
 <div class="bg-layer bg-chandarana"></div>
 <div class="bg-layer bg-carrefour"></div>
+
+<!-- Tap-outside backdrop for camera -->
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
-<div id="previewOverlay" onclick="collapsePreview()"></div>
+<!-- Tap overlay for photo zoom with dynamically positioned Close Button -->
+<div id="previewOverlay" onclick="collapsePreview()">
+  <button id="closePreviewBtn" onclick="collapsePreview(); event.stopPropagation();">✕</button>
+</div>
+
 <div class="container">
   <div id="networkIndicator" class="network-indicator"></div>
+
   <div id="mainForm">
     <div class="top-bar">
       <div class="terminal-pill-wrapper">
@@ -308,23 +395,29 @@ var Storage = {
         </button>
       </div>
     </div>
+
     <h2 id="formTitle">Chandarana</h2>
+
     <div class="step-grid">
+
       <div id="step1" class="step activeStep full-width">
         <label>Branch</label>
-        <select id="branch"><option value="">Loading…</option></select>
+        <select id="branch"><option value="">Loading...</option></select>
         <div id="branchMsg" class="msg"></div>
       </div>
+
       <div id="step2" class="step full-width">
         <label>Staff ID</label>
         <input id="staffID" type="tel" placeholder="Enter your ID" autocomplete="off">
         <div id="staffMsg" class="msg"></div>
       </div>
+
       <div id="step3" class="step">
         <label>GPS Location</label>
         <button onclick="verifyGPS()">Verify</button>
         <div id="gpsMsg" class="msg"></div>
       </div>
+
       <div id="step4" class="step">
         <label>Identity</label>
         <div id="cameraBtnWrapper">
@@ -338,15 +431,15 @@ var Storage = {
           </div>
           <button id="openCameraBtn" onclick="startCamera()">Take a Selfie</button>
         </div>
-        <!-- file input ONLY used for tier-0 (very low-end). Never used as camera-denied fallback. -->
-        <input type="file" accept="image/*" id="cameraInput" style="display:none">
+        <input type="file" accept="image/*" capture="user" id="cameraInput" style="display:none">
         <div id="cameraMsg" class="msg"></div>
       </div>
+
       <div id="step5" class="step full-width">
         <label>Action</label>
         <div style="display:flex;gap:10px;align-items:center;">
           <select id="actionChoice" style="flex:2">
-            <option value="">Select…</option>
+            <option value="">Select...</option>
             <option value="Clock In">Clock In</option>
             <option value="Clock Out">Clock Out</option>
           </select>
@@ -358,23 +451,27 @@ var Storage = {
         </div>
         <div id="actionMsg" class="msg"></div>
       </div>
+
       <div id="step6" class="step full-width">
         <button id="submitBtn" class="primary" onclick="submitAttendance()">SUBMIT ATTENDANCE</button>
         <div id="submitMsg" class="msg" style="justify-content:center;text-align:center;"></div>
       </div>
+
     </div>
   </div>
+
   <div id="successScreen">
-    <div class="success-emoji" id="successEmoji">😊</div>
-    <div class="success-badge" id="successBadge">Submitted</div>
+    <div class="success-emoji"   id="successEmoji">😊</div>
+    <div class="success-badge"   id="successBadge">Submitted</div>
     <div class="success-card">
-      <div class="success-name" id="successName"></div>
-      <div class="success-msg"  id="successMsg"></div>
+      <div class="success-name"  id="successName"></div>
+      <div class="success-msg"   id="successMsg"></div>
     </div>
     <div class="success-warning" id="successWarning"></div>
     <button class="success-back" onclick="resetToStart()">← Submit Another</button>
   </div>
 </div>
+
 <div id="guideModal">
   <div class="modal-box">
     <div id="guideIcon" style="font-size:44px;margin-bottom:10px;">🛑</div>
@@ -386,179 +483,38 @@ var Storage = {
     </button>
   </div>
 </div>
+
 <script>
-/* ═══════════════════════════════════════════════════════
-   DEVICE TIER DETECTION
-   ═══════════════════════════════════════════════════════
-   Tier 0 — very low-end  : no WebRTC / no canvas / old Android
-   Tier 1 — low-end       : WebRTC 320×240, JPEG q=0.35
-   Tier 2 — mid-range     : WebRTC 640×480, JPEG q=0.50
-   Tier 3 — high-end      : WebRTC 1280×960, JPEG q=0.65
-   Tier 4 — flagship/hi-MP: capture full-res, downsample carefully to avoid OOM
-   iPhone  — own subpath   : special iOS constraints + no orientation issues
-*/
-var DeviceTier = (function() {
-  var ua          = navigator.userAgent || '';
-  var isIOS       = /iP(hone|ad|od)/i.test(ua);
-  var isAndroid   = /Android/i.test(ua);
-  var hasWebRTC   = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-  var hasCanvas   = (function() {
-    try { var c = document.createElement('canvas'); return !!(c.getContext && c.getContext('2d')); }
-    catch(e) { return false; }
-  })();
-
-  /* Score: higher = more capable */
-  var score = 0;
-
-  /* Memory (navigator.deviceMemory is in GB, Chrome/Android only) */
-  var mem = navigator.deviceMemory || 0;
-  if      (mem >= 8)  score += 4;
-  else if (mem >= 4)  score += 3;
-  else if (mem >= 2)  score += 2;
-  else if (mem >= 1)  score += 1;
-  else                score += 0;
-
-  /* CPU cores */
-  var cores = navigator.hardwareConcurrency || 0;
-  if      (cores >= 8) score += 3;
-  else if (cores >= 4) score += 2;
-  else if (cores >= 2) score += 1;
-
-  /* Screen resolution */
-  var px = (window.screen.width || 0) * (window.screen.height || 0);
-  if      (px >= 2073600) score += 3; /* 1920×1080+ */
-  else if (px >= 921600)  score += 2; /* 1280×720+ */
-  else if (px >= 307200)  score += 1; /* 640×480+ */
-
-  /* Connection type — slow connections → be conservative */
-  try {
-    var conn = (navigator.connection || navigator.mozConnection || navigator.webkitConnection);
-    if (conn) {
-      var ct = conn.effectiveType || '';
-      if (ct === '4g') score += 1;
-      if (ct === '2g' || ct === 'slow-2g') score -= 2;
-    }
-  } catch(e) {}
-
-  /* Hard gates */
-  if (!hasWebRTC || !hasCanvas) {
-    return { tier: 0, isIOS: isIOS, isAndroid: isAndroid, hasWebRTC: false, hasCanvas: hasCanvas };
-  }
-
-  /* iOS always gets its own optimised path regardless of score */
-  if (isIOS) {
-    /* Detect iPhone model generation via screen size heuristics for flagship vs older */
-    var highEndIOS = (score >= 7);
-    return { tier: highEndIOS ? 'ios-high' : 'ios-mid', isIOS: true, isAndroid: false, hasWebRTC: true, hasCanvas: true, score: score };
-  }
-
-  var tier;
-  if      (score >= 9)  tier = 4;
-  else if (score >= 6)  tier = 3;
-  else if (score >= 3)  tier = 2;
-  else                  tier = 1;
-
-  return { tier: tier, isIOS: false, isAndroid: isAndroid, hasWebRTC: true, hasCanvas: true, score: score };
-})();
-
-/* Camera constraints per tier */
-function getCameraConstraints() {
-  var t = DeviceTier.tier;
-  if (t === 0) return null; /* should never be called */
-
-  /* iOS path — Safari accepts ideal constraints, NOT exact */
-  if (t === 'ios-mid') {
-    return {
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-      audio: false
-    };
-  }
-  if (t === 'ios-high') {
-    return {
-      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
-      audio: false
-    };
-  }
-
-  /* Android / desktop tiers */
-  if (t === 1) return { video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }, audio: false };
-  if (t === 2) return { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
-  if (t === 3) return { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false };
-  /* Tier 4 — capture at full res, downsample in capturePhoto */
-  return { video: { facingMode: 'user' }, audio: false };
-}
-
-/* JPEG quality per tier */
-function getJpegQuality() {
-  var t = DeviceTier.tier;
-  if (t === 1)          return 0.35;
-  if (t === 2)          return 0.50;
-  if (t === 3)          return 0.60;
-  if (t === 4)          return 0.65;
-  if (t === 'ios-mid')  return 0.50;
-  if (t === 'ios-high') return 0.65;
-  return 0.50;
-}
-
-/* Max output dimension (pixels, longest side) per tier */
-function getMaxDim() {
-  var t = DeviceTier.tier;
-  if (t === 1)          return 320;
-  if (t === 2)          return 480;
-  if (t === 3)          return 720;
-  if (t === 4)          return 900;  /* cap even on flagships — no need for selfie beyond this */
-  if (t === 'ios-mid')  return 480;
-  if (t === 'ios-high') return 720;
-  return 480;
-}
-
-/* ═══════════════════════════════════════════════════════
-   APP STATE
-   ═══════════════════════════════════════════════════════ */
 var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec";
+
 var currentTerminal = Storage.get('selected_terminal') || 'chandarana';
 var staff = [], branches = [], coords = null, staffName = "", photo = null;
-var isRestoring = false, activeFetchId = 0, videoStream = null;
-/* Track whether user has explicitly denied camera permission this session */
-var cameraPermissionDenied = false;
+var isRestoring = false, activeFetchId = 0;
+var videoStream = null;
 
+// ─── INIT ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  pruneHistory();
-  drainQueue();
   updateTerminalUI();
   checkNetworkStatus();
   initApp();
   if (window.matchMedia)
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
 });
-
-window.addEventListener('online',  function() { checkNetworkStatus(); drainQueue(); refreshPortalData(); });
+window.addEventListener('online',  function(){ checkNetworkStatus(); });
 window.addEventListener('offline', checkNetworkStatus);
 
+// ─── NETWORK ───────────────────────────────────────────────────────────────
 function checkNetworkStatus() {
   var ind = document.getElementById('networkIndicator');
   if (navigator.onLine) ind.classList.remove('offline');
-  else                  ind.classList.add('offline');
+  else ind.classList.add('offline');
 }
 
-function refreshPortalData() {
-  fetchFromServer('getPortalData', {}).then(function(data) {
-    var changed = JSON.stringify(branches) !== JSON.stringify(data.branches);
-    staff    = data.staff    || [];
-    branches = data.branches || [];
-    try { Storage.set(currentTerminal + '_portal_data', JSON.stringify({staff:staff, branches:branches})); } catch(e) {}
-    if (changed) populateBranches(branches);
-    window._serverWarmed = false;
-    var sid = document.getElementById('staffID').value.trim();
-    if (sid) fetchFromServer('ping', {id: sid}).catch(function() {});
-  }).catch(function() {});
-}
-
+// ─── THEMING ───────────────────────────────────────────────────────────────
 function updateTerminalUI() {
-  document.documentElement.className = 'theme-' + currentTerminal;
-  document.body.className            = 'theme-' + currentTerminal;
+  document.body.className = 'theme-' + currentTerminal;
   var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  var meta   = document.getElementById('theme-color-meta');
+  var meta = document.getElementById('theme-color-meta');
   setTimeout(function() {
     if (!meta) return;
     meta.setAttribute('content',
@@ -566,8 +522,8 @@ function updateTerminalUI() {
         ? (isDark ? '#064e3b' : '#52c234')
         : (isDark ? '#1e3a8a' : '#1a73e8'));
   }, 200);
-  document.getElementById('formTitle').innerText =
-    currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
+  var title = document.getElementById('formTitle');
+  title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
   document.getElementById('btn-chandarana').classList.toggle('active', currentTerminal === 'chandarana');
   document.getElementById('btn-carrefour').classList.toggle('active',  currentTerminal === 'carrefour');
   requestAnimationFrame(function() { requestAnimationFrame(function() {
@@ -575,51 +531,38 @@ function updateTerminalUI() {
     if (ab && sl) { sl.style.width = ab.offsetWidth + 'px'; sl.style.left = ab.offsetLeft + 'px'; }
   }); });
 }
-
 function switchTerminal(term) {
   if (currentTerminal === term) return;
-  currentTerminal = term;
-  Storage.set('selected_terminal', term);
+  currentTerminal = term; Storage.set('selected_terminal', term);
   staff = []; branches = [];
-  document.getElementById('branch').innerHTML = '<option value="">Loading…</option>';
-  updateTerminalUI();
-  resetToStart();
-  initApp();
-  drainQueue();
+  document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
+  updateTerminalUI(); resetToStart(); initApp();
 }
 
+// ─── SERVER ────────────────────────────────────────────────────────────────
 function fetchFromServer(action, data) {
   return fetch(APPS_SCRIPT_URL, {
-    method: 'POST', headers: {'Content-Type': 'text/plain'},
-    body: JSON.stringify({action: action, data: data, terminal: currentTerminal})
-  })
-  .then(function(r) { return r.json(); })
-  .then(function(j) { if (!j.ok) throw new Error(j.error || 'Server error'); return j.data; });
+    method:'POST', headers:{'Content-Type':'text/plain'},
+    body:JSON.stringify({action:action, data:data, terminal:currentTerminal})
+  }).then(function(r){ return r.json(); })
+    .then(function(j){ if(!j.ok) throw new Error(j.error||'Server error'); return j.data; });
 }
 
+// ─── INIT APP ──────────────────────────────────────────────────────────────
 function populateBranches(list) {
   if (!Array.isArray(list)) return;
-  var current = document.getElementById('branch').value;
-  document.getElementById('branch').innerHTML =
-    '<option value="">Choose Branch</option>' +
-    list.map(function(b) { return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
-  if (current) document.getElementById('branch').value = current;
+  document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' +
+    list.map(function(b){ return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
 }
-
 function initApp() {
-  var myId     = ++activeFetchId;
-  var cacheKey = currentTerminal + '_portal_data';
-  var cached   = false;
+  var myId = ++activeFetchId, cacheKey = currentTerminal + '_portal_data', cached = false;
   try {
     var raw = Storage.get(cacheKey);
     if (raw) {
       var p = JSON.parse(raw);
       if (p && Array.isArray(p.branches)) {
         staff = p.staff || []; branches = p.branches || [];
-        populateBranches(branches);
-        restoreFromCache();
-        loadPreferences();
-        cached = true;
+        populateBranches(branches); restoreFromCache(); cached = true;
       }
     }
   } catch(e) {}
@@ -628,108 +571,40 @@ function initApp() {
     var changed = JSON.stringify(branches) !== JSON.stringify(data.branches);
     staff = data.staff || []; branches = data.branches || [];
     try { Storage.set(cacheKey, JSON.stringify({staff:staff, branches:branches})); } catch(e) {}
-    if (!cached || changed) {
-      populateBranches(branches);
-      if (!cached) { restoreFromCache(); loadPreferences(); }
-    }
+    if (!cached || changed) { populateBranches(branches); if (!cached) restoreFromCache(); }
   }).catch(function() {
-    if (myId === activeFetchId && branches.length === 0) {
-      document.getElementById('branch').innerHTML = navigator.onLine
-        ? '<option value="">Failed to load — check connection</option>'
-        : '<option value="">📶 No internet — open app while connected to set up</option>';
-    }
+    if (myId === activeFetchId && branches.length === 0)
+      document.getElementById('branch').innerHTML = '<option value="">Failed to load — check connection</option>';
   });
 }
 
-/* ═══ LOCAL HISTORY / QUEUE (unchanged from original) ═══ */
+// ─── LOCAL STATE TRACKING ──────────────────────────────────────────────────
+// Prevents incorrect sign-ins/outs safely.
 function getStaffLocalStatus(staffID) {
   var todayKey = new Date().toDateString();
-  var histRaw  = Storage.get('local_history_' + currentTerminal);
-  var history  = histRaw ? JSON.parse(histRaw) : {};
-  return history[staffID + '_' + todayKey] || null;
-}
-function updateLocalStatus(staffID, action) {
+  var histRaw = Storage.get('local_history_' + currentTerminal);
+  var history = histRaw ? JSON.parse(histRaw) : {};
+  
+  // Prefer the local history for TODAY
+  var localStatus = history[staffID + '_' + todayKey];
+  if (localStatus) return localStatus;
+  
+  // Fall back to server's last known state
+  var member = null;
   for (var i = 0; i < staff.length; i++) {
-    if (staff[i].id === staffID) { staff[i].status = action; break; }
+    if (staff[i].id === staffID) { member = staff[i]; break; }
   }
-  var todayKey = new Date().toDateString();
-  var histRaw  = Storage.get('local_history_' + currentTerminal);
-  var history  = histRaw ? JSON.parse(histRaw) : {};
-  history[staffID + '_' + todayKey] = action;
-  try { Storage.set('local_history_' + currentTerminal, JSON.stringify(history)); } catch(e) {}
-}
-function pruneHistory() {
-  var todayKey = new Date().toDateString();
-  ['chandarana', 'carrefour'].forEach(function(term) {
-    try {
-      var raw = Storage.get('local_history_' + term); if (!raw) return;
-      var h = JSON.parse(raw), clean = {};
-      Object.keys(h).forEach(function(k) { if (k.indexOf(todayKey) !== -1) clean[k] = h[k]; });
-      Storage.set('local_history_' + term, JSON.stringify(clean));
-    } catch(e) {}
-  });
-}
-function getQueueKey() { return 'submit_queue_' + currentTerminal; }
-function enqueueSubmission(payload) {
-  var q = [];
-  try { q = JSON.parse(Storage.get(getQueueKey()) || '[]'); } catch(e) {}
-  q.push({payload: payload, ts: Date.now(), attempts: 0});
-  try { Storage.set(getQueueKey(), JSON.stringify(q)); } catch(e) {}
-}
-function drainQueue() {
-  if (!navigator.onLine) return;
-  var q = [];
-  try { q = JSON.parse(Storage.get(getQueueKey()) || '[]'); } catch(e) { return; }
-  if (!q.length) return;
-  var item = q[0];
-  item.attempts = (item.attempts || 0) + 1;
-  fetchFromServer('recordAttendance', item.payload)
-    .then(function() {
-      q.shift();
-      try { Storage.set(getQueueKey(), JSON.stringify(q)); } catch(e) {}
-      if (q.length) setTimeout(drainQueue, 600);
-    })
-    .catch(function() {
-      try { Storage.set(getQueueKey(), JSON.stringify(q)); } catch(e) {}
-      if (item.attempts < 8)
-        setTimeout(drainQueue, Math.min(30000, 2000 * Math.pow(2, item.attempts)));
-    });
+  return member ? member.status : null;
 }
 
-/* ═══ PREFERENCES / CACHE ═══ */
-function savePreferences() {
-  try {
-    var b = document.getElementById('branch').value;
-    var s = document.getElementById('staffID').value.trim();
-    if (b) Storage.set('pref_branch_'  + currentTerminal, b);
-    if (s) Storage.set('pref_staffid_' + currentTerminal, s);
-  } catch(e) {}
-}
-function loadPreferences() {
-  if (document.getElementById('staffID').value) return;
-  isRestoring = true;
-  try {
-    var branch  = Storage.get('pref_branch_'  + currentTerminal);
-    var staffID = Storage.get('pref_staffid_' + currentTerminal);
-    if (branch) {
-      var bEl = document.getElementById('branch');
-      bEl.value = branch;
-      if (bEl.value) handleBranchChange();
-    }
-    if (staffID) {
-      document.getElementById('staffID').value = staffID;
-      handleStaffInput.call(document.getElementById('staffID'));
-    }
-  } catch(e) {}
-  isRestoring = false;
-}
+// ─── FORM CACHE ────────────────────────────────────────────────────────────
 function getFormCacheKey() { return currentTerminal + '_attendance_cache'; }
 function autoSave(capturing) {
   if (isRestoring) return;
   try {
     Storage.set(getFormCacheKey(), JSON.stringify({
-      branch:    document.getElementById('branch').value,
-      staffID:   document.getElementById('staffID').value.trim(),
+      branch: document.getElementById('branch').value,
+      staffID: document.getElementById('staffID').value,
       capturing: !!capturing,
       lat: coords ? coords.latitude  : null,
       lng: coords ? coords.longitude : null
@@ -741,64 +616,53 @@ function restoreFromCache() {
   isRestoring = true;
   try {
     var d = JSON.parse(raw);
-    if (d.branch) {
-      var bEl = document.getElementById('branch'); bEl.value = d.branch;
-      if (bEl.value) handleBranchChange();
-    }
-    if (d.staffID) {
-      document.getElementById('staffID').value = d.staffID;
-      handleStaffInput.call(document.getElementById('staffID'));
-    }
-    if (d.lat && d.lng) {
-      coords = {latitude: d.lat, longitude: d.lng};
-      showSuccess('gpsMsg', 'Location Verified'); activateStep(4);
-    }
+    if (d.branch) { var bEl = document.getElementById('branch'); bEl.value = d.branch; if (bEl.value) handleBranchChange(); }
+    if (d.staffID) { document.getElementById('staffID').value = d.staffID; handleStaffInput.call(document.getElementById('staffID')); }
+    if (d.lat && d.lng) { coords = {latitude:d.lat, longitude:d.lng}; showSuccess('gpsMsg','Location Verified'); activateStep(4); }
     if (d.capturing) {
       photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-      document.getElementById('preview').src = photo;
+      document.getElementById('preview').src = photo; 
       document.getElementById('previewWrapper').style.display = 'block';
-      showSuccess('cameraMsg', 'Identity Restored');
-      activateStep(4); activateStep(5); autoSave(false);
+      showSuccess('cameraMsg','Identity Restored'); activateStep(4); activateStep(5); autoSave(false);
     }
   } catch(e) {}
   isRestoring = false;
 }
 
-/* ═══ STEP HELPERS ═══ */
+// ─── STEPS ─────────────────────────────────────────────────────────────────
 function activateStep(n) { document.getElementById('step'+n).classList.add('activeStep'); }
 function resetStepsFrom(n) {
-  for (var i = n; i <= 6; i++) {
-    var el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep');
-  }
+  for (var i = n; i <= 6; i++) { var el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep'); }
   if (n<=1) { document.getElementById('branch').value=''; clearMsg('branchMsg'); }
   if (n<=2) { staffName=''; document.getElementById('staffID').value=''; clearMsg('staffMsg'); }
   if (n<=3) { coords=null; clearMsg('gpsMsg'); }
   if (n<=4) {
     photo=null; stopCamera(); collapsePreview();
-    var pWrap = document.getElementById('previewWrapper'); if (pWrap) pWrap.style.display='none';
-    document.getElementById('preview').src = '';
+    var pWrap=document.getElementById('previewWrapper'); if(pWrap) pWrap.style.display='none'; 
+    document.getElementById('preview').src='';
     clearMsg('cameraMsg'); document.getElementById('cameraInput').value='';
   }
   if (n<=5) { document.getElementById('actionChoice').value=''; clearMsg('actionMsg'); }
   clearMsg('submitMsg'); autoSave(false);
 }
 function resetToStart() {
-  document.getElementById('successScreen').style.display = 'none';
-  document.getElementById('mainForm').style.display      = 'block';
-  resetStepsFrom(2);
-  document.getElementById('step1').classList.add('activeStep');
+  document.getElementById('successScreen').style.display='none';
+  document.getElementById('mainForm').style.display='block';
+  document.getElementById('branch').value=''; clearMsg('branchMsg');
+  resetStepsFrom(2); document.getElementById('step1').classList.add('activeStep');
   Storage.remove(getFormCacheKey());
-  loadPreferences();
 }
-function showSuccess(id,txt) { var e=document.getElementById(id); e.innerHTML='<span class="dot"></span> '+txt; e.className='msg success'; }
-function showError(id,txt)   { var e=document.getElementById(id); e.innerText=txt; e.className='msg error'; }
-function clearMsg(id)        { var e=document.getElementById(id); e.innerText=''; e.className='msg'; }
 
-/* ═══ FORM HANDLERS ═══ */
+// ─── MSG HELPERS ───────────────────────────────────────────────────────────
+function showSuccess(id,txt){ var e=document.getElementById(id); e.innerHTML='<span class="dot"></span> '+txt; e.className='msg success'; }
+function showError(id,txt)  { var e=document.getElementById(id); e.innerText=txt; e.className='msg error'; }
+function clearMsg(id)       { var e=document.getElementById(id); e.innerText=''; e.className='msg'; }
+
+// ─── BRANCH / STAFF ────────────────────────────────────────────────────────
 function handleBranchChange() {
   var val = document.getElementById('branch').value;
   if (!val) { resetStepsFrom(2); return; }
-  showSuccess('branchMsg', 'Branch Selected');
+  showSuccess('branchMsg','Branch Selected');
   if (document.getElementById('step2').classList.contains('activeStep') &&
       document.getElementById('staffID').value !== '') resetStepsFrom(2);
   if (!document.getElementById('step2').classList.contains('activeStep')) activateStep(2);
@@ -815,493 +679,387 @@ function handleStaffInput() {
   var match = null;
   for (var i = 0; i < staff.length; i++) { if (staff[i].id === val) { match = staff[i]; break; } }
   if (match) {
-    staffName = match.name;
-    showSuccess('staffMsg', 'Welcome ' + staffName);
-    if (!window._serverWarmed && navigator.onLine) {
-      window._serverWarmed = true;
-      fetchFromServer('ping', {id: match.id}).catch(function() {});
-    }
+    staffName = match.name; showSuccess('staffMsg','Welcome '+staffName);
     if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
     if (!document.getElementById('step3').classList.contains('activeStep')) activateStep(3);
     autoSave(false);
   } else {
     if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
-    showError('staffMsg', 'Invalid Staff ID. Please check.');
+    showError('staffMsg','Invalid Staff ID. Please check.');
   }
 }
 document.getElementById('staffID').oninput = handleStaffInput;
 
+// Instantly prevent logically incorrect selections using local history
 document.getElementById('actionChoice').onchange = function() {
   clearMsg('submitMsg');
   var action = this.value;
   if (!action) { clearMsg('actionMsg'); resetStepsFrom(6); return; }
-  var staffID = document.getElementById('staffID').value.trim();
+  
+  var staffID = document.getElementById('staffID').value;
   var lastAction = getStaffLocalStatus(staffID);
-  if (action === 'Clock In' && lastAction) {
-    showError('actionMsg', lastAction === 'Clock Out'
-      ? 'You have already completed your shift today.'
-      : 'You are already clocked in. Please Clock Out.');
+
+  if (action === 'Clock In' && lastAction === 'Clock In') {
+    showError('actionMsg', 'You are already clocked in. Please Clock Out.');
     resetStepsFrom(6); return;
   }
   if (action === 'Clock Out') {
-    if (lastAction !== 'Clock In') {
-      showError('actionMsg', lastAction === 'Clock Out'
-        ? 'You have already clocked out today.'
-        : 'You have not clocked in yet. Please Clock In first.');
+    if (!lastAction) {
+      showError('actionMsg', 'You have not clocked in yet. Please Clock In first.');
+      resetStepsFrom(6); return;
+    }
+    if (lastAction === 'Clock Out') {
+      showError('actionMsg', 'You have already clocked out today.');
       resetStepsFrom(6); return;
     }
   }
-  showSuccess('actionMsg', 'Ready for Submission');
-  activateStep(6);
+
+  showSuccess('actionMsg','Ready for Submission'); activateStep(6);
 };
 
-function autoSelectAction() {
-  requestAnimationFrame(function() {
-    var staffID    = document.getElementById('staffID').value.trim();
-    var lastAction = getStaffLocalStatus(staffID);
-    var select     = document.getElementById('actionChoice');
-    if      (!lastAction)               select.value = 'Clock In';
-    else if (lastAction === 'Clock In') select.value = 'Clock Out';
-    else                                select.value = '';
-    if (select.value) select.dispatchEvent(new Event('change'));
-  });
-}
-
-/* ═══ GPS ═══ */
-function verifyGPS() {
-  document.getElementById('gpsMsg').innerText  = 'Locating…';
-  document.getElementById('gpsMsg').className  = 'msg';
-  if (!navigator.geolocation) { showError('gpsMsg', 'GPS not supported on this device.'); return; }
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      coords = pos.coords;
-      var b = null, bv = document.getElementById('branch').value;
-      for (var i = 0; i < branches.length; i++) { if (branches[i][0] === bv) { b = branches[i]; break; } }
-      if (!b) { showError('gpsMsg', 'Select branch first.'); return; }
-      var R    = 6371e3;
-      var dLat = (b[1] - coords.latitude)  * Math.PI / 180;
-      var dLon = (b[2] - coords.longitude) * Math.PI / 180;
-      var a    = Math.sin(dLat/2)*Math.sin(dLat/2)
-                 + Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)
-                 * Math.sin(dLon/2)*Math.sin(dLon/2);
-      var dist = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      if (dist > 250)
-        showError('gpsMsg', dist > 1000
-          ? 'Too far (' + (dist/1000).toFixed(1) + 'km) — move closer'
-          : 'Too far (' + Math.round(dist) + 'm) — move closer');
-      else { showSuccess('gpsMsg', 'Location Verified'); activateStep(4); autoSave(false); }
-    },
-    function(err) {
-      if      (err.code === 1) showGuideModal('gps_denied');
-      else if (err.code === 2) showGuideModal('gps_off');
-      else                     showGuideModal('gps_signal');
-    },
-    {enableHighAccuracy: true, timeout: 15000, maximumAge: 60000}
-  );
-}
-
-/* ═══════════════════════════════════════════════════════
-   GUIDE MODAL
-   ═══════════════════════════════════════════════════════ */
+// ─── GPS ───────────────────────────────────────────────────────────────────
 function showGuideModal(type) {
-  var modal = document.getElementById('guideModal');
-  var title = document.getElementById('guideTitle');
-  var text  = document.getElementById('guideText');
-  var icon  = document.getElementById('guideIcon');
-  if (type === 'gps_denied') {
-    icon.textContent = '🚫'; title.textContent = 'Site Location Blocked'; title.style.color = 'var(--error-color)';
-    text.innerHTML = '<p>You have blocked location access for this website.</p>'
-      + '<p style="margin-top:8px"><strong>How to fix:</strong><br>Tap the Lock (🔒) or "AA" icon in your browser\'s address bar, go to Settings, and <strong>Allow</strong> Location, then refresh.</p>';
-  } else if (type === 'gps_off') {
-    icon.textContent = '📍'; title.textContent = 'Device Location Off'; title.style.color = 'var(--error-color)';
-    text.innerHTML = '<p>Your phone\'s GPS or Location service is turned off entirely.</p>'
-      + '<p style="margin-top:8px"><strong>How to fix:</strong><br>Pull down your notification panel (or open Settings) and turn on <strong>Location / GPS</strong>, then try again.</p>';
-  } else if (type === 'gps_signal') {
-    icon.textContent = '📡'; title.textContent = 'Cannot Pinpoint Location'; title.style.color = 'var(--warning-text)';
-    text.innerHTML = '<p>Your phone is struggling to find your exact location.</p>'
-      + '<ul style="margin-top:8px;padding-left:20px"><li>Step outside or move near a window.</li>'
-      + '<li><strong>Turn on WiFi</strong> (even if not connecting, it helps your phone locate you instantly).</li></ul>';
-  } else if (type === 'camera_denied') {
-    /* ── Camera denied: NO native fallback. Show fix instructions only. ── */
-    icon.textContent = '📸'; title.textContent = 'Camera Access Denied'; title.style.color = 'var(--error-color)';
-    var isIOS = DeviceTier.isIOS;
-    if (isIOS) {
-      text.innerHTML = '<p>You have denied camera access to this site.</p>'
-        + '<p style="margin-top:8px"><strong>How to fix on iPhone / iPad:</strong><br>'
-        + 'Go to <strong>Settings → Safari → Camera</strong> and set it to <strong>Ask</strong> or <strong>Allow</strong>. '
-        + 'Then close and reopen this page.</p>';
-    } else {
-      text.innerHTML = '<p>You have blocked the camera for this website.</p>'
-        + '<p style="margin-top:8px"><strong>How to fix:</strong><br>'
-        + 'Tap the Lock 🔒 or camera icon in the address bar, tap <strong>Permissions → Camera</strong>, '
-        + 'change it to <strong>Allow</strong>, then refresh.</p>';
-    }
-  } else if (type === 'camera_unavailable') {
-    /* Very low-end phone with no getUserMedia but still wants to try file input */
-    icon.textContent = '📷'; title.textContent = 'Using Device Camera App'; title.style.color = 'var(--warning-text)';
-    text.innerHTML = '<p>Your browser does not support live camera preview.</p>'
-      + '<p style="margin-top:8px">Your camera app will open instead. Take your selfie and it will be submitted automatically.</p>';
+  var modal=document.getElementById('guideModal'), title=document.getElementById('guideTitle'),
+      text=document.getElementById('guideText'),   icon=document.getElementById('guideIcon');
+  if (type==='gps') {
+    icon.textContent='📍'; title.textContent='Location Blocked'; title.style.color='var(--error-color)';
+    text.innerHTML='<p>We need your location to verify you are at the branch.</p>'
+      +'<p style="margin-top:8px"><strong>🍎 iPhone:</strong><br>Settings → Privacy & Security → Location Services → Allow Safari/Chrome.</p>'
+      +'<p style="margin-top:8px"><strong>🤖 Android:</strong><br>⋮ Menu → Settings → Site settings → Location → Allow.</p>';
+  } else if (type==='gps_signal') {
+    icon.textContent='📡'; title.textContent='Weak GPS Signal'; title.style.color='var(--warning-text)';
+    text.innerHTML='<p>We couldn\'t get an accurate location reading.</p>'
+      +'<ul style="margin-top:8px;padding-left:20px"><li>Step outside or near a window.</li>'
+      +'<li>Turn WiFi ON — it helps GPS lock faster.</li></ul>';
+  } else if (type==='camera') {
+    icon.textContent='📸'; title.textContent='Camera Fallback'; title.style.color='var(--warning-text)';
+    text.innerHTML='<p>Live camera is not available on this device.</p><p>Opening your camera app instead.</p>';
   }
   modal.style.display = 'flex';
 }
+function verifyGPS() {
+  document.getElementById('gpsMsg').innerText='Locating…'; document.getElementById('gpsMsg').className='msg';
+  if (!navigator.geolocation) { showError('gpsMsg','GPS not supported on this device.'); return; }
+  
+  // Relaxed timing & caching prevents unresponsiveness / failures if reconnecting
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      coords = pos.coords;
+      var b=null, bv=document.getElementById('branch').value;
+      for (var i=0;i<branches.length;i++) { if (branches[i][0]===bv){ b=branches[i]; break; } }
+      if (!b) { showError('gpsMsg','Select branch first.'); return; }
+      var R=6371e3,
+          dLat=(b[1]-coords.latitude)*Math.PI/180,
+          dLon=(b[2]-coords.longitude)*Math.PI/180,
+          a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2),
+          dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      if (dist>250)
+        showError('gpsMsg', dist>1000?'Too far ('+(dist/1000).toFixed(1)+'km)':'Too far ('+Math.round(dist)+'m) — move closer');
+      else { showSuccess('gpsMsg','Location Verified'); activateStep(4); autoSave(false); }
+    },
+    function(err){ if(err.code===1) showGuideModal('gps'); else showGuideModal('gps_signal'); },
+    {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
+  );
+}
 
-/* ═══════════════════════════════════════════════════════
-   TIERED CAMERA SYSTEM
-   ═══════════════════════════════════════════════════════ */
-
+// ─── CAMERA ────────────────────────────────────────────────────────────────
 function startCamera() {
   var btn = document.getElementById('openCameraBtn');
 
-  /* ── TIER 0: no WebRTC or no canvas ── */
-  if (DeviceTier.tier === 0) {
-    showGuideModal('camera_unavailable');
-    /* Add capture="user" attr at runtime for tier-0 only */
-    var inp = document.getElementById('cameraInput');
-    inp.setAttribute('capture', 'user');
-    inp.click();
-    return;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    document.getElementById('cameraInput').click(); return;
   }
-
-  /* ── If previously denied this session, only show fix guide — no fallback ── */
-  if (cameraPermissionDenied) {
-    showGuideModal('camera_denied');
-    return;
-  }
-
-  /* ── Set last-photo blurred background ── */
+  
   var lastPhoto = Storage.get('attendance_last_photo');
-  var bgEl      = document.getElementById('fallbackBg');
-  bgEl.style.backgroundImage = lastPhoto ? "url('" + lastPhoto + "')" : '';
+  var bgEl = document.getElementById('fallbackBg');
+  
+  if (lastPhoto) { bgEl.style.backgroundImage = "url('" + lastPhoto + "')"; } 
+  else { bgEl.style.backgroundImage = ""; }
 
+  document.getElementById('videoContainerWrapper').classList.add('expanded');
+  document.getElementById('cameraBackdrop').classList.add('show');
   btn.classList.add('loading');
-  btn.textContent = 'Loading Camera…';
+  btn.textContent = 'Loading Camera...';
   clearMsg('cameraMsg');
 
-  var constraints = getCameraConstraints();
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode:'user', width:{ideal:640}, height:{ideal:480} },
+    audio: false
+  })
+  .then(function(stream) {
+    videoStream = stream;
+    var video = document.getElementById('cameraVideo');
+    video.srcObject = stream;
 
-  navigator.mediaDevices.getUserMedia(constraints)
-    .then(function(stream) {
-      cameraPermissionDenied = false; /* reset if they previously allowed after denying */
-      videoStream = stream;
-      var video = document.getElementById('cameraVideo');
-      video.srcObject = stream;
-
-      /* iOS Safari sometimes needs a tiny timeout before play() works */
-      var playDelay = DeviceTier.isIOS ? 120 : 0;
-
-      video.onloadedmetadata = function() {
-        setTimeout(function() {
-          video.play().catch(function() {});
-          document.getElementById('videoContainerWrapper').classList.add('expanded');
-          document.getElementById('cameraBackdrop').classList.add('show');
-          requestAnimationFrame(function() {
-            video.classList.add('live');
-            btn.classList.remove('loading');
-          });
-        }, playDelay);
-      };
-
-      /* Fallback: onloadedmetadata may not fire on some old Android Webviews */
-      setTimeout(function() {
-        if (!video.classList.contains('live') && videoStream) {
-          video.play().catch(function() {});
-          document.getElementById('videoContainerWrapper').classList.add('expanded');
-          document.getElementById('cameraBackdrop').classList.add('show');
-          requestAnimationFrame(function() {
-            video.classList.add('live');
-            btn.classList.remove('loading');
-          });
-        }
-      }, 3500);
-    })
-    .catch(function(err) {
-      document.getElementById('videoContainerWrapper').classList.remove('expanded');
-      document.getElementById('cameraBackdrop').classList.remove('show');
-      btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
-      btn.classList.remove('loading');
-
-      var errName = (err && err.name) ? err.name : '';
-
-      if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
-        /* User explicitly denied — mark it, show guide only, NO native input fallback */
-        cameraPermissionDenied = true;
-        showGuideModal('camera_denied');
-      } else if (errName === 'OverconstrainedError' && getCameraConstraints() !== null) {
-        /* Device can't satisfy our constraints — retry with minimal constraints */
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: false })
-          .then(function(stream) {
-            cameraPermissionDenied = false;
-            videoStream = stream;
-            var video = document.getElementById('cameraVideo');
-            video.srcObject = stream;
-            video.onloadedmetadata = function() {
-              video.play().catch(function() {});
-              document.getElementById('videoContainerWrapper').classList.add('expanded');
-              document.getElementById('cameraBackdrop').classList.add('show');
-              requestAnimationFrame(function() {
-                video.classList.add('live');
-                btn.classList.remove('loading');
-              });
-            };
-          })
-          .catch(function(err2) {
-            var n2 = (err2 && err2.name) ? err2.name : '';
-            if (n2 === 'NotAllowedError' || n2 === 'PermissionDeniedError') {
-              cameraPermissionDenied = true;
-              showGuideModal('camera_denied');
-            } else {
-              /* Truly no camera — fall to file input without capture attr */
-              var inp = document.getElementById('cameraInput');
-              inp.removeAttribute('capture');
-              inp.click();
-            }
-          });
-      } else {
-        /* Any other error (NotFoundError, NotReadableError etc.) — file picker, no native camera */
-        var inp = document.getElementById('cameraInput');
-        inp.removeAttribute('capture'); /* don't force native camera if it failed */
-        inp.click();
-      }
-    });
+    video.onloadedmetadata = function() {
+      video.play().catch(function(){});
+      
+      requestAnimationFrame(function() {
+        video.classList.add('live');
+        btn.classList.remove('loading');
+      });
+    };
+  })
+  .catch(function(err) {
+    console.warn('Camera failed:', err);
+    document.getElementById('videoContainerWrapper').classList.remove('expanded');
+    document.getElementById('cameraBackdrop').classList.remove('show');
+    btn.textContent = 'Take a Selfie';
+    btn.classList.remove('loading');
+    showGuideModal('camera');
+    document.getElementById('cameraInput').click();
+  });
 }
 
-/* ═══════════════════════════════════════════════════════
-   CAPTURE PHOTO (tiered downsampling)
-   ═══════════════════════════════════════════════════════ */
 function capturePhoto() {
-  var video  = document.getElementById('cameraVideo');
+  var video = document.getElementById('cameraVideo');
   var canvas = document.createElement('canvas');
-
-  var vw = video.videoWidth  || 480;
-  var vh = video.videoHeight || 640;
-
-  var maxDim = getMaxDim();
-  var w = vw, h = vh;
-
-  /* Scale down to maxDim on longest side */
-  if (w > maxDim || h > maxDim) {
-    if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-    else       { w = Math.round(w * maxDim / h); h = maxDim; }
-  }
-
-  /* Tier 4 / ios-high: two-step downsample to avoid GPU memory spikes on
-     very high-res streams (e.g. 3264×2448). Draw at half first, then final. */
-  var tier = DeviceTier.tier;
-  if ((tier === 4 || tier === 'ios-high') && (vw > 1600 || vh > 1600)) {
-    try {
-      var half   = document.createElement('canvas');
-      half.width  = Math.round(vw / 2);
-      half.height = Math.round(vh / 2);
-      half.getContext('2d').drawImage(video, 0, 0, half.width, half.height);
-      canvas.width  = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(half, 0, 0, w, h);
-      half = null; /* allow GC */
-    } catch(e) {
-      /* If two-step fails (e.g. OOM on very old device miscategorised as tier 4),
-         fall back to single direct draw at target size */
-      canvas.width  = w;
-      canvas.height = h;
-      canvas.getContext('2d').drawImage(video, 0, 0, w, h);
-    }
-  } else {
-    canvas.width  = w;
-    canvas.height = h;
-    canvas.getContext('2d').drawImage(video, 0, 0, w, h);
-  }
-
-  var quality = getJpegQuality();
-  photo = canvas.toDataURL('image/jpeg', quality);
-
-  /* Free canvas memory immediately */
-  canvas.width = 1; canvas.height = 1;
-
-  try { Storage.set('attendance_last_photo', photo); } catch(e) {}
-  document.getElementById('preview').src                  = photo;
+  canvas.width  = video.videoWidth  || 640;
+  canvas.height = video.videoHeight || 480;
+  canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+  photo = canvas.toDataURL('image/jpeg', 0.65);
+  
+  try { Storage.set('attendance_last_photo', photo); } catch(e){}
+  
+  var p = document.getElementById('preview'); p.src = photo; 
   document.getElementById('previewWrapper').style.display = 'block';
-  showSuccess('cameraMsg', 'Identity Captured');
-  activateStep(5);
-  autoSelectAction();
-  autoSave(false);
+  showSuccess('cameraMsg','Identity Captured');
+  activateStep(5); autoSave(false);
+
   stopCamera();
 }
 
 function stopCamera() {
-  var wrapper  = document.getElementById('videoContainerWrapper');
+  var wrapper = document.getElementById('videoContainerWrapper');
   var backdrop = document.getElementById('cameraBackdrop');
-  var video    = document.getElementById('cameraVideo');
-  var btn      = document.getElementById('openCameraBtn');
+  var video = document.getElementById('cameraVideo');
+  var btn = document.getElementById('openCameraBtn');
+
   wrapper.classList.remove('expanded');
   backdrop.classList.remove('show');
   video.classList.remove('live');
+
   if (btn) {
     btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
-    btn.classList.remove('loading'); btn.disabled = false;
+    btn.classList.remove('loading');
+    btn.disabled = false;
   }
+
   setTimeout(function() {
-    if (videoStream) { videoStream.getTracks().forEach(function(t) { t.stop(); }); videoStream = null; }
+    if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
     video.srcObject = null;
-  }, 300);
+  }, 300); 
 }
 
-/* ═══ FILE INPUT (tier-0 and non-camera errors only) ═══ */
 document.getElementById('cameraInput').onchange = function(e) {
   var file = e.target.files[0]; if (!file) return;
-  autoSave(true); showSuccess('cameraMsg', 'Processing…');
-  var url = URL.createObjectURL(file);
-  var img = new Image();
+  autoSave(true); showSuccess('cameraMsg','Processing…');
+  var url = URL.createObjectURL(file); var img = new Image();
   img.onload = function() {
     try {
-      var maxDim = getMaxDim();
-      var q      = getJpegQuality();
-      var w = img.width, h = img.height;
-      if (w > maxDim || h > maxDim) {
-        if (w > h) { h = Math.round(h * maxDim / w); w = maxDim; }
-        else       { w = Math.round(w * maxDim / h); h = maxDim; }
-      }
-      var canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      photo = canvas.toDataURL('image/jpeg', q);
-      canvas.width = 1; canvas.height = 1; /* free memory */
-      try { Storage.set('attendance_last_photo', photo); } catch(err) {}
-      document.getElementById('preview').src                  = photo;
-      document.getElementById('previewWrapper').style.display = 'block';
-      showSuccess('cameraMsg', 'Identity Captured');
-      activateStep(5);
-      autoSelectAction();
-      autoSave(false);
-    } catch(err) { showError('cameraMsg', 'Error processing photo.'); }
+      var max=640, q=0.65, w=img.width, h=img.height;
+      if (w>max||h>max){ if(w>h){h=Math.floor(h*max/w);w=max;}else{w=Math.floor(w*max/h);h=max;} }
+      var canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
+      canvas.getContext('2d').drawImage(img,0,0,w,h);
+      photo=canvas.toDataURL('image/jpeg',q);
+      
+      try { Storage.set('attendance_last_photo', photo); } catch(err){}
+
+      var p=document.getElementById('preview'); p.src=photo; 
+      document.getElementById('previewWrapper').style.display='block';
+      showSuccess('cameraMsg','Identity Captured'); activateStep(5); autoSave(false);
+    } catch(err){ showError('cameraMsg','Error processing photo.'); }
     finally { URL.revokeObjectURL(url); }
   };
-  img.onerror = function() { URL.revokeObjectURL(url); showError('cameraMsg', 'Could not read image.'); };
+  img.onerror = function(){ URL.revokeObjectURL(url); showError('cameraMsg','Could not read image.'); };
   img.src = url;
 };
 
-/* ═══ PREVIEW EXPAND/COLLAPSE ═══ */
+// ─── SMOOTH FLIP ZOOM (WHATSAPP STYLE) ─────────────────────────────────────
 document.getElementById('preview').onclick = function() {
-  var p  = document.getElementById('preview');
-  var ov = document.getElementById('previewOverlay');
-  if (p.classList.contains('enlarged')) return;
+  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
+  if (p.classList.contains('enlarged')) return; 
+
   var rect = p.getBoundingClientRect();
-  p.style.transition   = 'none';
-  p.style.position     = 'fixed';
-  p.style.top          = rect.top  + 'px';
-  p.style.left         = rect.left + 'px';
-  p.style.width        = rect.width  + 'px';
-  p.style.height       = rect.height + 'px';
-  p.style.margin       = '0';
-  p.style.transform    = 'translate(0,0)';
-  p.style.zIndex       = '10000';
-  void p.offsetWidth;
-  p.style.transition   = 'all 0.35s cubic-bezier(0.25,1,0.4,1)';
-  p.style.top          = '50%';
-  p.style.left         = '50%';
-  var targetSize       = Math.min(window.innerWidth * 0.8, 320);
-  p.style.width        = targetSize + 'px';
-  p.style.height       = targetSize + 'px';
-  p.style.transform    = 'translate(-50%,-50%)';
-  p.style.borderRadius = '24px';
+  p.style.transition = 'none';
+  p.style.position = 'fixed';
+  p.style.top = rect.top + 'px';
+  p.style.left = rect.left + 'px';
+  p.style.width = rect.width + 'px';
+  p.style.height = rect.height + 'px';
+  p.style.margin = '0';
+  p.style.transform = 'translate(0, 0)';
+  p.style.zIndex = '10000';
+  
+  void p.offsetWidth; // Flush CSS changes
+
+  p.style.transition = 'all 0.35s cubic-bezier(0.25, 1, 0.4, 1)';
+  p.style.top = '50%';
+  p.style.left = '50%';
+  
+  var targetSize = Math.min(window.innerWidth * 0.8, 320);
+  p.style.width = targetSize + 'px';
+  p.style.height = targetSize + 'px';
+  p.style.transform = 'translate(-50%, -50%)';
+  p.style.borderRadius = '24px'; 
+  p.style.borderWidth = '0px';   
+  p.style.boxShadow = '0 15px 40px rgba(0,0,0,0.5)';
+  
   p.classList.add('enlarged');
-  ov.style.display = 'block'; void ov.offsetWidth; ov.classList.add('show');
+  
+  ov.style.display = 'block'; 
+  void ov.offsetWidth; 
+  ov.classList.add('show');
+  
+  // Center close button perfectly right above the newly sized square
+  var closeBtn = document.getElementById('closePreviewBtn');
+  closeBtn.style.top = 'calc(50% - ' + (targetSize/2 + 32) + 'px)';
+  closeBtn.style.left = '50%';
+  closeBtn.style.transform = 'translate(-50%, -50%)';
+  closeBtn.classList.add('show');
 };
 
 function collapsePreview() {
-  var p  = document.getElementById('preview');
-  var ov = document.getElementById('previewOverlay');
+  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (!p.classList.contains('enlarged')) return;
-  var rect = document.getElementById('previewWrapper').getBoundingClientRect();
-  p.style.transition   = 'all 0.32s cubic-bezier(0.25,1,0.4,1)';
-  p.style.top          = rect.top  + 'px';
-  p.style.left         = rect.left + 'px';
-  p.style.width        = rect.width  + 'px';
-  p.style.height       = rect.height + 'px';
-  p.style.transform    = 'translate(0,0)';
+  
+  document.getElementById('closePreviewBtn').classList.remove('show');
+  
+  var wrapper = document.getElementById('previewWrapper');
+  var rect = wrapper.getBoundingClientRect();
+  
+  p.style.top = rect.top + 'px';
+  p.style.left = rect.left + 'px';
+  p.style.width = rect.width + 'px';
+  p.style.height = rect.height + 'px';
+  p.style.transform = 'translate(0, 0)';
   p.style.borderRadius = '50%';
+  p.style.borderWidth = '3px';
+  p.style.boxShadow = 'none';
+  
   ov.classList.remove('show');
+  
   setTimeout(function() {
-    p.style.transition = 'opacity 0.12s ease';
-    p.style.opacity    = '0';
-  }, 200);
-  setTimeout(function() {
-    p.style.transition   = 'none';
-    p.style.position     = 'absolute';
-    p.style.top          = '0'; p.style.left   = '0';
-    p.style.width        = '100%'; p.style.height = '100%';
-    p.style.transform    = 'none'; p.style.zIndex = '1';
-    p.style.borderRadius = ''; p.style.borderWidth = ''; p.style.margin = '';
+    p.style.transition = 'none';
+    p.style.position = 'absolute';
+    p.style.top = '0';
+    p.style.left = '0';
+    p.style.width = '100%';
+    p.style.height = '100%';
+    p.style.transform = 'none';
+    p.style.zIndex = '1';
+    
+    p.style.borderRadius = '';
+    p.style.borderWidth = '';
+    p.style.boxShadow = '';
+    p.style.margin = '';
+    
     p.classList.remove('enlarged');
     ov.style.display = 'none';
-    requestAnimationFrame(function() {
-      p.style.transition = 'opacity 0.18s ease';
-      p.style.opacity    = '1';
-      setTimeout(function() { p.style.transition = ''; p.style.opacity = ''; }, 180);
-    });
-  }, 320);
+  }, 350);
 }
 
-/* ═══ SUBMIT ═══ */
+// ─── SUBMIT ────────────────────────────────────────────────────────────────
 function submitAttendance() {
   var branch  = document.getElementById('branch').value;
-  var staffID = document.getElementById('staffID').value.trim();
+  var staffID = document.getElementById('staffID').value;
   var action  = document.getElementById('actionChoice').value;
-  if (!branch || !staffID || !action) { showError('submitMsg', 'Complete all steps.'); return; }
-  if (!photo)                         { showError('submitMsg', 'Please take a selfie first.'); return; }
+  if (!branch||!staffID||!action) { showError('submitMsg','Complete all steps.'); return; }
+
+  // Prevent offline-clunkiness: if not connected, instantly fail safely.
+  if (!navigator.onLine) {
+    showError('submitMsg', 'No internet connection. Please connect to network and try again.'); 
+    return;
+  }
+
   var lastAction = getStaffLocalStatus(staffID);
-  if (action === 'Clock In' && lastAction) {
-    showError('submitMsg', lastAction === 'Clock Out'
-      ? 'You have already completed your shift today.'
-      : 'You are already clocked in today.');
-    return;
+
+  // Redundant safety check at submission time
+  if (action === 'Clock In' && lastAction === 'Clock In') {
+    showError('submitMsg', 'You have already clocked in today.'); return;
   }
-  if (action === 'Clock Out' && lastAction !== 'Clock In') {
-    showError('submitMsg', lastAction === 'Clock Out'
-      ? 'You have already clocked out today.'
-      : 'You must Clock In before Clocking Out.');
-    return;
+  if (action === 'Clock Out') {
+    if (!lastAction) {
+      showError('submitMsg', 'You must Clock In first before Clocking Out.'); return;
+    }
+    if (lastAction === 'Clock Out') {
+      showError('submitMsg', 'You have already clocked out today.'); return;
+    }
   }
+
+  var submitBtn = document.getElementById('submitBtn');
+  var originalBtnText = submitBtn.textContent;
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'SUBMITTING...';
+
   var payload = {
-    name:  staffName, id: staffID, branch: branch, action: action, image: photo,
-    lat:   coords ? coords.latitude  : 0,
-    lng:   coords ? coords.longitude : 0,
-    clientTimestamp: new Date().toISOString()
+    name:staffName, id:staffID, branch:branch, action:action, image:photo,
+    lat:coords?coords.latitude:0, lng:coords?coords.longitude:0,
+    clientTimestamp:new Date().toISOString()
   };
-  updateLocalStatus(staffID, action);
-  savePreferences();
-  Storage.remove(getFormCacheKey());
-  finishSubmission(action);
-  if (navigator.onLine) {
-    fetchFromServer('recordAttendance', payload).catch(function() { enqueueSubmission(payload); });
-  } else {
-    enqueueSubmission(payload);
-  }
+
+  fetchFromServer('recordAttendance', payload).then(function() {
+    // Write local safety history ONLY after success, to ensure it doesn't wrongly lock user out later.
+    var member = null;
+    for (var i = 0; i < staff.length; i++) { if (staff[i].id===staffID){ member=staff[i]; break; } }
+    if (member) member.status = action;
+    
+    var todayKey = new Date().toDateString();
+    var histRaw = Storage.get('local_history_' + currentTerminal);
+    var history = histRaw ? JSON.parse(histRaw) : {};
+    history[staffID + '_' + todayKey] = action;
+    try { Storage.set('local_history_' + currentTerminal, JSON.stringify(history)); } catch(e){}
+
+    finishSubmission(action);
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalBtnText;
+
+  }).catch(function(err) {
+    showError('submitMsg', 'Server error. Please try again.');
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalBtnText;
+  });
 }
 
+// ─── FINISH SUBMISSION ─────────────────────────────────────────────────────
 function finishSubmission(action) {
+  Storage.remove(getFormCacheKey());
   var firstName = staffName.split(' ')[0] || staffName;
-  var isIn      = (action === 'Clock In');
-  var now       = new Date();
-  var timeVal   = now.getHours() + (now.getMinutes() / 60.0);
-  var emoji = '✅', badge = 'Submitted', msg = '', warning = null;
+  var isIn = (action === 'Clock In');
+  var now = new Date();
+  var hrs = now.getHours();
+  var mins = now.getMinutes();
+  
+  var timeVal = hrs + (mins / 60.0);
+  
+  var emoji='✅', badge='Submitted', msg='', warning=null;
+
   if (isIn) {
-    if      (timeVal < 6.5)      { emoji='🌟'; badge='On Time!';   msg="Fantastic start — you're early today! Keep it up!"; }
-    else if (timeVal <= 7.6667)  { emoji='✅'; badge='On Time!';   msg="Great, you are on time for the morning shift."; }
-    else if (timeVal < 11.0)     { emoji='⏰'; badge='Clocked In'; msg="Late for morning shift."; warning="⚠️ Warning: Consistent late clock-ins are reviewed by management."; }
-    else if (timeVal < 14.0)     { emoji='🌟'; badge='On Time!';   msg="Early for the second shift. Great job!"; }
-    else if (timeVal <= 14.6667) { emoji='✅'; badge='On Time!';   msg="On time for the second shift. Have a productive afternoon!"; }
-    else                         { emoji='⏰'; badge='Clocked In'; msg="Late for afternoon shift."; warning="⚠️ Warning: Late clock-ins are reviewed by management."; }
+    if (timeVal < 6.5) { 
+      emoji='🌟'; badge='On Time!'; msg="Fantastic start — you're early today! keep it up"; 
+    } else if (timeVal <= 7.6667) { 
+      emoji='✅'; badge='On Time!'; msg="Great, you are on time for the morning shift."; 
+    } else if (timeVal < 11.0) { 
+      emoji='⏰'; badge='Clocked In'; msg="Late for morning shift."; warning="⚠️ Warning: Consistent late clock-ins are reviewed by management."; 
+    } else if (timeVal < 14.0) { 
+      emoji='🌟'; badge='On Time!'; msg="Early for the second shift. Great job!"; 
+    } else if (timeVal <= 14.6667) { 
+      emoji='✅'; badge='On Time!'; msg="On time for the second shift. Have a productive afternoon!"; 
+    } else { 
+      emoji='⏰'; badge='Clocked In'; msg="Late for afternoon shift."; warning="⚠️ Warning: Late clock-ins are reviewed by management."; 
+    }
   } else {
-    if (now.getHours() < 16) { emoji='👋'; badge='Clocked Out'; msg="Have a wonderful afternoon!"; }
-    else                      { emoji='🌙'; badge='Clocked Out'; msg="Have a restful night!"; }
+    if (hrs < 16) { emoji='👋'; badge='Clocked Out'; msg="Have a wonderful afternoon!"; }
+    else          { emoji='🌙'; badge='Clocked Out'; msg="Have a restful night!"; }
   }
+
   document.getElementById('successEmoji').textContent = emoji;
   document.getElementById('successBadge').textContent = badge;
   document.getElementById('successName').textContent  = firstName;
   document.getElementById('successMsg').textContent   = msg;
   var w = document.getElementById('successWarning');
-  if (warning) { w.textContent = warning; w.style.display = 'block'; }
-  else         { w.style.display = 'none'; }
-  document.getElementById('mainForm').style.display      = 'none';
+  if (warning) { w.textContent=warning; w.style.display='block'; } else { w.style.display='none'; }
+  document.getElementById('mainForm').style.display    = 'none';
   document.getElementById('successScreen').style.display = 'flex';
 }
 </script>
