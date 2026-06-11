@@ -173,7 +173,8 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   pointer-events:auto; opacity:1; transform: scale(1);
   box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
-#cameraVideo{ width:100%;height:100%;object-fit:cover;display:block; }
+/* transform scaleX(-1) mirrors the live preview so it acts like a real mirror */
+#cameraVideo{ width:100%;height:100%;object-fit:cover;display:block; transform: scaleX(-1); }
 #cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; }
 #cameraBackdrop.show{ display:block; }
 .camera-ui{
@@ -232,14 +233,6 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   content:'';position:absolute;top:45%;left:50%; width:3.5px;height:7px;
   border-right:2px solid #fff;border-bottom:2px solid #fff;
   transform:translate(-50%,-50%) rotate(45deg);
-}
-
-.completed-warning {
-  background: var(--warning-bg); border: 1px solid var(--warning-border);
-  color: var(--warning-text); padding: 14px 18px; border-radius: 12px;
-  text-align: center; font-weight: 700; font-size: 14px; letter-spacing: 0.3px;
-  display: none; animation: bounceIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 /* Success Screen */
@@ -369,9 +362,6 @@ var Storage={
           <div class="btn-spinner"></div>
         </button>
         <div id="submitMsg" class="msg" style="justify-content:center;text-align:center;"></div>
-        <div id="completedWarning" class="completed-warning">
-          ✅ You have completed today's attendance.
-        </div>
       </div>
 
     </div>
@@ -523,12 +513,6 @@ function resetStepsFrom(n) {
     currentAction=''; 
     document.getElementById('actionBadge').textContent='...'; 
     document.getElementById('actionBadge').style.color='var(--dynamic-primary)';
-    
-    // Reset submission area layout
-    document.getElementById('submitBtn').style.display = 'block';
-    document.getElementById('submitMsg').style.display = 'flex';
-    var cw = document.getElementById('completedWarning');
-    if (cw) cw.style.display = 'none';
   }
   clearMsg('submitMsg');
 }
@@ -569,16 +553,16 @@ function handleStaffInput() {
     var history = historyRaw ? JSON.parse(historyRaw) : {};
     var lastAction = history[match.id + '_' + todayKey] || match.status;
 
-    // Determine state but DO NOT block progress yet
+    // Immediately stop user at Staff ID step if they've already clocked out today
     if (lastAction === 'Clock Out') {
-      currentAction = 'Completed';
-      document.getElementById('actionBadge').textContent = 'Done for Today';
-      document.getElementById('actionBadge').style.color = 'var(--text-tertiary)';
-    } else {
-      currentAction = (lastAction === 'Clock In') ? 'Clock Out' : 'Clock In';
-      document.getElementById('actionBadge').textContent = currentAction;
-      document.getElementById('actionBadge').style.color = 'var(--dynamic-primary)';
+      showError('staffMsg', 'You have completed today\'s attendance.');
+      resetStepsFrom(3); 
+      return;
     }
+    
+    currentAction = (lastAction === 'Clock In') ? 'Clock Out' : 'Clock In';
+    document.getElementById('actionBadge').textContent = currentAction;
+    document.getElementById('actionBadge').style.color = 'var(--dynamic-primary)';
     
     showSuccess('staffMsg','Welcome '+staffName);
     if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
@@ -672,8 +656,16 @@ function capturePhoto() {
   var canvas = document.createElement('canvas');
   canvas.width = Math.round(vw * scale); canvas.height = Math.round(vh * scale);
   var ctx = canvas.getContext('2d');
+  
+  // Mirror the canvas context so the saved photo matches the mirrored video preview perfectly
+  ctx.translate(canvas.width, 0);
+  ctx.scale(-1, 1);
+  
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  
+  // Reset the transform back to default
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
   
   // Save as high-quality JPEG (85% compression)
   photo = canvas.toDataURL('image/jpeg', 0.85);
@@ -684,18 +676,7 @@ function capturePhoto() {
   activateStep(5);
   activateStep(6);
 
-  // If already completed, hide submit button and show warning at the bottom.
-  if (currentAction === 'Completed') {
-    document.getElementById('submitBtn').style.display = 'none';
-    document.getElementById('submitMsg').style.display = 'none';
-    document.getElementById('completedWarning').style.display = 'block';
-  } else {
-    document.getElementById('submitBtn').style.display = 'block';
-    document.getElementById('submitMsg').style.display = 'flex';
-    document.getElementById('completedWarning').style.display = 'none';
-    showSuccess('submitMsg', 'Ready for Submission');
-  }
-  
+  showSuccess('submitMsg', 'Ready for Submission');
   stopCamera();
 }
 
