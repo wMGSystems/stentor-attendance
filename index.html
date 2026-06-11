@@ -151,8 +151,7 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 #submitBtn.submitting .btn-label { opacity: 0; }
 #submitBtn .btn-spinner {
   display: none; position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 22px; height: 22px;
+  transform: translate(-50%, -50%); width: 22px; height: 22px;
   border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff;
   border-radius: 50%; animation: spin 0.6s linear infinite;
 }
@@ -212,15 +211,15 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   object-fit: cover; border-radius: 50%; border: 3px solid var(--success-color);
   cursor: pointer; z-index: 1; transform: translateZ(0);
-  will-change: top, left, width, height, transform, border-radius, opacity;
+  will-change: top, left, width, height, border-radius, border-width;
 }
 #previewOverlay{
   display:none;position:fixed;inset:0; background:rgba(0,0,0,0.85);
-  z-index:9999; opacity:0; transition:opacity 0.3s ease; cursor:pointer;
+  z-index:9999; opacity:0; transition:opacity 0.4s ease; cursor:pointer;
 }
 #previewOverlay.show{opacity:1}
 
-/* Messages */
+/* Messages & Warning Block */
 .msg{ font-size:12px;font-weight:600;margin-top:6px;min-height:20px; color:var(--text-tertiary);display:flex;align-items:center; }
 .msg.success{color:var(--success-color);font-size:13px}
 .msg.error  {color:var(--error-color)}
@@ -233,6 +232,14 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   content:'';position:absolute;top:45%;left:50%; width:3.5px;height:7px;
   border-right:2px solid #fff;border-bottom:2px solid #fff;
   transform:translate(-50%,-50%) rotate(45deg);
+}
+
+.completed-warning {
+  background: var(--warning-bg); border: 1px solid var(--warning-border);
+  color: var(--warning-text); padding: 14px 18px; border-radius: 12px;
+  text-align: center; font-weight: 700; font-size: 14px; letter-spacing: 0.3px;
+  display: none; animation: bounceIn 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 
 /* Success Screen */
@@ -362,6 +369,9 @@ var Storage={
           <div class="btn-spinner"></div>
         </button>
         <div id="submitMsg" class="msg" style="justify-content:center;text-align:center;"></div>
+        <div id="completedWarning" class="completed-warning">
+          ✅ You have completed today's attendance.
+        </div>
       </div>
 
     </div>
@@ -509,15 +519,24 @@ function resetStepsFrom(n) {
     var pWrap=document.getElementById('previewWrapper'); if(pWrap) pWrap.style.display='none'; 
     document.getElementById('preview').src=''; clearMsg('cameraMsg');
   }
-  if (n<=5) { currentAction=''; document.getElementById('actionBadge').textContent='...'; }
+  if (n<=5) { 
+    currentAction=''; 
+    document.getElementById('actionBadge').textContent='...'; 
+    document.getElementById('actionBadge').style.color='var(--dynamic-primary)';
+    
+    // Reset submission area layout
+    document.getElementById('submitBtn').style.display = 'block';
+    document.getElementById('submitMsg').style.display = 'flex';
+    var cw = document.getElementById('completedWarning');
+    if (cw) cw.style.display = 'none';
+  }
   clearMsg('submitMsg');
 }
+
 function resetToStart() {
   document.getElementById('successScreen').style.display='none';
   document.getElementById('mainForm').style.display='block';
   resetStepsFrom(2); 
-  document.getElementById('step1').classList.add('activeStep');
-  // Re-trigger branch change so it jumps straight to step 2 if a branch is already populated
   handleBranchChange();
 }
 
@@ -550,13 +569,16 @@ function handleStaffInput() {
     var history = historyRaw ? JSON.parse(historyRaw) : {};
     var lastAction = history[match.id + '_' + todayKey] || match.status;
 
+    // Determine state but DO NOT block progress yet
     if (lastAction === 'Clock Out') {
-      showError('staffMsg', 'You have completed today\'s attendance.');
-      resetStepsFrom(3); return;
+      currentAction = 'Completed';
+      document.getElementById('actionBadge').textContent = 'Done for Today';
+      document.getElementById('actionBadge').style.color = 'var(--text-tertiary)';
+    } else {
+      currentAction = (lastAction === 'Clock In') ? 'Clock Out' : 'Clock In';
+      document.getElementById('actionBadge').textContent = currentAction;
+      document.getElementById('actionBadge').style.color = 'var(--dynamic-primary)';
     }
-    
-    currentAction = (lastAction === 'Clock In') ? 'Clock Out' : 'Clock In';
-    document.getElementById('actionBadge').textContent = currentAction;
     
     showSuccess('staffMsg','Welcome '+staffName);
     if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
@@ -609,7 +631,7 @@ function verifyGPS() {
   );
 }
 
-// Camera Optimization
+// Camera Optimization - Ask for High Definition
 function startCamera() {
   var btn = document.getElementById('openCameraBtn');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
@@ -618,7 +640,8 @@ function startCamera() {
   btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; position:relative; transform:none; width:16px; height:16px; margin-right:8px; vertical-align:middle; border-width:2px; top:auto; left:auto;"></span><span style="vertical-align:middle;">Starting Camera...</span>';
   clearMsg('cameraMsg');
 
-  var constraints = { video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
+  // Request high definition stream for modern devices
+  var constraints = { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
   navigator.mediaDevices.getUserMedia(constraints)
     .then(function(stream) {
       videoStream = stream;
@@ -642,23 +665,36 @@ function startCamera() {
 
 function capturePhoto() {
   var video = document.getElementById('cameraVideo');
-  var vw = video.videoWidth || 640, vh = video.videoHeight || 480;
-  var maxDim = 640, scale = (vw > maxDim || vh > maxDim) ? (maxDim / Math.max(vw, vh)) : 1;
+  // High quality capture bounds
+  var vw = video.videoWidth || 1280, vh = video.videoHeight || 720;
+  var maxDim = 1280, scale = (vw > maxDim || vh > maxDim) ? (maxDim / Math.max(vw, vh)) : 1;
+  
   var canvas = document.createElement('canvas');
   canvas.width = Math.round(vw * scale); canvas.height = Math.round(vh * scale);
   var ctx = canvas.getContext('2d');
-  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'medium';
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
   
-  photo = canvas.toDataURL('image/jpeg', 0.70);
+  // Save as high-quality JPEG (85% compression)
+  photo = canvas.toDataURL('image/jpeg', 0.85);
   document.getElementById('preview').src = photo;
   document.getElementById('previewWrapper').style.display = 'block';
   showSuccess('cameraMsg','Identity Captured');
   
-  // Instantly enable steps 5 and 6
   activateStep(5);
-  showSuccess('submitMsg', 'Ready for Submission');
   activateStep(6);
+
+  // If already completed, hide submit button and show warning at the bottom.
+  if (currentAction === 'Completed') {
+    document.getElementById('submitBtn').style.display = 'none';
+    document.getElementById('submitMsg').style.display = 'none';
+    document.getElementById('completedWarning').style.display = 'block';
+  } else {
+    document.getElementById('submitBtn').style.display = 'block';
+    document.getElementById('submitMsg').style.display = 'flex';
+    document.getElementById('completedWarning').style.display = 'none';
+    showSuccess('submitMsg', 'Ready for Submission');
+  }
   
   stopCamera();
 }
@@ -675,48 +711,80 @@ function stopCamera() {
   }, 400);
 }
 
-// Photo Zoom - simplified closing
+// Smooth Photo Zoom Implementation
 document.getElementById('preview').onclick = function() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (p.classList.contains('enlarged')) return collapsePreview();
+  
   var rect = p.getBoundingClientRect();
-  p.style.transition = 'none'; p.style.position = 'fixed';
-  p.style.top = rect.top + 'px'; p.style.left = rect.left + 'px';
-  p.style.width = rect.width + 'px'; p.style.height = rect.height + 'px';
-  p.style.margin = '0'; p.style.transform = 'translate(0,0)';
-  p.style.zIndex = '10000'; p.style.opacity = '1';
+  
+  // Freeze current DOM position explicitly
+  p.style.transition = 'none';
+  p.style.position = 'fixed';
+  p.style.top = rect.top + 'px'; 
+  p.style.left = rect.left + 'px';
+  p.style.width = rect.width + 'px'; 
+  p.style.height = rect.height + 'px';
+  p.style.margin = '0'; 
+  p.style.transform = 'translate(0,0)';
+  p.style.zIndex = '10000';
+  
+  // Force a browser reflow to register fixed coordinates before applying transition
   void p.offsetWidth;
   
-  p.style.transition = 'all 0.35s cubic-bezier(0.25,1,0.4,1)';
-  p.style.top = '50%'; p.style.left = '50%';
-  var targetSize = Math.min(window.innerWidth * 0.8, 320);
-  p.style.width = targetSize + 'px'; p.style.height = targetSize + 'px';
-  p.style.transform = 'translate(-50%,-50%)'; p.style.borderRadius = '24px';
-  p.style.borderWidth = '0px'; p.style.boxShadow = '0 20px 40px rgba(0,0,0,0.5)';
+  // Apply purely dimensional transition directly to center
+  p.style.transition = 'all 0.4s cubic-bezier(0.25, 1, 0.4, 1)';
+  p.style.top = '50%'; 
+  p.style.left = '50%';
+  var targetSize = Math.min(window.innerWidth * 0.85, 360);
+  p.style.width = targetSize + 'px'; 
+  p.style.height = targetSize + 'px';
+  p.style.transform = 'translate(-50%,-50%)'; 
+  p.style.borderRadius = '20px'; // Soft square
+  p.style.borderWidth = '4px'; // Keeps the colored border visible
+  p.style.boxShadow = '0 20px 40px rgba(0,0,0,0.5)';
   p.classList.add('enlarged');
   
-  ov.style.display = 'block'; void ov.offsetWidth; ov.classList.add('show');
+  ov.style.display = 'block'; 
+  void ov.offsetWidth; 
+  ov.classList.add('show');
 };
 
 function collapsePreview() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (!p.classList.contains('enlarged')) return;
-  var wrapper = document.getElementById('previewWrapper'), rect = wrapper.getBoundingClientRect();
   
-  p.style.transition = 'top 0.3s cubic-bezier(0.4,0,0.2,1), left 0.3s cubic-bezier(0.4,0,0.2,1), width 0.3s cubic-bezier(0.4,0,0.2,1), height 0.3s cubic-bezier(0.4,0,0.2,1), border-radius 0.3s ease, opacity 0.15s ease 0.15s';
-  p.style.top = rect.top + 'px'; p.style.left = rect.left + 'px';
-  p.style.width = rect.width + 'px'; p.style.height = rect.height + 'px';
-  p.style.transform = 'translate(0,0)'; p.style.borderRadius = '50%'; p.style.borderWidth = '3px';
-  p.style.boxShadow = 'none'; p.style.opacity = '0';
+  var wrapper = document.getElementById('previewWrapper');
+  var rect = wrapper.getBoundingClientRect();
+  
+  // Animate strictly physical dimensions back to root location
+  p.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+  p.style.top = rect.top + 'px'; 
+  p.style.left = rect.left + 'px';
+  p.style.width = rect.width + 'px'; 
+  p.style.height = rect.height + 'px';
+  p.style.transform = 'translate(0,0)'; 
+  p.style.borderRadius = '50%'; 
+  p.style.borderWidth = '3px';
+  p.style.boxShadow = 'none';
   ov.classList.remove('show');
   
+  // Snap back into relative DOM structure once transition visual completes
   setTimeout(function() {
-    p.style.transition = 'none'; p.style.position = 'absolute';
-    p.style.top = '0'; p.style.left = '0'; p.style.width = '100%'; p.style.height = '100%';
-    p.style.transform = 'none'; p.style.zIndex = '1'; p.style.borderRadius = ''; p.style.borderWidth = '';
-    p.style.opacity = '0'; p.classList.remove('enlarged'); ov.style.display = 'none';
-    requestAnimationFrame(function() { p.style.transition = 'opacity 0.2s ease'; p.style.opacity = '1'; });
-  }, 320);
+    if (!p.classList.contains('enlarged')) return; // Safety check
+    p.style.transition = 'none'; 
+    p.style.position = 'absolute';
+    p.style.top = '0'; 
+    p.style.left = '0'; 
+    p.style.width = '100%'; 
+    p.style.height = '100%';
+    p.style.transform = 'none'; 
+    p.style.zIndex = '1'; 
+    p.style.borderRadius = ''; 
+    p.style.borderWidth = '';
+    p.classList.remove('enlarged'); 
+    ov.style.display = 'none';
+  }, 400); // Matches transition duration
 }
 
 // Background Sync Queue
@@ -728,7 +796,7 @@ function queueSubmission(payload) {
 
 function submitAttendance() {
   var branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
-  if (!branch||!staffID||!currentAction||!photo) return;
+  if (!branch||!staffID||!currentAction||!photo || currentAction==='Completed') return;
   
   var submitBtn = document.getElementById('submitBtn');
   submitBtn.disabled = true; submitBtn.classList.add('submitting');
