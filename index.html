@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" id="theme-color-meta" content="#52c234">
+<meta name="theme-color" id="theme-color-meta" content="#059669">
 <script>
   (function() {
     try {
@@ -13,8 +13,8 @@
       var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       var meta = document.getElementById('theme-color-meta');
       if (meta) {
-        if (savedTerm === 'carrefour') meta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
-        else meta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
+        if (savedTerm === 'carrefour') meta.setAttribute('content', isDark ? '#2563eb' : '#3b82f6');
+        else meta.setAttribute('content', isDark ? '#059669' : '#10b981');
       }
     } catch(e) {}
   })();
@@ -31,9 +31,13 @@
   --success-card-bg:#f0fdf4; --success-card-border:#bbf7d0;
   --modal-overlay:rgba(0,0,0,0.65); --shadow-color:rgba(0,0,0,0.1);
   --label-text:#6b7280;
-  --theme-chan:#059669; --theme-carr:#2563eb;
+  
+  /* Beautiful Solid Colors */
+  --theme-chan:#10b981; /* Emerald Green */
+  --theme-carr:#3b82f6; /* Royal Blue */
   --dynamic-primary:var(--theme-chan);
 }
+
 @media (prefers-color-scheme:dark) {
   :root {
     --bg-primary:#1f2937; --bg-secondary:#111827;
@@ -45,34 +49,27 @@
     --success-card-bg:#064e3b; --success-card-border:#065f46;
     --modal-overlay:rgba(0,0,0,0.85); --shadow-color:rgba(0,0,0,0.5);
     --label-text:#9ca3af;
-    --theme-chan:#10b981; --theme-carr:#3b82f6;
+    
+    /* Slightly deeper versions for dark mode background */
+    --theme-chan:#059669; 
+    --theme-carr:#2563eb; 
   }
 }
+
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
 body {
   font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-  color:var(--text-primary); background-color: var(--dynamic-primary);
+  color:var(--text-primary); 
+  /* Single dynamic background color with smooth transition */
+  background-color: var(--dynamic-primary);
   min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
   align-items:center; justify-content:flex-start;
   padding:max(20px,env(safe-area-inset-top)) 12px 32px;
   overflow-y:auto; -webkit-overflow-scrolling:touch;
   transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.bg-layer{
-  position:fixed; inset:-100px; z-index:-1; 
-  transition:opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-  background-size: cover; background-position: center;
-}
-.bg-chandarana{background:linear-gradient(135deg,#52c234 0%,#1a73e8 100%);opacity:1}
-.bg-carrefour {background:linear-gradient(135deg,#1a73e8 0%,#52c234 100%);opacity:0}
-@media (prefers-color-scheme:dark){
-  .bg-chandarana{background:linear-gradient(135deg,#064e3b 0%,#1e3a8a 100%)}
-  .bg-carrefour {background:linear-gradient(135deg,#1e3a8a 0%,#064e3b 100%)}
-}
-body.theme-chandarana .bg-chandarana{opacity:1}
-body.theme-chandarana .bg-carrefour {opacity:0}
-body.theme-carrefour  .bg-chandarana{opacity:0}
-body.theme-carrefour  .bg-carrefour {opacity:1}
+
 body.theme-chandarana{--dynamic-primary:var(--theme-chan)}
 body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f6}
 
@@ -82,6 +79,7 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
   box-shadow:0 15px 35px var(--shadow-color);
   position:relative; overflow:visible;
 }
+
 .network-indicator{
   position:absolute;top:18px;left:18px;width:8px;height:8px;border-radius:50%;
   background:var(--success-color);opacity:0.8;transition:background 0.4s ease;
@@ -112,7 +110,7 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 .pill-btn.active .full-text{display:block}
 .pill-btn:not(.active) .short-text{display:block}
 
-/* Original nudge bounce restoration */
+/* Bouncy entrance animation for steps */
 @keyframes bounceIn{ 
   0%{transform:scale(0.9);opacity:0} 
   60%{transform:scale(1.05)} 
@@ -169,24 +167,16 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   position:absolute; bottom:0; right:0;
   width:100%; height:0; border-radius:14px;
   overflow:hidden; z-index:60; background-color: #000;
-  /* Faster collapse and fade out */
-  transition: width 0.25s ease, height 0.25s ease, opacity 0.2s ease, transform 0.25s ease;
+  /* Fast popping expand and collapse */
+  transition: width 0.35s cubic-bezier(0.25, 1, 0.4, 1), height 0.35s cubic-bezier(0.25, 1, 0.4, 1), opacity 0.25s ease, transform 0.35s cubic-bezier(0.25, 1, 0.4, 1);
   transform-origin:bottom right; opacity:0; pointer-events:none;
   transform: scale(0.6);
+  -webkit-mask-image: -webkit-radial-gradient(white, black); /* Fixes corner bleed */
 }
 #videoContainerWrapper.expanded{
   width:calc(200% + 12px); height:330px;
   pointer-events:auto; opacity:1; transform: scale(1);
   box-shadow: 0 15px 35px rgba(0,0,0,0.4);
-  /* Slow smooth expansion matching the 0.85s photo zoom */
-  transition: all 0.85s cubic-bezier(0.25, 1, 0.4, 1);
-}
-
-.fallback-bg {
-  position: absolute; inset: -30px;
-  background-color: #000;
-  background-position: center; background-size: cover;
-  filter: blur(20px); z-index: 1; opacity: 0.6;
 }
 
 #cameraVideo{ 
@@ -220,13 +210,17 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   z-index:4; -webkit-tap-highlight-color:transparent;
 }
 
-/* Photo Preview Overlay */
-.preview-wrapper { width: 56px; height: 56px; position: relative; display: none; margin: 0 auto; }
+/* Centered Photo Preview & Inline Action */
+.preview-wrapper { width: 56px; height: 56px; position: relative; display: none; margin: 0; }
 #preview {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  object-fit: cover; border-radius: 50%; border: 3px solid var(--success-color);
+  object-fit: cover; border-radius: 50%;
+  /* Using box-shadow instead of border fixes the "sharp corners popping out" bug */
+  box-shadow: 0 0 0 3px var(--success-color);
   cursor: pointer; z-index: 1; transform: translateZ(0);
-  will-change: top, left, width, height, border-radius, border-width;
+  -webkit-mask-image: -webkit-radial-gradient(white, black); /* Additional clip safeguard */
+  backface-visibility: hidden;
+  will-change: top, left, width, height, border-radius, box-shadow;
 }
 #previewOverlay{
   display:none;position:fixed;inset:0; background:rgba(0,0,0,0.85);
@@ -234,7 +228,7 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 }
 #previewOverlay.show{opacity:1}
 
-/* Messages & Warning Block */
+/* Messages */
 .msg{ font-size:12px;font-weight:600;margin-top:6px;min-height:20px; color:var(--text-tertiary);display:flex;align-items:center; }
 .msg.success{color:var(--success-color);font-size:13px}
 .msg.error  {color:var(--error-color)}
@@ -299,9 +293,6 @@ var Storage={
 (function(){document.body.className='theme-'+(Storage.get('selected_terminal')||'chandarana')})();
 </script>
 
-<div class="bg-layer bg-chandarana"></div>
-<div class="bg-layer bg-carrefour"></div>
-
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
 <div id="previewOverlay" onclick="collapsePreview()"></div>
 
@@ -347,8 +338,6 @@ var Storage={
         <label>Identity</label>
         <div id="cameraBtnWrapper">
           <div id="videoContainerWrapper">
-            <!-- Blurred background fallback -->
-            <div id="fallbackBg" class="fallback-bg"></div>
             <video id="cameraVideo" autoplay playsinline muted></video>
             <button id="closeCameraBtn" onclick="stopCamera()" aria-label="Close camera">&#x2715;</button>
             <div class="camera-ui">
@@ -361,10 +350,10 @@ var Storage={
       </div>
 
       <div id="step5" class="step full-width">
-        <!-- Minimal empty inline structure without borders or background -->
-        <div style="display:flex; justify-content:space-between; align-items:center;">
+        <!-- Centered minimal inline layout -->
+        <div style="display:flex; justify-content:center; align-items:center; gap:20px; height:60px;">
           <div id="actionDisplay" style="font-size:24px; font-weight:800; color:var(--dynamic-primary); letter-spacing:0.5px;"></div>
-          <div id="previewWrapper" class="preview-wrapper" style="margin:0; flex-shrink:0;">
+          <div id="previewWrapper" class="preview-wrapper" style="flex-shrink:0;">
             <img id="preview" alt="Selfie">
           </div>
         </div>
@@ -455,7 +444,7 @@ function checkNetworkStatus() {
 function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
   var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  var hexColor = currentTerminal === 'chandarana' ? (isDark ? '#064e3b' : '#52c234') : (isDark ? '#1e3a8a' : '#1a73e8');
+  var hexColor = currentTerminal === 'chandarana' ? (isDark ? '#059669' : '#10b981') : (isDark ? '#2563eb' : '#3b82f6');
   var meta = document.getElementById('theme-color-meta');
   if (meta) meta.setAttribute('content', hexColor);
   
@@ -626,20 +615,10 @@ function verifyGPS() {
   );
 }
 
-// Camera Optimization - Instant slow expansion masks load time
+// Shows Spinner until Hardware returns live feed, then immediately pops
 function startCamera() {
   var btn = document.getElementById('openCameraBtn');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
-
-  // Inject heavily blurred last photo into background
-  var lastPhoto = Storage.get('attendance_last_photo');
-  var bgEl = document.getElementById('fallbackBg');
-  if (lastPhoto) { bgEl.style.backgroundImage = "url('" + lastPhoto + "')"; }
-  else { bgEl.style.backgroundImage = "none"; bgEl.style.backgroundColor = "#000"; }
-
-  // Immediately expand container slowly to mask camera load
-  document.getElementById('videoContainerWrapper').classList.add('expanded');
-  document.getElementById('cameraBackdrop').classList.add('show');
 
   btn.classList.add('loading');
   btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; position:relative; transform:none; width:16px; height:16px; margin-right:8px; vertical-align:middle; border-width:2px; top:auto; left:auto;"></span><span style="vertical-align:middle;">Starting Camera...</span>';
@@ -654,15 +633,18 @@ function startCamera() {
       video.srcObject = stream;
       video.onloadedmetadata = function() {
         video.play().catch(function(){});
+        
+        // Expand AFTER camera is actively loaded
+        document.getElementById('videoContainerWrapper').classList.add('expanded');
+        document.getElementById('cameraBackdrop').classList.add('show');
         video.classList.add('live');
+        
         btn.classList.remove('loading');
         btn.innerText = 'Take a Selfie';
       };
     })
     .catch(function(err) {
       console.warn('Camera failed:', err);
-      document.getElementById('videoContainerWrapper').classList.remove('expanded');
-      document.getElementById('cameraBackdrop').classList.remove('show');
       btn.classList.remove('loading');
       btn.innerText = 'Take a Selfie';
       showGuideModal('camera');
@@ -684,15 +666,10 @@ function capturePhoto() {
   
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  
-  // Reset the transform back to default
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   
   // Save as high-quality JPEG (85% compression)
   photo = canvas.toDataURL('image/jpeg', 0.85);
-  
-  // Cache for future blur background
-  Storage.set('attendance_last_photo', photo);
 
   // Apply to step 5 preview
   document.getElementById('preview').src = photo;
@@ -723,7 +700,7 @@ function stopCamera() {
   }, 300);
 }
 
-// 0.85s Expand / 0.25s Fast Collapse Zoom
+// FAST 0.3s Snappy Expand / Collapse Zoom
 document.getElementById('preview').onclick = function() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (p.classList.contains('enlarged')) return collapsePreview();
@@ -744,8 +721,8 @@ document.getElementById('preview').onclick = function() {
   // Force a browser reflow
   void p.offsetWidth;
   
-  // Apply 0.85s purely dimensional transition matching camera expansion
-  p.style.transition = 'all 0.85s cubic-bezier(0.25, 1, 0.4, 1)';
+  // Apply snappy 0.3s dimensional transition
+  p.style.transition = 'all 0.3s cubic-bezier(0.25, 1, 0.4, 1)';
   p.style.top = '50%'; 
   p.style.left = '50%';
   var targetSize = Math.min(window.innerWidth * 0.85, 360);
@@ -753,13 +730,11 @@ document.getElementById('preview').onclick = function() {
   p.style.height = targetSize + 'px';
   p.style.transform = 'translate(-50%,-50%)'; 
   p.style.borderRadius = '20px'; // Soft square
-  p.style.borderWidth = '4px'; // Keeps the colored border visible
-  p.style.boxShadow = '0 20px 40px rgba(0,0,0,0.5)';
+  p.style.boxShadow = '0 0 0 4px var(--success-color), 0 20px 40px rgba(0,0,0,0.5)';
   p.classList.add('enlarged');
   
   ov.style.display = 'block'; 
   void ov.offsetWidth; 
-  // Overlay uses quick transition (0.25s) so the background gets dark immediately
   ov.classList.add('show');
 };
 
@@ -770,16 +745,15 @@ function collapsePreview() {
   var wrapper = document.getElementById('previewWrapper');
   var rect = wrapper.getBoundingClientRect();
   
-  // Snappier 0.25s return animation and fade out
-  p.style.transition = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+  // Snappier 0.3s return animation
+  p.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
   p.style.top = rect.top + 'px'; 
   p.style.left = rect.left + 'px';
   p.style.width = rect.width + 'px'; 
   p.style.height = rect.height + 'px';
   p.style.transform = 'translate(0,0)'; 
   p.style.borderRadius = '50%'; 
-  p.style.borderWidth = '3px';
-  p.style.boxShadow = 'none';
+  p.style.boxShadow = '0 0 0 3px var(--success-color)';
   ov.classList.remove('show');
   
   // Snap back into relative position instantly after visual completes
@@ -794,10 +768,10 @@ function collapsePreview() {
     p.style.transform = 'none'; 
     p.style.zIndex = '1'; 
     p.style.borderRadius = ''; 
-    p.style.borderWidth = '';
+    p.style.boxShadow = '0 0 0 3px var(--success-color)';
     p.classList.remove('enlarged'); 
     ov.style.display = 'none';
-  }, 250);
+  }, 300);
 }
 
 // Background Sync Queue
