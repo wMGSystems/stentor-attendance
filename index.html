@@ -21,364 +21,187 @@
 <title>Store Attendance</title>
 <style>
 :root {
-  --bg-primary:#ffffff; --bg-secondary:#f9f9f9;
-  --text-primary:#1a1a1a; --text-secondary:#666666; --text-tertiary:#999999;
-  --border-color:#dddddd; --input-bg:#f9f9f9; --input-border:#ddd;
-  --button-secondary-bg:#e8f0fe;
-  --success-color:#28a745; --error-color:#dc3545;
-  --warning-bg:#fff4f3; --warning-border:#fbc9c4; --warning-text:#b71c1c;
-  --success-card-bg:#f6faff; --success-card-border:#d0e4ff;
-  --modal-overlay:rgba(0,0,0,0.72); --shadow-color:rgba(0,0,0,0.14);
-  --label-text:#666666;
-  --theme-chan:#059669; --theme-carr:#1a73e8;
-  --dynamic-primary:var(--theme-chan);
-  --fallback-cam-bg: #ffffff; 
+  --bg-primary: #ffffff; --bg-secondary: #f9f9f9;
+  --text-primary: #1a1a1a; --text-secondary: #666666; --text-tertiary: #999999;
+  --border-color: #dddddd; --input-bg: #f9f9f9; --input-border: #ddd;
+  --button-secondary-bg: #e8f0fe;
+  --success-color: #28a745; --error-color: #dc3545; --warning-bg: #fff4f3;
+  --warning-border: #fbc9c4; --warning-text: #b71c1c;
+  --success-card-bg: #f6faff; --success-card-border: #d0e4ff;
+  --modal-overlay: rgba(0,0,0,0.72); --shadow-color: rgba(0,0,0,0.14);
+  --label-text: #666666;
+  --theme-chan: #059669; --theme-carr: #1a73e8;
+  --dynamic-primary: var(--theme-chan);
 }
-@media (prefers-color-scheme:dark) {
+@media (prefers-color-scheme: dark) {
   :root {
-    --bg-primary:#1a1a2e; --bg-secondary:#16213e;
-    --text-primary:#f5f5f5; --text-secondary:#b0b0b0; --text-tertiary:#808080;
-    --border-color:#404040; --input-bg:#2d2d44; --input-border:#404040;
-    --button-secondary-bg:#1e3a5f;
-    --success-color:#4ade80; --error-color:#ff6b6b;
-    --warning-bg:#3d2620; --warning-border:#6b4423; --warning-text:#ffb3a0;
-    --success-card-bg:#1e3a5f; --success-card-border:#2d5a8c;
-    --modal-overlay:rgba(0,0,0,0.88); --shadow-color:rgba(0,0,0,0.4);
-    --label-text:#a0a0a0;
-    --theme-chan:#10b981; --theme-carr:#3b82f6;
-    --fallback-cam-bg: #000000; 
+    --bg-primary: #1a1a2e; --bg-secondary: #16213e;
+    --text-primary: #f5f5f5; --text-secondary: #b0b0b0; --text-tertiary: #808080;
+    --border-color: #404040; --input-bg: #2d2d44; --input-border: #404040;
+    --button-secondary-bg: #1e3a5f;
+    --success-color: #4ade80; --error-color: #ff6b6b; --warning-bg: #3d2620;
+    --warning-border: #6b4423; --warning-text: #ffb3a0;
+    --success-card-bg: #1e3a5f; --success-card-border: #2d5a8c;
+    --modal-overlay: rgba(0,0,0,0.88); --shadow-color: rgba(0,0,0,0.4);
+    --label-text: #a0a0a0;
+    --theme-chan: #10b981; --theme-carr: #3b82f6;
   }
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family:'Segoe UI',Tahoma,sans-serif; color:var(--text-primary);
-  min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
-  align-items:center; justify-content:flex-start;
-  padding:max(12px,env(safe-area-inset-top)) 10px 32px;
-  overflow-y:auto; -webkit-overflow-scrolling:touch;
-}
-.bg-layer{position:fixed;inset:0;z-index:-1;transition:opacity 0.5s ease-in-out}
-.bg-chandarana{background:linear-gradient(135deg,#52c234 0%,#52c234 75%,#1a73e8 100%);opacity:1}
-.bg-carrefour {background:linear-gradient(135deg,#1a73e8 0%,#1a73e8 75%,#52c234 100%);opacity:0}
-@media (prefers-color-scheme:dark){
-  .bg-chandarana{background:linear-gradient(135deg,#064e3b 0%,#064e3b 75%,#1e3a8a 100%)}
-  .bg-carrefour {background:linear-gradient(135deg,#1e3a8a 0%,#1e3a8a 75%,#064e3b 100%)}
-}
-body.theme-chandarana .bg-chandarana{opacity:1}
-body.theme-chandarana .bg-carrefour {opacity:0}
-body.theme-carrefour  .bg-chandarana{opacity:0}
-body.theme-carrefour  .bg-carrefour {opacity:1}
-body.theme-chandarana{--dynamic-primary:var(--theme-chan)}
-body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#1a73e8}
-@media (prefers-color-scheme:dark){body.theme-carrefour{--success-color:#3b82f6}}
-
-.container{
-  max-width:420px;width:100%;margin:auto;background:var(--bg-primary);
-  padding:22px 20px 26px;border-radius:20px;
-  box-shadow:0 10px 40px var(--shadow-color);
-  position:relative; overflow:visible;
-}
-.network-indicator{
-  position:absolute;top:16px;left:16px;width:6px;height:6px;border-radius:50%;
-  background:var(--success-color);opacity:0.6;transition:background 0.4s ease;
-}
-.network-indicator.offline{background:var(--text-tertiary);opacity:0.4}
-
-.top-bar{display:flex;justify-content:flex-end;margin-bottom:8px}
-.terminal-pill-wrapper{
-  position:relative;display:inline-flex;background:var(--input-bg);
-  border:1px solid var(--border-color);border-radius:50px;padding:4px;height:42px;
-  box-shadow:inset 0 2px 5px rgba(0,0,0,0.08);align-items:center;
-}
-.pill-slider{
-  position:absolute;top:4px;bottom:4px;left:4px;border-radius:50px;
-  background:var(--dynamic-primary);box-shadow:0 2px 6px rgba(0,0,0,0.2);
-  transition:all 0.35s cubic-bezier(0.25,1,0.5,1);z-index:1;
-}
-.pill-btn{
-  position:relative;z-index:2;background:transparent;border:none;
-  padding:0 16px;height:100%;font-size:13.5px;font-weight:800;
-  color:var(--text-secondary);cursor:pointer;transition:color 0.15s ease;
-  display:flex;align-items:center;justify-content:center;
-  outline:none;-webkit-tap-highlight-color:transparent;
-}
-.pill-btn.active{color:#fff;transition:color 0.2s ease 0.15s}
-.pill-btn .full-text,.pill-btn .short-text{display:none}
-.pill-btn.active .full-text{display:block}
-.pill-btn:not(.active) .short-text{display:block}
-
-@keyframes bounceIn{
-  0%{transform:scale(0.9);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1}
-}
-@keyframes pulse{
-  0%,100%{opacity:1} 50%{opacity:0.55}
+  font-family: 'Segoe UI', Tahoma, sans-serif; color: var(--text-primary);
+  min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column;
+  align-items: center; justify-content: flex-start;
+  padding: max(12px, env(safe-area-inset-top)) 10px 32px;
+  overflow-y: auto; -webkit-overflow-scrolling: touch;
 }
 
-h2{
-  text-align:center;color:var(--dynamic-primary);margin:0 auto 18px;
-  width:max-content;font-size:20px;text-transform:uppercase;letter-spacing:1px;
-  font-weight:800;
+/* ── SMOOTH GRADIENT TRANSITIONS ── */
+.bg-layer { position: fixed; inset: 0; z-index: -1; }
+/* Base layer remains fixed and opaque beneath to prevent flashing during transition */
+.bg-chandarana { background: linear-gradient(135deg, #52c234 0%, #52c234 75%, #1a73e8 100%); z-index: -2; opacity: 1; }
+/* Top layer seamlessly fades in and out over it */
+.bg-carrefour  { background: linear-gradient(135deg, #1a73e8 0%, #1a73e8 75%, #52c234 100%); z-index: -1; opacity: 0; transition: opacity 0.5s ease-in-out; }
+@media (prefers-color-scheme: dark) {
+  .bg-chandarana { background: linear-gradient(135deg, #064e3b 0%, #064e3b 75%, #1e3a8a 100%); }
+  .bg-carrefour  { background: linear-gradient(135deg, #1e3a8a 0%, #1e3a8a 75%, #064e3b 100%); }
 }
+body.theme-chandarana .bg-carrefour  { opacity: 0; }
+body.theme-carrefour  .bg-carrefour  { opacity: 1; }
+body.theme-chandarana { --dynamic-primary: var(--theme-chan); }
+body.theme-carrefour  { --dynamic-primary: var(--theme-carr); --success-color: #1a73e8; }
+@media (prefers-color-scheme: dark) { body.theme-carrefour { --success-color: #3b82f6; } }
 
-.step-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.step{opacity:0.28;pointer-events:none;transition:opacity 0.4s ease}
-.step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.45s ease}
-.full-width{grid-column:span 2}
+.container { max-width: 420px; width: 100%; margin: auto; background: var(--bg-primary); padding: 22px 20px 26px; border-radius: 20px; box-shadow: 0 10px 40px var(--shadow-color); position: relative; overflow: visible; }
 
-label{font-weight:700;font-size:11px;display:block;margin-bottom:5px;color:var(--label-text);text-transform:uppercase}
-input,select{
-  width:100%;height:44px;padding:0 12px;border-radius:10px;
-  border:1px solid var(--input-border);font-size:14px;background:var(--input-bg);
-  color:var(--text-primary);transition:border 0.2s,background 0.2s;
-  -webkit-appearance:none;cursor:pointer;
+.network-indicator {
+  position: absolute; top: 16px; left: 16px; width: 6px; height: 6px; border-radius: 50%;
+  background: var(--success-color); opacity: 0.6; transition: background 0.4s ease;
 }
-input:focus,select:focus{outline:none;border-color:var(--dynamic-primary);background:var(--bg-secondary)}
-button{
-  width:100%;height:44px;padding:0 12px;border-radius:10px;border:none;
-  font-size:14px;font-weight:700;background:var(--button-secondary-bg);
-  color:var(--dynamic-primary);cursor:pointer;transition:background 0.2s,opacity 0.2s,transform 0.1s;
-}
-button:active{transform:scale(0.97)}
-button.primary{
-  background:var(--dynamic-primary);color:#fff;height:52px;font-size:16px;
-  box-shadow:0 4px 14px rgba(0,0,0,0.15);
-}
-button:disabled{opacity:0.6;cursor:not-allowed;transform:none}
-button.loading{animation:pulse 0.9s ease-in-out infinite}
+.network-indicator.offline { background: var(--text-tertiary); opacity: 0.4; }
 
-/* ═══════════════════════════════════════════════════════
-   CAMERA SYSTEM
-═══════════════════════════════════════════════════════ */
-#step4{position:relative}
+.top-bar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+.terminal-pill-wrapper { position: relative; display: inline-flex; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 50px; padding: 4px; height: 42px; box-shadow: inset 0 2px 5px rgba(0,0,0,0.08); align-items: center; }
+.pill-slider { position: absolute; top: 4px; bottom: 4px; left: 4px; border-radius: 50px; background: var(--dynamic-primary); box-shadow: 0 2px 6px rgba(0,0,0,0.2); transition: all 0.35s cubic-bezier(0.25,1,0.5,1); z-index: 1; }
+.pill-btn { position: relative; z-index: 2; background: transparent; border: none; padding: 0 16px; height: 100%; font-size: 13.5px; font-weight: 800; color: var(--text-secondary); cursor: pointer; transition: color 0.15s ease; display: flex; align-items: center; justify-content: center; outline: none; -webkit-tap-highlight-color: transparent; }
+.pill-btn.active { color: #ffffff; transition: color 0.2s ease 0.15s; }
+.pill-btn .full-text, .pill-btn .short-text { display: none; }
+.pill-btn.active .full-text { display: block; }
+.pill-btn:not(.active) .short-text { display: block; }
 
-#cameraBtnWrapper{
-  position:relative;
-}
+@keyframes cartoonNudge { 0%{transform:scale(1) rotate(0deg)} 20%{transform:scale(1.15) rotate(-5deg)} 40%{transform:scale(1.15) rotate(5deg)} 60%{transform:scale(1.05) rotate(-3deg)} 80%{transform:scale(1.02) rotate(2deg)} 100%{transform:scale(1) rotate(0deg)} }
+@keyframes bounceIn { 0%{transform:scale(0.9);opacity:0} 60%{transform:scale(1.05)} 100%{transform:scale(1);opacity:1} }
 
-#videoContainerWrapper{
-  position:absolute;
-  bottom:0; right:0;
-  width:100%;
-  height:0;
-  border-radius:10px;
-  overflow:hidden;
-  z-index:60;
-  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-  transform-origin:bottom right;
-  pointer-events:none;
-}
+h2 { text-align: center; color: var(--dynamic-primary); margin: 0 auto 18px auto; width: max-content; font-size: 20px; text-transform: uppercase; letter-spacing: 1px; transition: color 0.4s ease; font-weight: 800; transform-origin: center; }
+.shake-nudge { animation: cartoonNudge 0.55s cubic-bezier(0.36,0.07,0.19,0.97) both; }
 
-#videoContainerWrapper.expanded{
-  width:calc(200% + 12px);
-  height:330px;
-  border-radius:14px;
-  pointer-events:auto;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-}
+.step-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.step { opacity: 0.28; pointer-events: none; transition: opacity 0.4s ease; }
+.step.activeStep { opacity: 1; pointer-events: auto; animation: bounceIn 0.45s ease; }
+.full-width { grid-column: span 2; }
 
-.fallback-bg {
-  position: absolute;
-  inset: -30px; 
-  background-color: var(--fallback-cam-bg);
-  background-position: center;
-  background-size: cover;
-  background-repeat: no-repeat;
-  filter: blur(15px);
-  z-index: 1;
-}
+label { font-weight: 700; font-size: 11px; display: block; margin-bottom: 5px; color: var(--label-text); text-transform: uppercase; }
+input, select { width: 100%; height: 44px; padding: 0 12px; border-radius: 10px; border: 1px solid var(--input-border); font-size: 14px; background: var(--input-bg); color: var(--text-primary); transition: border 0.2s, background 0.2s; -webkit-appearance: none; cursor: pointer; }
+input:focus, select:focus { outline: none; border-color: var(--dynamic-primary); background: var(--bg-secondary); }
+button { width: 100%; height: 44px; padding: 0 12px; border-radius: 10px; border: none; font-size: 14px; font-weight: 700; background: var(--button-secondary-bg); color: var(--dynamic-primary); cursor: pointer; transition: all 0.3s; }
+button:active { transform: scale(0.98); }
+button.primary { background: var(--dynamic-primary); color: #ffffff; height: 52px; font-size: 16px; box-shadow: 0 4px 14px rgba(0,0,0,0.15); transition: background 0.4s ease, transform 0.1s; }
+button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
 
-#cameraVideo{
-  position:relative;
-  z-index: 2;
-  width:100%;height:100%;object-fit:cover;display:block;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-}
-#cameraVideo.live {
-  opacity: 1;
-}
+#step4 { position: relative; }
 
-#cameraBackdrop{
-  display:none;position:fixed;inset:0;z-index:59;
+#videoContainerWrapper {
+  position: absolute; top: 0; right: 0; width: 100%; height: 44px;
+  border-radius: 10px; overflow: hidden; z-index: 50;
+  transition: width 0.42s cubic-bezier(0.25,1,0.5,1), height 0.42s cubic-bezier(0.25,1,0.5,1), border-radius 0.42s ease;
+  background: #000; pointer-events: none; opacity: 0;
 }
-#cameraBackdrop.show{display:block}
+#videoContainerWrapper.expanded {
+  width: calc(200% + 12px); height: 220px; border-radius: 14px;
+  pointer-events: auto; opacity: 1;
+  transition: width 0.42s cubic-bezier(0.25,1,0.5,1), height 0.42s cubic-bezier(0.25,1,0.5,1), border-radius 0.42s ease, opacity 0.15s ease;
+}
+#cameraVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
+.camera-overlay { position: absolute; bottom: 12px; left: 0; width: 100%; display: flex; justify-content: center; }
+#captureBtn {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: rgba(255,255,255,0.35); border: 4px solid white;
+  cursor: pointer; display: flex; justify-content: center; align-items: center; transition: transform 0.15s;
+}
+#captureBtn::after { content: ''; width: 40px; height: 40px; background: white; border-radius: 50%; }
+#captureBtn:active { transform: scale(0.88); }
 
-.camera-ui{
-  position:absolute;bottom:0;left:0;right:0;
-  padding:12px 16px 18px;
-  background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 100%);
-  display:flex;align-items:center;justify-content:center;
-  z-index: 3;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-}
-#cameraVideo.live ~ .camera-ui { opacity: 1; }
-
-#captureBtn{
-  width:64px;height:64px;border-radius:50%;
-  background:rgba(255,255,255,0.28);border:4px solid rgba(255,255,255,0.92);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:transform 0.12s;-webkit-tap-highlight-color:transparent;
-}
-#captureBtn::after{content:'';width:46px;height:46px;background:#fff;border-radius:50%;transition:transform 0.1s}
-#captureBtn:active{transform:scale(0.86)}
-#captureBtn:active::after{transform:scale(0.88)}
-
-#closeCameraBtn{
-  position:absolute;top:10px;right:10px;width:30px;height:30px;border-radius:50%;
-  background:rgba(0,0,0,0.42);border:none;color:#fff;font-size:14px;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  z-index: 3;
-  transition:background 0.15s, opacity 0.3s ease;-webkit-tap-highlight-color:transparent;
-  opacity: 0;
-}
-#cameraVideo.live ~ #closeCameraBtn { opacity: 1; }
-#closeCameraBtn:active{background:rgba(0,0,0,0.75)}
-
-/* ═══════════════════════════════════════════
-   PHOTO PREVIEW (WHATSAPP ZOOM STYLE)
-═══════════════════════════════════════════ */
-.preview-wrapper {
-  width: 58px; height: 58px; position: relative;
-  display: none; margin: 4px auto 0;
-}
+/* ── PHOTO PREVIEW ── */
 #preview {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  object-fit: cover; border-radius: 50%;
-  border: 3px solid var(--success-color);
-  cursor: pointer; z-index: 1;
-  /* Hardware acceleration to prevent layout jump glitches */
-  transform: translateZ(0);
-  -webkit-transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  will-change: top, left, width, height, transform, border-radius;
+  width: 58px; height: 58px; object-fit: cover; border-radius: 50%;
+  border: 3px solid var(--success-color); display: none; margin: 4px auto 0;
+  background: var(--input-bg); cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.25,1,0.5,1);
+  position: relative; z-index: 1;
 }
-#previewOverlay{
-  display:none;position:fixed;inset:0;
-  background:rgba(0,0,0,0.85);z-index:9999;
-  opacity:0;transition:opacity 0.38s ease;
+/* Expanded to a square, preserving border color */
+#preview.enlarged {
+  width: min(75vw, 280px); height: min(75vw, 280px);
+  position: fixed; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10000; border-width: 5px;
+  border-radius: 12px; 
+  border-color: var(--success-color);
+  box-shadow: 0 12px 48px rgba(0,0,0,0.55);
 }
-#previewOverlay.show{opacity:1}
+#previewOverlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.82); z-index: 9999;
+  opacity: 0; transition: opacity 0.4s ease;
+}
+#previewOverlay.show { opacity: 1; }
 
-/* The X Close Button styling - dynamically centered above the picture via JS */
-#closePreviewBtn {
-  position: fixed;
-  width: 36px;
-  height: 36px;
-  background: rgba(255,255,255,0.2);
-  border: 2px solid rgba(255,255,255,0.8);
-  color: #fff;
-  font-size: 16px;
-  font-weight: bold;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 10001;
-  backdrop-filter: blur(4px);
+/* The X Close button strictly top-right */
+#previewClose {
+  display: none; position: fixed;
+  top: calc(50% - min(37.5vw, 140px) - 35px); 
+  right: calc(50% - min(37.5vw, 140px));
+  font-size: 28px; font-weight: 800; color: #fff; cursor: pointer;
+  z-index: 10001; text-shadow: 0 2px 6px rgba(0,0,0,0.5); line-height: 1;
   -webkit-tap-highlight-color: transparent;
-  opacity: 0;
-  transition: opacity 0.3s ease;
-  pointer-events: none;
 }
-#closePreviewBtn.show {
-  opacity: 1;
-  pointer-events: auto;
-}
-#closePreviewBtn:active {
-  background: rgba(255,255,255,0.4);
-}
+#previewClose.show { display: block; }
 
-/* ═══════════════════════════════════════
-   MESSAGES / SUCCESS
-═══════════════════════════════════════ */
-.msg{
-  font-size:12px;font-weight:700;margin-top:6px;min-height:20px;
-  color:var(--text-tertiary);display:flex;align-items:center;transition:color 0.2s;
-}
-.msg.success{color:var(--success-color);font-size:13px}
-.msg.error  {color:var(--error-color)}
-.msg .dot{
-  display:inline-flex;justify-content:center;align-items:center;
-  width:18px;height:18px;background:var(--success-color);border-radius:50%;
-  margin-right:8px;flex-shrink:0;position:relative;
-}
-.msg .dot::after{
-  content:'';position:absolute;top:50%;left:50%;
-  width:4.5px;height:9px;
-  border-right:2.5px solid #fff;border-bottom:2.5px solid #fff;
-  transform:translate(-50%,-60%) rotate(45deg);
-}
+.msg { font-size: 12px; font-weight: 700; margin-top: 6px; min-height: 20px; color: var(--text-tertiary); display: flex; align-items: center; transition: color 0.2s; }
+.msg.success { color: var(--success-color); font-size: 13px; }
+.msg.error { color: var(--error-color); }
+.msg .dot { display: inline-flex; justify-content: center; align-items: center; width: 18px; height: 18px; background: var(--success-color); border-radius: 50%; margin-right: 8px; flex-shrink: 0; position: relative; }
+.msg .dot::after { content: ''; position: absolute; top: 50%; left: 50%; width: 4.5px; height: 9px; border-right: 2.5px solid white; border-bottom: 2.5px solid white; transform: translate(-50%,-60%) rotate(45deg); }
 
-#successScreen{
-  display:none;flex-direction:column;align-items:center;
-  padding:32px 24px 24px;text-align:center;width:100%;
-}
-.success-emoji{font-size:72px;margin-bottom:16px;animation:bounceIn 0.6s ease}
-.success-badge{
-  background:var(--dynamic-primary);color:#fff;font-size:13px;font-weight:800;
-  text-transform:uppercase;padding:8px 24px;border-radius:999px;
-  margin-bottom:24px;display:inline-block;box-shadow:0 4px 12px rgba(0,0,0,0.15);
-}
-.success-card{
-  background:var(--success-card-bg);border:1.5px solid var(--success-card-border);
-  border-radius:16px;padding:24px 20px;width:100%;margin-bottom:18px;
-  animation:bounceIn 0.7s ease 0.1s backwards;
-}
-.success-name{font-size:28px;font-weight:800;color:var(--dynamic-primary);margin-bottom:12px}
-.success-msg {font-size:15px;font-weight:600;color:var(--text-secondary);line-height:1.6}
-.success-warning{
-  background:var(--warning-bg);border:1.5px solid var(--warning-border);
-  border-left:4px solid var(--error-color);border-radius:12px;
-  padding:14px 16px;width:100%;text-align:left;
-  font-size:13px;font-weight:700;color:var(--warning-text);
-  display:none;animation:bounceIn 0.7s ease 0.2s backwards;
-}
-.success-back{
-  width:100%;height:48px;background:var(--button-secondary-bg);
-  color:var(--dynamic-primary);border:none;border-radius:12px;
-  font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;
-}
+#successScreen { display: none; flex-direction: column; align-items: center; padding: 32px 24px 24px; text-align: center; width: 100%; }
+.success-emoji { font-size: 72px; margin-bottom: 16px; animation: bounceIn 0.6s ease; }
+.success-badge { background: var(--dynamic-primary); color: #fff; font-size: 13px; font-weight: 800; text-transform: uppercase; padding: 8px 24px; border-radius: 999px; margin-bottom: 24px; display: inline-block; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+.success-card { background: var(--success-card-bg); border: 1.5px solid var(--success-card-border); border-radius: 16px; padding: 24px 20px; width: 100%; margin-bottom: 18px; animation: bounceIn 0.7s ease 0.1s backwards; }
+.success-name { font-size: 28px; font-weight: 800; color: var(--dynamic-primary); margin-bottom: 12px; }
+.success-msg { font-size: 15px; font-weight: 600; color: var(--text-secondary); line-height: 1.6; }
+.success-warning { background: var(--warning-bg); border: 1.5px solid var(--warning-border); border-left: 4px solid var(--error-color); border-radius: 12px; padding: 14px 16px; width: 100%; text-align: left; font-size: 13px; font-weight: 700; color: var(--warning-text); display: none; animation: bounceIn 0.7s ease 0.2s backwards; }
+.success-back { width: 100%; height: 48px; background: var(--button-secondary-bg); color: var(--dynamic-primary); border: none; border-radius: 12px; font-size: 15px; font-weight: 700; cursor: pointer; margin-top: 8px; }
 
-#guideModal{
-  display:none;position:fixed;inset:0;background:var(--modal-overlay);
-  z-index:19999;flex-direction:column;align-items:center;justify-content:center;
-  padding:20px;backdrop-filter:blur(4px);
-}
-#guideModal .modal-box{
-  background:var(--bg-primary);padding:28px;border-radius:16px;
-  text-align:center;max-width:350px;width:100%;
-}
-#guideModal .modal-box h3{color:var(--error-color);margin:10px 0 16px;font-size:20px}
-.modal-instructions{
-  background:var(--input-bg);color:var(--text-secondary);
-  padding:16px;border-radius:10px;margin-bottom:14px;
-  font-size:13px;line-height:1.6;text-align:left;
-}
+#guideModal { display: none; position: fixed; inset: 0; background: var(--modal-overlay); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+#guideModal .modal-box { background: var(--bg-primary); padding: 28px; border-radius: 16px; text-align: center; max-width: 350px; width: 100%; }
+#guideModal .modal-box h3 { color: var(--error-color); margin: 10px 0 16px; font-size: 20px; }
+.modal-instructions { background: var(--input-bg); color: var(--text-secondary); padding: 16px; border-radius: 10px; margin-bottom: 14px; font-size: 13.5px; line-height: 1.6; text-align: left; }
 </style>
 </head>
 
 <body class="theme-chandarana">
 <script>
-var Storage={
-  set:function(k,v){try{localStorage.setItem(k,v)}catch(e){throw e}},
-  get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
-  remove:function(k){try{localStorage.removeItem(k)}catch(e){}}
-};
-(function(){document.body.className='theme-'+(Storage.get('selected_terminal')||'chandarana')})();
+  const Storage = {
+    set: function(k,v){ try{ localStorage.setItem(k,v); }catch(e){ throw e; } },
+    get: function(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    remove: function(k){ try{ localStorage.removeItem(k); }catch(e){} }
+  };
+  (function(){ document.body.className = 'theme-' + (Storage.get('selected_terminal')||'chandarana'); })();
 </script>
 
 <div class="bg-layer bg-chandarana"></div>
 <div class="bg-layer bg-carrefour"></div>
-
-<!-- Tap-outside backdrop for camera -->
-<div id="cameraBackdrop" onclick="stopCamera()"></div>
-<!-- Tap overlay for photo zoom with dynamically positioned Close Button -->
-<div id="previewOverlay" onclick="collapsePreview()">
-  <button id="closePreviewBtn" onclick="collapsePreview(); event.stopPropagation();">✕</button>
-</div>
+<div id="previewOverlay" onclick="collapsePreview()"></div>
+<div id="previewClose" onclick="collapsePreview()">✕</div>
 
 <div class="container">
   <div id="networkIndicator" class="network-indicator"></div>
@@ -399,7 +222,6 @@ var Storage={
     <h2 id="formTitle">Chandarana</h2>
 
     <div class="step-grid">
-
       <div id="step1" class="step activeStep full-width">
         <label>Branch</label>
         <select id="branch"><option value="">Loading...</option></select>
@@ -420,17 +242,13 @@ var Storage={
 
       <div id="step4" class="step">
         <label>Identity</label>
-        <div id="cameraBtnWrapper">
-          <div id="videoContainerWrapper">
-            <div class="fallback-bg" id="fallbackBg"></div>
-            <video id="cameraVideo" autoplay playsinline muted></video>
-            <button id="closeCameraBtn" onclick="stopCamera()">✕</button>
-            <div class="camera-ui">
-              <div id="captureBtn" onclick="capturePhoto()"></div>
-            </div>
+        <div id="videoContainerWrapper">
+          <video id="cameraVideo" autoplay playsinline></video>
+          <div class="camera-overlay">
+            <div id="captureBtn" onclick="capturePhoto()"></div>
           </div>
-          <button id="openCameraBtn" onclick="startCamera()">Take a Selfie</button>
         </div>
+        <button id="openCameraBtn" onclick="startCamera()">Take a Selfie</button>
         <input type="file" accept="image/*" capture="user" id="cameraInput" style="display:none">
         <div id="cameraMsg" class="msg"></div>
       </div>
@@ -443,29 +261,26 @@ var Storage={
             <option value="Clock In">Clock In</option>
             <option value="Clock Out">Clock Out</option>
           </select>
-          <div style="flex:1;display:flex;justify-content:center;align-items:center;">
-            <div id="previewWrapper" class="preview-wrapper">
-              <img id="preview" alt="Selfie">
-            </div>
+          <div style="flex:1;display:flex;justify-content:center;">
+            <img id="preview">
           </div>
         </div>
         <div id="actionMsg" class="msg"></div>
       </div>
 
       <div id="step6" class="step full-width">
-        <button id="submitBtn" class="primary" onclick="submitAttendance()">SUBMIT ATTENDANCE</button>
+        <button id="submitBtn" onclick="submitAttendance()" class="primary">SUBMIT ATTENDANCE</button>
         <div id="submitMsg" class="msg" style="justify-content:center;text-align:center;"></div>
       </div>
-
     </div>
   </div>
 
   <div id="successScreen">
-    <div class="success-emoji"   id="successEmoji">😊</div>
-    <div class="success-badge"   id="successBadge">Submitted</div>
+    <div class="success-emoji" id="successEmoji">😊</div>
+    <div class="success-badge" id="successBadge">Submitted</div>
     <div class="success-card">
-      <div class="success-name"  id="successName"></div>
-      <div class="success-msg"   id="successMsg"></div>
+      <div class="success-name" id="successName"></div>
+      <div class="success-msg" id="successMsg"></div>
     </div>
     <div class="success-warning" id="successWarning"></div>
     <button class="success-back" onclick="resetToStart()">← Submit Another</button>
@@ -477,85 +292,129 @@ var Storage={
     <div id="guideIcon" style="font-size:44px;margin-bottom:10px;">🛑</div>
     <h3 id="guideTitle">Action Blocked</h3>
     <div class="modal-instructions" id="guideText"></div>
-    <button onclick="document.getElementById('guideModal').style.display='none'"
-      style="background:var(--dynamic-primary);color:#fff;border:none;padding:14px;border-radius:8px;width:100%;font-weight:700;cursor:pointer;">
-      GOT IT
-    </button>
+    <button onclick="document.getElementById('guideModal').style.display='none'" style="background:var(--dynamic-primary);color:#fff;border:none;padding:14px;border-radius:8px;width:100%;font-weight:700;cursor:pointer;">GOT IT</button>
   </div>
 </div>
 
 <script>
-var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec";
 
-var currentTerminal = Storage.get('selected_terminal') || 'chandarana';
-var staff = [], branches = [], coords = null, staffName = "", photo = null;
-var isRestoring = false, activeFetchId = 0;
-var videoStream = null;
+let currentTerminal = Storage.get('selected_terminal') || 'chandarana';
+let staff = [], branches = [], coords = null, staffName = "", photo = null;
+let isRestoring = false, activeFetchId = 0, isSyncing = false;
+let offlineQueue = [];
+let videoStream = null;
 
-// ─── INIT ──────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   updateTerminalUI();
   checkNetworkStatus();
+  loadOfflineQueue();
   initApp();
-  if (window.matchMedia)
+  syncOfflineData();
+  if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
+  }
 });
-window.addEventListener('online',  function(){ checkNetworkStatus(); });
+
+window.addEventListener('online',  function(){ checkNetworkStatus(); syncOfflineData(); });
 window.addEventListener('offline', checkNetworkStatus);
 
-// ─── NETWORK ───────────────────────────────────────────────────────────────
 function checkNetworkStatus() {
   var ind = document.getElementById('networkIndicator');
   if (navigator.onLine) ind.classList.remove('offline');
   else ind.classList.add('offline');
 }
 
-// ─── THEMING ───────────────────────────────────────────────────────────────
 function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
   var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
   var meta = document.getElementById('theme-color-meta');
   setTimeout(function() {
     if (!meta) return;
-    meta.setAttribute('content',
-      currentTerminal === 'chandarana'
-        ? (isDark ? '#064e3b' : '#52c234')
-        : (isDark ? '#1e3a8a' : '#1a73e8'));
+    if (currentTerminal === 'chandarana') meta.setAttribute('content', isDark ? '#064e3b' : '#52c234');
+    else meta.setAttribute('content', isDark ? '#1e3a8a' : '#1a73e8');
   }, 200);
+
   var title = document.getElementById('formTitle');
   title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
+  title.classList.remove('shake-nudge');
+  void title.offsetWidth;
+  title.classList.add('shake-nudge');
+
   document.getElementById('btn-chandarana').classList.toggle('active', currentTerminal === 'chandarana');
   document.getElementById('btn-carrefour').classList.toggle('active',  currentTerminal === 'carrefour');
-  requestAnimationFrame(function() { requestAnimationFrame(function() {
-    var ab = document.querySelector('.pill-btn.active'), sl = document.getElementById('pillSlider');
-    if (ab && sl) { sl.style.width = ab.offsetWidth + 'px'; sl.style.left = ab.offsetLeft + 'px'; }
-  }); });
+
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      var ab = document.querySelector('.pill-btn.active');
+      var sl = document.getElementById('pillSlider');
+      if (ab && sl) { sl.style.width = ab.offsetWidth + 'px'; sl.style.left = ab.offsetLeft + 'px'; }
+    });
+  });
 }
+
 function switchTerminal(term) {
   if (currentTerminal === term) return;
-  currentTerminal = term; Storage.set('selected_terminal', term);
+  currentTerminal = term;
+  Storage.set('selected_terminal', term);
   staff = []; branches = [];
   document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
-  updateTerminalUI(); resetToStart(); initApp();
+  updateTerminalUI();
+  resetToStart();
+  initApp();
 }
 
-// ─── SERVER ────────────────────────────────────────────────────────────────
+function loadOfflineQueue() {
+  try { var q = Storage.get('attendance_offline_queue'); if (q) offlineQueue = JSON.parse(q); }
+  catch(e) { offlineQueue = []; }
+}
+
+function saveOfflineQueue() {
+  try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); }
+  catch(e) {
+    if (offlineQueue.length > 0) {
+      offlineQueue = offlineQueue.slice(Math.floor(offlineQueue.length / 2));
+      try { Storage.set('attendance_offline_queue', JSON.stringify(offlineQueue)); } catch(e2) {}
+    }
+  }
+}
+
+function syncOfflineData() {
+  if (!navigator.onLine || offlineQueue.length === 0 || isSyncing) return;
+  isSyncing = true;
+  var toSync = offlineQueue.slice();
+  var failed = [];
+  var i = 0;
+  function next() {
+    if (i >= toSync.length) { offlineQueue = failed; saveOfflineQueue(); isSyncing = false; return; }
+    var record = toSync[i++];
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST', headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({action:'recordAttendance', data:record.data, terminal:record.terminal})
+    }).then(function(r){ return r.json(); }).then(function(j){ if (!j.ok) throw new Error(); }).catch(function(){ failed.push(record); }).then(next);
+  }
+  next();
+}
+
 function fetchFromServer(action, data) {
   return fetch(APPS_SCRIPT_URL, {
-    method:'POST', headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:action, data:data, terminal:currentTerminal})
-  }).then(function(r){ return r.json(); })
-    .then(function(j){ if(!j.ok) throw new Error(j.error||'Server error'); return j.data; });
+    method: 'POST', headers: {'Content-Type':'text/plain'},
+    body: JSON.stringify({action: action, data: data, terminal: currentTerminal})
+  }).then(function(r){ return r.json(); }).then(function(j){
+    if (!j.ok) throw new Error(j.error || 'Server error');
+    return j.data;
+  });
 }
 
-// ─── INIT APP ──────────────────────────────────────────────────────────────
 function populateBranches(list) {
   if (!Array.isArray(list)) return;
-  document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' +
-    list.map(function(b){ return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
+  document.getElementById('branch').innerHTML = '<option value="">Choose Branch</option>' + list.map(function(b){ return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
 }
+
 function initApp() {
-  var myId = ++activeFetchId, cacheKey = currentTerminal + '_portal_data', cached = false;
+  var myId = ++activeFetchId;
+  var cacheKey = currentTerminal + '_portal_data';
+  var cached = false;
   try {
     var raw = Storage.get(cacheKey);
     if (raw) {
@@ -566,6 +425,7 @@ function initApp() {
       }
     }
   } catch(e) {}
+
   fetchFromServer('getPortalData', {}).then(function(data) {
     if (myId !== activeFetchId) return;
     var changed = JSON.stringify(branches) !== JSON.stringify(data.branches);
@@ -578,27 +438,8 @@ function initApp() {
   });
 }
 
-// ─── LOCAL STATE TRACKING ──────────────────────────────────────────────────
-// Prevents incorrect sign-ins/outs safely.
-function getStaffLocalStatus(staffID) {
-  var todayKey = new Date().toDateString();
-  var histRaw = Storage.get('local_history_' + currentTerminal);
-  var history = histRaw ? JSON.parse(histRaw) : {};
-  
-  // Prefer the local history for TODAY
-  var localStatus = history[staffID + '_' + todayKey];
-  if (localStatus) return localStatus;
-  
-  // Fall back to server's last known state
-  var member = null;
-  for (var i = 0; i < staff.length; i++) {
-    if (staff[i].id === staffID) { member = staff[i]; break; }
-  }
-  return member ? member.status : null;
-}
-
-// ─── FORM CACHE ────────────────────────────────────────────────────────────
 function getFormCacheKey() { return currentTerminal + '_attendance_cache'; }
+
 function autoSave(capturing) {
   if (isRestoring) return;
   try {
@@ -611,6 +452,7 @@ function autoSave(capturing) {
     }));
   } catch(e) {}
 }
+
 function restoreFromCache() {
   var raw = Storage.get(getFormCacheKey()); if (!raw) return;
   isRestoring = true;
@@ -621,50 +463,50 @@ function restoreFromCache() {
     if (d.lat && d.lng) { coords = {latitude:d.lat, longitude:d.lng}; showSuccess('gpsMsg','Location Verified'); activateStep(4); }
     if (d.capturing) {
       photo = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-      document.getElementById('preview').src = photo; 
-      document.getElementById('previewWrapper').style.display = 'block';
+      var p = document.getElementById('preview'); p.src = photo; p.style.display = 'block';
       showSuccess('cameraMsg','Identity Restored'); activateStep(4); activateStep(5); autoSave(false);
     }
   } catch(e) {}
   isRestoring = false;
 }
 
-// ─── STEPS ─────────────────────────────────────────────────────────────────
 function activateStep(n) { document.getElementById('step'+n).classList.add('activeStep'); }
+
 function resetStepsFrom(n) {
   for (var i = n; i <= 6; i++) { var el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep'); }
-  if (n<=1) { document.getElementById('branch').value=''; clearMsg('branchMsg'); }
-  if (n<=2) { staffName=''; document.getElementById('staffID').value=''; clearMsg('staffMsg'); }
-  if (n<=3) { coords=null; clearMsg('gpsMsg'); }
-  if (n<=4) {
-    photo=null; stopCamera(); collapsePreview();
-    var pWrap=document.getElementById('previewWrapper'); if(pWrap) pWrap.style.display='none'; 
-    document.getElementById('preview').src='';
-    clearMsg('cameraMsg'); document.getElementById('cameraInput').value='';
+  if (n <= 1) { document.getElementById('branch').value = ''; clearMsg('branchMsg'); }
+  if (n <= 2) { staffName = ''; document.getElementById('staffID').value = ''; clearMsg('staffMsg'); }
+  if (n <= 3) { coords = null; clearMsg('gpsMsg'); }
+  if (n <= 4) {
+    photo = null; stopCamera();
+    var p = document.getElementById('preview');
+    p.style.display = 'none'; p.src = '';
+    collapsePreview();
+    clearMsg('cameraMsg');
+    document.getElementById('cameraInput').value = '';
   }
-  if (n<=5) { document.getElementById('actionChoice').value=''; clearMsg('actionMsg'); }
+  if (n <= 5) { document.getElementById('actionChoice').value = ''; clearMsg('actionMsg'); }
   clearMsg('submitMsg'); autoSave(false);
 }
+
 function resetToStart() {
-  document.getElementById('successScreen').style.display='none';
-  document.getElementById('mainForm').style.display='block';
-  document.getElementById('branch').value=''; clearMsg('branchMsg');
-  resetStepsFrom(2); document.getElementById('step1').classList.add('activeStep');
+  document.getElementById('successScreen').style.display = 'none';
+  document.getElementById('mainForm').style.display = 'block';
+  document.getElementById('branch').value = ''; clearMsg('branchMsg');
+  resetStepsFrom(2);
+  document.getElementById('step1').classList.add('activeStep');
   Storage.remove(getFormCacheKey());
 }
 
-// ─── MSG HELPERS ───────────────────────────────────────────────────────────
-function showSuccess(id,txt){ var e=document.getElementById(id); e.innerHTML='<span class="dot"></span> '+txt; e.className='msg success'; }
-function showError(id,txt)  { var e=document.getElementById(id); e.innerText=txt; e.className='msg error'; }
-function clearMsg(id)       { var e=document.getElementById(id); e.innerText=''; e.className='msg'; }
+function showSuccess(id, txt) { var e = document.getElementById(id); e.innerHTML = '<span class="dot"></span> '+txt; e.className = 'msg success'; }
+function showError(id, txt)   { var e = document.getElementById(id); e.innerText = txt; e.className = 'msg error'; }
+function clearMsg(id)         { var e = document.getElementById(id); e.innerText = ''; e.className = 'msg'; }
 
-// ─── BRANCH / STAFF ────────────────────────────────────────────────────────
 function handleBranchChange() {
   var val = document.getElementById('branch').value;
   if (!val) { resetStepsFrom(2); return; }
   showSuccess('branchMsg','Branch Selected');
-  if (document.getElementById('step2').classList.contains('activeStep') &&
-      document.getElementById('staffID').value !== '') resetStepsFrom(2);
+  if (document.getElementById('step2').classList.contains('activeStep') && document.getElementById('staffID').value !== '') resetStepsFrom(2);
   if (!document.getElementById('step2').classList.contains('activeStep')) activateStep(2);
   autoSave(false);
 }
@@ -672,183 +514,151 @@ document.getElementById('branch').onchange = handleBranchChange;
 
 function handleStaffInput() {
   var val = this.value.trim();
-  if (val.length < 1) {
-    if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
-    clearMsg('staffMsg'); return;
-  }
-  var match = null;
-  for (var i = 0; i < staff.length; i++) { if (staff[i].id === val) { match = staff[i]; break; } }
+  if (val.length < 1) { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); clearMsg('staffMsg'); return; }
+  var match = (staff||[]).filter(function(s){ return s.id === val; })[0];
   if (match) {
     staffName = match.name; showSuccess('staffMsg','Welcome '+staffName);
     if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
     if (!document.getElementById('step3').classList.contains('activeStep')) activateStep(3);
     autoSave(false);
-  } else {
-    if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3);
-    showError('staffMsg','Invalid Staff ID. Please check.');
-  }
+    
+    // PRE-WARM SERVER CACHE:
+    // Sending a ping in the background spins up the Google server instance right now.
+    // By the time the user finishes taking a photo and clicks submit, the backend is 
+    // already fully active, removing the cold-start delay and making the submit instant.
+    if (navigator.onLine) {
+       fetch(APPS_SCRIPT_URL, { 
+         method: 'POST', headers: {'Content-Type':'text/plain'}, 
+         body: JSON.stringify({action: 'ping'}) 
+       }).catch(function(){}); // Silent pre-fetch
+    }
+  } else { if (document.getElementById('step3').classList.contains('activeStep')) resetStepsFrom(3); showError('staffMsg','Invalid Staff ID. Please check.'); }
 }
 document.getElementById('staffID').oninput = handleStaffInput;
 
-// Instantly prevent logically incorrect selections using local history
 document.getElementById('actionChoice').onchange = function() {
-  clearMsg('submitMsg');
-  var action = this.value;
-  if (!action) { clearMsg('actionMsg'); resetStepsFrom(6); return; }
-  
-  var staffID = document.getElementById('staffID').value;
-  var lastAction = getStaffLocalStatus(staffID);
-
-  if (action === 'Clock In' && lastAction === 'Clock In') {
-    showError('actionMsg', 'You are already clocked in. Please Clock Out.');
-    resetStepsFrom(6); return;
-  }
-  if (action === 'Clock Out') {
-    if (!lastAction) {
-      showError('actionMsg', 'You have not clocked in yet. Please Clock In first.');
-      resetStepsFrom(6); return;
-    }
-    if (lastAction === 'Clock Out') {
-      showError('actionMsg', 'You have already clocked out today.');
-      resetStepsFrom(6); return;
-    }
-  }
-
+  clearMsg('submitMsg'); if (!this.value) { clearMsg('actionMsg'); resetStepsFrom(6); return; }
   showSuccess('actionMsg','Ready for Submission'); activateStep(6);
 };
 
-// ─── GPS ───────────────────────────────────────────────────────────────────
+/* ── PHOTO PREVIEW ── */
+document.getElementById('preview').onclick = function() {
+  var p = document.getElementById('preview');
+  var ov = document.getElementById('previewOverlay');
+  var cl = document.getElementById('previewClose');
+  if (p.classList.contains('enlarged')) { collapsePreview(); return; }
+  ov.style.display = 'block'; cl.style.display = 'block';
+  void ov.offsetWidth; // Trigger reflow
+  ov.classList.add('show'); cl.classList.add('show');
+  p.classList.add('enlarged');
+};
+function collapsePreview() {
+  var p = document.getElementById('preview');
+  var ov = document.getElementById('previewOverlay');
+  var cl = document.getElementById('previewClose');
+  p.classList.remove('enlarged');
+  ov.classList.remove('show');
+  cl.classList.remove('show');
+  setTimeout(function(){ ov.style.display = 'none'; cl.style.display = 'none'; }, 400);
+}
+
+/* ── GPS SMART ERROR HANDLING ── */
 function showGuideModal(type) {
-  var modal=document.getElementById('guideModal'), title=document.getElementById('guideTitle'),
-      text=document.getElementById('guideText'),   icon=document.getElementById('guideIcon');
-  if (type==='gps') {
-    icon.textContent='📍'; title.textContent='Location Blocked'; title.style.color='var(--error-color)';
-    text.innerHTML='<p>We need your location to verify you are at the branch.</p>'
-      +'<p style="margin-top:8px"><strong>🍎 iPhone:</strong><br>Settings → Privacy & Security → Location Services → Allow Safari/Chrome.</p>'
-      +'<p style="margin-top:8px"><strong>🤖 Android:</strong><br>⋮ Menu → Settings → Site settings → Location → Allow.</p>';
-  } else if (type==='gps_signal') {
-    icon.textContent='📡'; title.textContent='Weak GPS Signal'; title.style.color='var(--warning-text)';
-    text.innerHTML='<p>We couldn\'t get an accurate location reading.</p>'
-      +'<ul style="margin-top:8px;padding-left:20px"><li>Step outside or near a window.</li>'
-      +'<li>Turn WiFi ON — it helps GPS lock faster.</li></ul>';
-  } else if (type==='camera') {
-    icon.textContent='📸'; title.textContent='Camera Fallback'; title.style.color='var(--warning-text)';
-    text.innerHTML='<p>Live camera is not available on this device.</p><p>Opening your camera app instead.</p>';
+  var modal = document.getElementById('guideModal'), title = document.getElementById('guideTitle'),
+      text  = document.getElementById('guideText'),  icon  = document.getElementById('guideIcon');
+  
+  if (type === 'gps_site_blocked') { 
+    icon.textContent='🛑'; title.textContent='Site Access Blocked'; title.style.color='var(--error-color)'; 
+    text.innerHTML='<p>Location access was blocked for this website in your browser.</p><br><p><strong>How to fix:</strong></p><p>1. Tap the Lock (🔒) or Settings icon next to the website address at the top.</p><p>2. Select <strong>Permissions</strong> or <strong>Site Settings</strong>.</p><p>3. Allow <strong>Location</strong>, then tap Verify again.</p>'; 
+  }
+  if (type === 'gps_device_off') { 
+    icon.textContent='📍'; title.textContent='Device Location OFF'; title.style.color='var(--warning-text)'; 
+    text.innerHTML='<p>Your phone\'s main location setting is turned OFF.</p><br><p><strong>How to fix:</strong></p><p>1. Swipe down from the top of your screen to open the notification panel.</p><p>2. Tap to turn ON <strong>Location / GPS</strong>.</p><p>3. Wait a few seconds and tap Verify again.</p>'; 
+  }
+  if (type === 'camera') { 
+    icon.textContent='📸'; title.textContent='Camera Fallback'; title.style.color='var(--warning-text)'; 
+    text.innerHTML='<p>Live video feed is unavailable on this device.</p><p>Opening your standard camera app instead.</p>'; 
   }
   modal.style.display = 'flex';
 }
+
 function verifyGPS() {
-  document.getElementById('gpsMsg').innerText='Locating…'; document.getElementById('gpsMsg').className='msg';
+  document.getElementById('gpsMsg').innerText = 'Locating…'; document.getElementById('gpsMsg').className = 'msg';
   if (!navigator.geolocation) { showError('gpsMsg','GPS not supported on this device.'); return; }
   
-  // Relaxed timing & caching prevents unresponsiveness / failures if reconnecting
   navigator.geolocation.getCurrentPosition(
     function(pos) {
       coords = pos.coords;
-      var b=null, bv=document.getElementById('branch').value;
-      for (var i=0;i<branches.length;i++) { if (branches[i][0]===bv){ b=branches[i]; break; } }
+      var b = (branches||[]).filter(function(x){ return x[0]===document.getElementById('branch').value; })[0];
       if (!b) { showError('gpsMsg','Select branch first.'); return; }
-      var R=6371e3,
-          dLat=(b[1]-coords.latitude)*Math.PI/180,
-          dLon=(b[2]-coords.longitude)*Math.PI/180,
-          a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2),
-          dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-      if (dist>250)
-        showError('gpsMsg', dist>1000?'Too far ('+(dist/1000).toFixed(1)+'km)':'Too far ('+Math.round(dist)+'m) — move closer');
-      else { showSuccess('gpsMsg','Location Verified'); activateStep(4); autoSave(false); }
+      var R=6371e3, dLat=(b[1]-coords.latitude)*Math.PI/180, dLon=(b[2]-coords.longitude)*Math.PI/180;
+      var a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2);
+      var dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+      if (dist>250) {
+        showError('gpsMsg', dist>1000 ? 'Too far ('+(dist/1000).toFixed(1)+'km)' : 'Too far ('+Math.round(dist)+'m) Move closer');
+      } else { showSuccess('gpsMsg','Location Verified'); activateStep(4); autoSave(false); }
     },
-    function(err){ if(err.code===1) showGuideModal('gps'); else showGuideModal('gps_signal'); },
-    {enableHighAccuracy:true, timeout:15000, maximumAge:60000}
+    function(err) { 
+      // Smart detection: determine if the browser blocked it explicitly or if device GPS is off
+      if (navigator.permissions && navigator.permissions.query) {
+        navigator.permissions.query({name: 'geolocation'}).then(function(res) {
+          if (res.state === 'denied') showGuideModal('gps_site_blocked');
+          else showGuideModal('gps_device_off');
+        }).catch(function() {
+          if (err.code === 1) showGuideModal('gps_site_blocked');
+          else showGuideModal('gps_device_off');
+        });
+      } else {
+        if (err.code === 1) showGuideModal('gps_site_blocked');
+        else showGuideModal('gps_device_off');
+      }
+    },
+    {enableHighAccuracy:true, timeout:10000, maximumAge:0}
   );
 }
 
-// ─── CAMERA ────────────────────────────────────────────────────────────────
+/* ── CAMERA ── */
 function startCamera() {
-  var btn = document.getElementById('openCameraBtn');
+  var wrapper = document.getElementById('videoContainerWrapper');
+  var video   = document.getElementById('cameraVideo');
+  document.getElementById('cameraMsg').innerText = 'Starting camera…';
+  document.getElementById('cameraMsg').className = 'msg';
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    document.getElementById('cameraInput').click(); return;
+    clearMsg('cameraMsg'); document.getElementById('cameraInput').click(); return;
   }
-  
-  var lastPhoto = Storage.get('attendance_last_photo');
-  var bgEl = document.getElementById('fallbackBg');
-  
-  if (lastPhoto) { bgEl.style.backgroundImage = "url('" + lastPhoto + "')"; } 
-  else { bgEl.style.backgroundImage = ""; }
 
-  document.getElementById('videoContainerWrapper').classList.add('expanded');
-  document.getElementById('cameraBackdrop').classList.add('show');
-  btn.classList.add('loading');
-  btn.textContent = 'Loading Camera...';
-  clearMsg('cameraMsg');
-
-  navigator.mediaDevices.getUserMedia({
-    video: { facingMode:'user', width:{ideal:640}, height:{ideal:480} },
-    audio: false
-  })
-  .then(function(stream) {
-    videoStream = stream;
-    var video = document.getElementById('cameraVideo');
-    video.srcObject = stream;
-
-    video.onloadedmetadata = function() {
-      video.play().catch(function(){});
-      
-      requestAnimationFrame(function() {
-        video.classList.add('live');
-        btn.classList.remove('loading');
-      });
-    };
-  })
-  .catch(function(err) {
-    console.warn('Camera failed:', err);
-    document.getElementById('videoContainerWrapper').classList.remove('expanded');
-    document.getElementById('cameraBackdrop').classList.remove('show');
-    btn.textContent = 'Take a Selfie';
-    btn.classList.remove('loading');
-    showGuideModal('camera');
-    document.getElementById('cameraInput').click();
-  });
+  navigator.mediaDevices.getUserMedia({video:{facingMode:'user', width:{ideal:640}, height:{ideal:480}}, audio:false})
+    .then(function(stream) {
+      videoStream = stream; video.srcObject = stream;
+      wrapper.classList.add('expanded');
+      document.getElementById('openCameraBtn').style.visibility = 'hidden';
+      clearMsg('cameraMsg');
+    })
+    .catch(function(err) {
+      console.warn('Camera failed:', err); clearMsg('cameraMsg');
+      showGuideModal('camera'); document.getElementById('cameraInput').click();
+    });
 }
 
 function capturePhoto() {
   var video = document.getElementById('cameraVideo');
   var canvas = document.createElement('canvas');
-  canvas.width  = video.videoWidth  || 640;
-  canvas.height = video.videoHeight || 480;
+  canvas.width  = video.videoWidth  || 640; canvas.height = video.videoHeight || 480;
   canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
   photo = canvas.toDataURL('image/jpeg', 0.65);
-  
-  try { Storage.set('attendance_last_photo', photo); } catch(e){}
-  
-  var p = document.getElementById('preview'); p.src = photo; 
-  document.getElementById('previewWrapper').style.display = 'block';
+  stopCamera();
+  var p = document.getElementById('preview');
+  p.src = photo; p.style.display = 'block';
   showSuccess('cameraMsg','Identity Captured');
   activateStep(5); autoSave(false);
-
-  stopCamera();
 }
 
 function stopCamera() {
-  var wrapper = document.getElementById('videoContainerWrapper');
-  var backdrop = document.getElementById('cameraBackdrop');
-  var video = document.getElementById('cameraVideo');
+  if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
+  document.getElementById('videoContainerWrapper').classList.remove('expanded');
   var btn = document.getElementById('openCameraBtn');
-
-  wrapper.classList.remove('expanded');
-  backdrop.classList.remove('show');
-  video.classList.remove('live');
-
-  if (btn) {
-    btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
-    btn.classList.remove('loading');
-    btn.disabled = false;
-  }
-
-  setTimeout(function() {
-    if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
-    video.srcObject = null;
-  }, 300); 
+  if (btn) { btn.style.visibility = 'visible'; btn.innerText = photo ? 'Retake Selfie' : 'Take a Selfie'; }
 }
 
 document.getElementById('cameraInput').onchange = function(e) {
@@ -857,16 +667,11 @@ document.getElementById('cameraInput').onchange = function(e) {
   var url = URL.createObjectURL(file); var img = new Image();
   img.onload = function() {
     try {
-      var max=640, q=0.65, w=img.width, h=img.height;
-      if (w>max||h>max){ if(w>h){h=Math.floor(h*max/w);w=max;}else{w=Math.floor(w*max/h);h=max;} }
-      var canvas=document.createElement('canvas'); canvas.width=w; canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      photo=canvas.toDataURL('image/jpeg',q);
-      
-      try { Storage.set('attendance_last_photo', photo); } catch(err){}
-
-      var p=document.getElementById('preview'); p.src=photo; 
-      document.getElementById('previewWrapper').style.display='block';
+      var max=640, q=0.65, canvas=document.createElement('canvas'), w=img.width, h=img.height;
+      if(w>max||h>max){ if(w>h){h=Math.floor(h*max/w);w=max;}else{w=Math.floor(w*max/h);h=max;} }
+      canvas.width=w; canvas.height=h; canvas.getContext('2d').drawImage(img,0,0,w,h);
+      photo = canvas.toDataURL('image/jpeg', q);
+      var p=document.getElementById('preview'); p.src=photo; p.style.display='block';
       showSuccess('cameraMsg','Identity Captured'); activateStep(5); autoSave(false);
     } catch(err){ showError('cameraMsg','Error processing photo.'); }
     finally { URL.revokeObjectURL(url); }
@@ -875,192 +680,48 @@ document.getElementById('cameraInput').onchange = function(e) {
   img.src = url;
 };
 
-// ─── SMOOTH FLIP ZOOM (WHATSAPP STYLE) ─────────────────────────────────────
-document.getElementById('preview').onclick = function() {
-  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
-  if (p.classList.contains('enlarged')) return; 
-
-  var rect = p.getBoundingClientRect();
-  p.style.transition = 'none';
-  p.style.position = 'fixed';
-  p.style.top = rect.top + 'px';
-  p.style.left = rect.left + 'px';
-  p.style.width = rect.width + 'px';
-  p.style.height = rect.height + 'px';
-  p.style.margin = '0';
-  p.style.transform = 'translate(0, 0)';
-  p.style.zIndex = '10000';
-  
-  void p.offsetWidth; // Flush CSS changes
-
-  p.style.transition = 'all 0.35s cubic-bezier(0.25, 1, 0.4, 1)';
-  p.style.top = '50%';
-  p.style.left = '50%';
-  
-  var targetSize = Math.min(window.innerWidth * 0.8, 320);
-  p.style.width = targetSize + 'px';
-  p.style.height = targetSize + 'px';
-  p.style.transform = 'translate(-50%, -50%)';
-  p.style.borderRadius = '24px'; 
-  p.style.borderWidth = '0px';   
-  p.style.boxShadow = '0 15px 40px rgba(0,0,0,0.5)';
-  
-  p.classList.add('enlarged');
-  
-  ov.style.display = 'block'; 
-  void ov.offsetWidth; 
-  ov.classList.add('show');
-  
-  // Center close button perfectly right above the newly sized square
-  var closeBtn = document.getElementById('closePreviewBtn');
-  closeBtn.style.top = 'calc(50% - ' + (targetSize/2 + 32) + 'px)';
-  closeBtn.style.left = '50%';
-  closeBtn.style.transform = 'translate(-50%, -50%)';
-  closeBtn.classList.add('show');
-};
-
-function collapsePreview() {
-  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
-  if (!p.classList.contains('enlarged')) return;
-  
-  document.getElementById('closePreviewBtn').classList.remove('show');
-  
-  var wrapper = document.getElementById('previewWrapper');
-  var rect = wrapper.getBoundingClientRect();
-  
-  p.style.top = rect.top + 'px';
-  p.style.left = rect.left + 'px';
-  p.style.width = rect.width + 'px';
-  p.style.height = rect.height + 'px';
-  p.style.transform = 'translate(0, 0)';
-  p.style.borderRadius = '50%';
-  p.style.borderWidth = '3px';
-  p.style.boxShadow = 'none';
-  
-  ov.classList.remove('show');
-  
-  setTimeout(function() {
-    p.style.transition = 'none';
-    p.style.position = 'absolute';
-    p.style.top = '0';
-    p.style.left = '0';
-    p.style.width = '100%';
-    p.style.height = '100%';
-    p.style.transform = 'none';
-    p.style.zIndex = '1';
-    
-    p.style.borderRadius = '';
-    p.style.borderWidth = '';
-    p.style.boxShadow = '';
-    p.style.margin = '';
-    
-    p.classList.remove('enlarged');
-    ov.style.display = 'none';
-  }, 350);
-}
-
-// ─── SUBMIT ────────────────────────────────────────────────────────────────
+/* ── SUBMIT ── */
 function submitAttendance() {
-  var branch  = document.getElementById('branch').value;
-  var staffID = document.getElementById('staffID').value;
-  var action  = document.getElementById('actionChoice').value;
+  var branch=document.getElementById('branch').value, staffID=document.getElementById('staffID').value, action=document.getElementById('actionChoice').value;
   if (!branch||!staffID||!action) { showError('submitMsg','Complete all steps.'); return; }
-
-  // Prevent offline-clunkiness: if not connected, instantly fail safely.
-  if (!navigator.onLine) {
-    showError('submitMsg', 'No internet connection. Please connect to network and try again.'); 
-    return;
-  }
-
-  var lastAction = getStaffLocalStatus(staffID);
-
-  // Redundant safety check at submission time
-  if (action === 'Clock In' && lastAction === 'Clock In') {
-    showError('submitMsg', 'You have already clocked in today.'); return;
-  }
-  if (action === 'Clock Out') {
-    if (!lastAction) {
-      showError('submitMsg', 'You must Clock In first before Clocking Out.'); return;
-    }
-    if (lastAction === 'Clock Out') {
-      showError('submitMsg', 'You have already clocked out today.'); return;
-    }
-  }
-
-  var submitBtn = document.getElementById('submitBtn');
-  var originalBtnText = submitBtn.textContent;
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'SUBMITTING...';
-
-  var payload = {
-    name:staffName, id:staffID, branch:branch, action:action, image:photo,
-    lat:coords?coords.latitude:0, lng:coords?coords.longitude:0,
-    clientTimestamp:new Date().toISOString()
-  };
-
-  fetchFromServer('recordAttendance', payload).then(function() {
-    // Write local safety history ONLY after success, to ensure it doesn't wrongly lock user out later.
-    var member = null;
-    for (var i = 0; i < staff.length; i++) { if (staff[i].id===staffID){ member=staff[i]; break; } }
-    if (member) member.status = action;
-    
-    var todayKey = new Date().toDateString();
-    var histRaw = Storage.get('local_history_' + currentTerminal);
-    var history = histRaw ? JSON.parse(histRaw) : {};
-    history[staffID + '_' + todayKey] = action;
-    try { Storage.set('local_history_' + currentTerminal, JSON.stringify(history)); } catch(e){}
-
-    finishSubmission(action);
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalBtnText;
-
-  }).catch(function(err) {
-    showError('submitMsg', 'Server error. Please try again.');
-    submitBtn.disabled = false;
-    submitBtn.textContent = originalBtnText;
-  });
+  var btn=document.getElementById('submitBtn'); btn.textContent='SENDING…'; btn.disabled=true;
+  var payload={name:staffName, id:staffID, branch:branch, action:action, image:photo, lat:coords?coords.latitude:0, lng:coords?coords.longitude:0, clientTimestamp:new Date().toISOString()};
+  if (!navigator.onLine) { offlineQueue.push({data:payload, terminal:currentTerminal}); saveOfflineQueue(); finishSubmission(action); return; }
+  fetchFromServer('recordAttendance', payload)
+    .then(function(){ finishSubmission(action); })
+    .catch(function(err) {
+      if (err.name==='TypeError' || err.message==='OFFLINE') {
+        offlineQueue.push({data:payload, terminal:currentTerminal}); saveOfflineQueue(); finishSubmission(action);
+      } else {
+        showError('submitMsg', err.message); btn.textContent='RETRY'; btn.disabled=false;
+      }
+    });
 }
 
-// ─── FINISH SUBMISSION ─────────────────────────────────────────────────────
 function finishSubmission(action) {
   Storage.remove(getFormCacheKey());
-  var firstName = staffName.split(' ')[0] || staffName;
-  var isIn = (action === 'Clock In');
-  var now = new Date();
-  var hrs = now.getHours();
-  var mins = now.getMinutes();
-  
-  var timeVal = hrs + (mins / 60.0);
-  
+  var firstName=staffName.split(' ')[0]||staffName, isIn=action==='Clock In', hrs=new Date().getHours();
   var emoji='✅', badge='Submitted', msg='', warning=null;
-
   if (isIn) {
-    if (timeVal < 6.5) { 
-      emoji='🌟'; badge='On Time!'; msg="Fantastic start — you're early today! keep it up"; 
-    } else if (timeVal <= 7.6667) { 
-      emoji='✅'; badge='On Time!'; msg="Great, you are on time for the morning shift."; 
-    } else if (timeVal < 11.0) { 
-      emoji='⏰'; badge='Clocked In'; msg="Late for morning shift."; warning="⚠️ Warning: Consistent late clock-ins are reviewed by management."; 
-    } else if (timeVal < 14.0) { 
-      emoji='🌟'; badge='On Time!'; msg="Early for the second shift. Great job!"; 
-    } else if (timeVal <= 14.6667) { 
-      emoji='✅'; badge='On Time!'; msg="On time for the second shift. Have a productive afternoon!"; 
-    } else { 
-      emoji='⏰'; badge='Clocked In'; msg="Late for afternoon shift."; warning="⚠️ Warning: Late clock-ins are reviewed by management."; 
-    }
+    if(hrs<8)  { emoji='🌟'; badge='On Time!';    msg="Fantastic start — you're early today! Keep it up"; }
+    else if(hrs<11){ emoji='⏰'; badge='Clocked In'; msg="You're late."; warning="⚠️ Warning: Consistent late clock-ins are reviewed by management."; }
+    else if(hrs<15){ emoji='✅'; badge='On Time!';  msg="Have a productive shift!"; }
+    else       { emoji='⏰'; badge='Clocked In'; msg="Late for second shift."; warning="⚠️ Warning: Late clock-ins are reviewed by management."; }
   } else {
-    if (hrs < 16) { emoji='👋'; badge='Clocked Out'; msg="Have a wonderful afternoon!"; }
-    else          { emoji='🌙'; badge='Clocked Out'; msg="Have a restful night!"; }
+    if(hrs<16) { emoji='👋'; badge='Clocked Out'; msg="Have a wonderful day!"; }
+    else       { emoji='🌙'; badge='Clocked Out'; msg="Have a restful night!"; }
   }
-
-  document.getElementById('successEmoji').textContent = emoji;
-  document.getElementById('successBadge').textContent = badge;
-  document.getElementById('successName').textContent  = firstName;
-  document.getElementById('successMsg').textContent   = msg;
-  var w = document.getElementById('successWarning');
-  if (warning) { w.textContent=warning; w.style.display='block'; } else { w.style.display='none'; }
-  document.getElementById('mainForm').style.display    = 'none';
-  document.getElementById('successScreen').style.display = 'flex';
+  document.getElementById('successEmoji').textContent=emoji;
+  document.getElementById('successBadge').textContent=badge;
+  document.getElementById('successName').textContent=firstName;
+  document.getElementById('successMsg').textContent=msg;
+  var w=document.getElementById('successWarning');
+  if(warning){w.textContent=warning;w.style.display='block';}else{w.style.display='none';}
+  document.getElementById('mainForm').style.display='none';
+  document.getElementById('successScreen').style.display='flex';
+  document.getElementById('submitBtn').textContent='SUBMIT ATTENDANCE';
+  document.getElementById('submitBtn').disabled=false;
+  syncOfflineData();
 }
 </script>
 </body>
