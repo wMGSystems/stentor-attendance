@@ -112,7 +112,12 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 .pill-btn.active .full-text{display:block}
 .pill-btn:not(.active) .short-text{display:block}
 
-@keyframes bounceIn{ 0%{transform:scale(0.94);opacity:0} 100%{transform:scale(1);opacity:1} }
+/* Original nudge bounce restoration */
+@keyframes bounceIn{ 
+  0%{transform:scale(0.9);opacity:0} 
+  60%{transform:scale(1.05)} 
+  100%{transform:scale(1);opacity:1} 
+}
 @keyframes spin{ to { transform: rotate(360deg); } }
 
 h2{
@@ -122,7 +127,7 @@ h2{
 
 .step-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px}
 .step{opacity:0.3;pointer-events:none;transition:opacity 0.4s ease}
-.step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)}
+.step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.45s ease}
 .full-width{grid-column:span 2}
 
 label{font-weight:600;font-size:12px;display:block;margin-bottom:6px;color:var(--label-text);text-transform:uppercase;letter-spacing:0.5px}
@@ -164,17 +169,28 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   position:absolute; bottom:0; right:0;
   width:100%; height:0; border-radius:14px;
   overflow:hidden; z-index:60; background-color: #000;
-  transition: all 0.85s cubic-bezier(0.25, 1, 0.4, 1);
+  /* Faster collapse and fade out */
+  transition: width 0.25s ease, height 0.25s ease, opacity 0.2s ease, transform 0.25s ease;
   transform-origin:bottom right; opacity:0; pointer-events:none;
-  transform: scale(0.95);
+  transform: scale(0.6);
 }
 #videoContainerWrapper.expanded{
   width:calc(200% + 12px); height:330px;
   pointer-events:auto; opacity:1; transform: scale(1);
   box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+  /* Slow smooth expansion matching the 0.85s photo zoom */
+  transition: all 0.85s cubic-bezier(0.25, 1, 0.4, 1);
 }
-/* transform scaleX(-1) mirrors the live preview so it acts like a real mirror */
+
+.fallback-bg {
+  position: absolute; inset: -30px;
+  background-color: #000;
+  background-position: center; background-size: cover;
+  filter: blur(20px); z-index: 1; opacity: 0.6;
+}
+
 #cameraVideo{ 
+  position:relative; z-index:2;
   width:100%;height:100%;object-fit:cover;display:block; transform: scaleX(-1); 
   opacity: 0; transition: opacity 0.4s ease; 
 }
@@ -204,7 +220,7 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   z-index:4; -webkit-tap-highlight-color:transparent;
 }
 
-/* Photo Preview & Inline Name */
+/* Photo Preview Overlay */
 .preview-wrapper { width: 56px; height: 56px; position: relative; display: none; margin: 0 auto; }
 #preview {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -331,6 +347,8 @@ var Storage={
         <label>Identity</label>
         <div id="cameraBtnWrapper">
           <div id="videoContainerWrapper">
+            <!-- Blurred background fallback -->
+            <div id="fallbackBg" class="fallback-bg"></div>
             <video id="cameraVideo" autoplay playsinline muted></video>
             <button id="closeCameraBtn" onclick="stopCamera()" aria-label="Close camera">&#x2715;</button>
             <div class="camera-ui">
@@ -343,9 +361,9 @@ var Storage={
       </div>
 
       <div id="step5" class="step full-width">
-        <!-- Clean, bolder inline display of Name and Photo -->
-        <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-secondary); padding:10px 16px; border-radius:16px; border:1px solid var(--border-color); box-shadow:0 2px 8px rgba(0,0,0,0.02);">
-          <div id="staffNameDisplay" style="font-size:18px; font-weight:800; color:var(--dynamic-primary); flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; padding-right:12px;"></div>
+        <!-- Minimal empty inline structure without borders or background -->
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div id="actionDisplay" style="font-size:24px; font-weight:800; color:var(--dynamic-primary); letter-spacing:0.5px;"></div>
           <div id="previewWrapper" class="preview-wrapper" style="margin:0; flex-shrink:0;">
             <img id="preview" alt="Selfie">
           </div>
@@ -507,7 +525,7 @@ function resetStepsFrom(n) {
   }
   if (n<=5) { 
     currentAction=''; 
-    document.getElementById('staffNameDisplay').textContent=''; 
+    document.getElementById('actionDisplay').textContent=''; 
   }
   clearMsg('submitMsg');
 }
@@ -556,7 +574,6 @@ function handleStaffInput() {
     }
     
     currentAction = (lastAction === 'Clock In') ? 'Clock Out' : 'Clock In';
-    document.getElementById('staffNameDisplay').textContent = staffName;
     
     showSuccess('staffMsg','Welcome '+staffName);
     if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
@@ -614,6 +631,12 @@ function startCamera() {
   var btn = document.getElementById('openCameraBtn');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
 
+  // Inject heavily blurred last photo into background
+  var lastPhoto = Storage.get('attendance_last_photo');
+  var bgEl = document.getElementById('fallbackBg');
+  if (lastPhoto) { bgEl.style.backgroundImage = "url('" + lastPhoto + "')"; }
+  else { bgEl.style.backgroundImage = "none"; bgEl.style.backgroundColor = "#000"; }
+
   // Immediately expand container slowly to mask camera load
   document.getElementById('videoContainerWrapper').classList.add('expanded');
   document.getElementById('cameraBackdrop').classList.add('show');
@@ -667,8 +690,15 @@ function capturePhoto() {
   
   // Save as high-quality JPEG (85% compression)
   photo = canvas.toDataURL('image/jpeg', 0.85);
+  
+  // Cache for future blur background
+  Storage.set('attendance_last_photo', photo);
+
+  // Apply to step 5 preview
   document.getElementById('preview').src = photo;
+  document.getElementById('actionDisplay').textContent = currentAction;
   document.getElementById('previewWrapper').style.display = 'block';
+  
   showSuccess('cameraMsg','Identity Captured');
   
   activateStep(5);
@@ -690,10 +720,10 @@ function stopCamera() {
   setTimeout(function() {
     if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
     video.srcObject = null;
-  }, 400);
+  }, 300);
 }
 
-// Snappier Photo Zoom Implementation
+// 0.85s Expand / 0.25s Fast Collapse Zoom
 document.getElementById('preview').onclick = function() {
   var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
   if (p.classList.contains('enlarged')) return collapsePreview();
@@ -714,8 +744,8 @@ document.getElementById('preview').onclick = function() {
   // Force a browser reflow
   void p.offsetWidth;
   
-  // Apply faster purely dimensional transition
-  p.style.transition = 'all 0.25s cubic-bezier(0.25, 1, 0.4, 1)';
+  // Apply 0.85s purely dimensional transition matching camera expansion
+  p.style.transition = 'all 0.85s cubic-bezier(0.25, 1, 0.4, 1)';
   p.style.top = '50%'; 
   p.style.left = '50%';
   var targetSize = Math.min(window.innerWidth * 0.85, 360);
@@ -729,6 +759,7 @@ document.getElementById('preview').onclick = function() {
   
   ov.style.display = 'block'; 
   void ov.offsetWidth; 
+  // Overlay uses quick transition (0.25s) so the background gets dark immediately
   ov.classList.add('show');
 };
 
@@ -739,7 +770,7 @@ function collapsePreview() {
   var wrapper = document.getElementById('previewWrapper');
   var rect = wrapper.getBoundingClientRect();
   
-  // Snappier return animation
+  // Snappier 0.25s return animation and fade out
   p.style.transition = 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
   p.style.top = rect.top + 'px'; 
   p.style.left = rect.left + 'px';
@@ -751,7 +782,7 @@ function collapsePreview() {
   p.style.boxShadow = 'none';
   ov.classList.remove('show');
   
-  // Snap back after 250ms
+  // Snap back into relative position instantly after visual completes
   setTimeout(function() {
     if (!p.classList.contains('enlarged')) return;
     p.style.transition = 'none'; 
@@ -779,7 +810,7 @@ function queueSubmission(payload) {
 // INSTANT Submit implementation
 function submitAttendance() {
   var branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
-  if (!branch||!staffID||!currentAction||!photo || currentAction==='Completed') return;
+  if (!branch||!staffID||!currentAction||!photo) return;
   
   // Record locally to prevent duplicates
   var todayKey = new Date().toDateString();
