@@ -50,7 +50,6 @@
     --modal-overlay:rgba(0,0,0,0.85); --shadow-color:rgba(0,0,0,0.5);
     --label-text:#9ca3af;
     
-    /* Slightly deeper versions for dark mode background */
     --theme-chan:#059669; 
     --theme-carr:#2563eb; 
   }
@@ -61,11 +60,11 @@
 body {
   font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
   color:var(--text-primary); 
-  /* Single dynamic background color with smooth transition */
   background-color: var(--dynamic-primary);
   min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
-  align-items:center; justify-content:flex-start;
-  padding:max(20px,env(safe-area-inset-top)) 12px 32px;
+  align-items:center; 
+  justify-content:center; 
+  padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom); 
   overflow-y:auto; -webkit-overflow-scrolling:touch;
   transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -73,12 +72,86 @@ body {
 body.theme-chandarana{--dynamic-primary:var(--theme-chan)}
 body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f6}
 
-.container{
-  max-width:400px;width:100%;margin:auto;background:var(--bg-primary);
-  padding:24px 22px 28px;border-radius:24px;
-  box-shadow:0 15px 35px var(--shadow-color);
-  position:relative; overflow:visible;
+/* Hanging Sign ("Key Holder" effect) */
+.hanging-sign-wrapper {
+  position: relative;
+  margin-bottom: 48px; 
+  perspective: 800px;
+  z-index: 10;
+  width: 240px; 
 }
+.chain {
+  position: absolute;
+  top: -30px;
+  width: 5px;
+  height: 34px;
+  background: linear-gradient(to right, #9ca3af, #f3f4f6, #9ca3af);
+  border-radius: 3px;
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 1; 
+}
+
+/* Solid Nails with shadows */
+.chain::before {
+  content: ''; position: absolute; top: -6px; left: -2.5px;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, #e5e7eb, #9ca3af);
+  border: 1px solid #6b7280;
+  box-shadow: 0 8px 12px rgba(0,0,0,0.6), 0 3px 6px rgba(0,0,0,0.4);
+}
+.left-chain { left: 40px; }
+.right-chain { right: 40px; }
+
+.hanging-sign {
+  background: var(--bg-primary);
+  color: var(--dynamic-primary);
+  padding: 12px 10px;
+  border-radius: 12px;
+  font-weight: 900;
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  text-align: center;
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  box-shadow: 0 10px 25px var(--shadow-color), inset 0 -3px 0 rgba(0,0,0,0.05);
+  transform-origin: top center;
+  transition: color 0.4s ease;
+  position: relative;
+  z-index: 2; 
+}
+
+@keyframes swing {
+  0%   { transform: rotateX(0deg) rotateZ(0deg); }
+  20%  { transform: rotateX(25deg) rotateZ(-3deg); }
+  40%  { transform: rotateX(-15deg) rotateZ(2deg); }
+  60%  { transform: rotateX(8deg) rotateZ(-1deg); }
+  80%  { transform: rotateX(-3deg) rotateZ(0deg); }
+  100% { transform: rotateX(0deg) rotateZ(0deg); }
+}
+.hanging-sign.nudge {
+  animation: swing 0.7s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Main Container - Perfect Square */
+.container{
+  max-width:400px;
+  width:100%;
+  aspect-ratio: 1 / 1; 
+  margin:0 auto;
+  background:var(--bg-primary);
+  padding:24px 22px;
+  border-radius:24px;
+  box-shadow:0 15px 35px var(--shadow-color);
+  position:relative; 
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  justify-content:center; 
+}
+
+#mainForm { width: 100%; }
 
 .network-indicator{
   position:absolute;top:18px;left:18px;width:8px;height:8px;border-radius:50%;
@@ -87,7 +160,7 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 }
 .network-indicator.offline{background:var(--text-tertiary);opacity:0.4; box-shadow:none;}
 
-.top-bar{display:flex;justify-content:flex-end;margin-bottom:8px}
+.top-bar{display:flex;justify-content:flex-end;margin-bottom:20px}
 .terminal-pill-wrapper{
   position:relative;display:inline-flex;background:var(--input-bg);
   border:1px solid var(--border-color);border-radius:50px;padding:4px;height:40px;
@@ -110,7 +183,6 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 .pill-btn.active .full-text{display:block}
 .pill-btn:not(.active) .short-text{display:block}
 
-/* Bouncy entrance animation for steps */
 @keyframes bounceIn{ 
   0%{transform:scale(0.9);opacity:0} 
   60%{transform:scale(1.05)} 
@@ -118,15 +190,9 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 }
 @keyframes spin{ to { transform: rotate(360deg); } }
 
-h2{
-  text-align:center;color:var(--dynamic-primary);margin:0 auto 20px;
-  font-size:22px;letter-spacing:0.5px;font-weight:800;
-}
-
 .step-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px}
 .step{opacity:0.3;pointer-events:none;transition:opacity 0.4s ease}
 .step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.45s ease}
-.full-width{grid-column:span 2}
 
 label{font-weight:600;font-size:12px;display:block;margin-bottom:6px;color:var(--label-text);text-transform:uppercase;letter-spacing:0.5px}
 input,select{
@@ -143,99 +209,75 @@ button{
   cursor:pointer;transition:transform 0.1s, opacity 0.2s, background 0.2s;
 }
 button:active{transform:scale(0.97)}
-button.primary{
-  background:var(--dynamic-primary);color:#fff;height:52px;font-size:16px;
-  box-shadow:0 4px 12px rgba(0,0,0,0.15); letter-spacing: 0.5px;
-}
 button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 
-/* Animated Submit State */
-#submitBtn { position: relative; overflow: hidden; }
-#submitBtn.submitting .btn-label { opacity: 0; }
-#submitBtn .btn-spinner {
-  display: none; position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%); width: 22px; height: 22px;
-  border: 2.5px solid rgba(255,255,255,0.3); border-top-color: #fff;
-  border-radius: 50%; animation: spin 0.6s linear infinite;
+.btn-spinner {
+  border: 2px solid rgba(0,0,0,0.1); 
+  border-top-color: currentColor;
+  border-radius: 50%; 
+  animation: spin 0.6s linear infinite;
 }
-#submitBtn.submitting .btn-spinner { display: block; }
 
-/* Camera */
-#step4{position:relative}
-#cameraBtnWrapper{position:relative;}
+/* Perfect Overlay Camera */
 #videoContainerWrapper{
-  position:absolute; bottom:0; right:0;
-  width:100%; height:0; border-radius:14px;
+  position:absolute; top:0; left:0; right:0; bottom:0;
+  width:100%; height:100%; border-radius:24px;
   overflow:hidden; z-index:60; background-color: #000;
-  /* Fast popping expand and collapse */
-  transition: width 0.35s cubic-bezier(0.25, 1, 0.4, 1), height 0.35s cubic-bezier(0.25, 1, 0.4, 1), opacity 0.25s ease, transform 0.35s cubic-bezier(0.25, 1, 0.4, 1);
-  transform-origin:bottom right; opacity:0; pointer-events:none;
-  transform: scale(0.6);
-  -webkit-mask-image: -webkit-radial-gradient(white, black); /* Fixes corner bleed */
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.25, 1, 0.4, 1);
+  transform: scale(0.95); opacity:0; pointer-events:none;
 }
 #videoContainerWrapper.expanded{
-  width:calc(200% + 12px); height:330px;
   pointer-events:auto; opacity:1; transform: scale(1);
-  box-shadow: 0 15px 35px rgba(0,0,0,0.4);
 }
 
 #cameraVideo{ 
-  position:relative; z-index:2;
-  width:100%;height:100%;object-fit:cover;display:block; transform: scaleX(-1); 
+  position:absolute; top:0; left:0; width:100%; height:100%;
+  object-fit:cover; display:block; transform: scaleX(-1); 
   opacity: 0; transition: opacity 0.4s ease; 
 }
 #cameraVideo.live { opacity: 1; }
 
-#cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; }
+#cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 #cameraBackdrop.show{ display:block; }
 .camera-ui{
-  position:absolute;bottom:0;left:0;right:0; padding:12px 16px 20px;
-  background:linear-gradient(to top,rgba(0,0,0,0.6) 0%,transparent 100%);
+  position:absolute;bottom:0;left:0;right:0; padding:20px;
+  background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 100%);
   display:flex;align-items:center;justify-content:center; z-index:3;
 }
 #captureBtn{
-  width:60px;height:60px;border-radius:50%;
+  width:64px;height:64px;border-radius:50%;
   background:rgba(255,255,255,0.3);border:4px solid rgba(255,255,255,0.95);
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:transform 0.1s;-webkit-tap-highlight-color:transparent;
 }
-#captureBtn::after{content:'';width:44px;height:44px;background:#fff;border-radius:50%;transition:transform 0.1s}
+#captureBtn::after{content:'';width:48px;height:48px;background:#fff;border-radius:50%;transition:transform 0.1s}
 #captureBtn:active{transform:scale(0.88)}
 #captureBtn:active::after{transform:scale(0.9)}
 
 #closeCameraBtn{
-  position:absolute;top:10px;right:10px; width:32px;height:32px;border-radius:50%;
+  position:absolute;top:16px;right:16px; width:36px;height:36px;border-radius:50%;
   background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);
-  color:#fff;font-size:14px; cursor:pointer; display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:16px; cursor:pointer; display:flex;align-items:center;justify-content:center;
   z-index:4; -webkit-tap-highlight-color:transparent;
 }
 
-/* Centered Photo Preview & Inline Action */
-.preview-wrapper { width: 56px; height: 56px; position: relative; display: none; margin: 0; }
-#preview {
-  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-  object-fit: cover; border-radius: 50%;
-  /* Using box-shadow instead of border fixes the "sharp corners popping out" bug */
-  box-shadow: 0 0 0 3px var(--success-color);
-  cursor: pointer; z-index: 1; transform: translateZ(0);
-  -webkit-mask-image: -webkit-radial-gradient(white, black); /* Additional clip safeguard */
-  backface-visibility: hidden;
-  will-change: top, left, width, height, border-radius, box-shadow;
-}
-#previewOverlay{
-  display:none;position:fixed;inset:0; background:rgba(0,0,0,0.85);
-  z-index:9999; opacity:0; transition:opacity 0.25s ease; cursor:pointer;
-}
-#previewOverlay.show{opacity:1}
-
 /* Messages */
-.msg{ font-size:12px;font-weight:600;margin-top:6px;min-height:20px; color:var(--text-tertiary);display:flex;align-items:center; }
+.msg{ 
+  font-size:12px;font-weight:600;margin-top:6px;
+  min-height:38px; 
+  align-items:flex-start; 
+  line-height:1.4;
+  color:var(--text-tertiary);display:flex; 
+  transition: opacity 0.3s ease, color 0.3s ease;
+  opacity: 1;
+}
 .msg.success{color:var(--success-color);font-size:13px}
 .msg.error  {color:var(--error-color)}
 .msg .dot{
   display:inline-flex;justify-content:center;align-items:center;
   width:16px;height:16px;background:var(--success-color);border-radius:50%;
   margin-right:6px;flex-shrink:0;position:relative;
+  margin-top: 1px; 
 }
 .msg .dot::after{
   content:'';position:absolute;top:45%;left:50%; width:3.5px;height:7px;
@@ -243,13 +285,40 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   transform:translate(-50%,-50%) rotate(45deg);
 }
 
-/* Success Screen */
-#successScreen{ display:none;flex-direction:column;align-items:center; padding:24px 16px;text-align:center;width:100%; }
-.success-emoji{font-size:72px;margin-bottom:12px;animation:bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)}
+/* Success Screen & Zoomable Photo */
+#successScreen{ display:none;flex-direction:column;align-items:center; justify-content:center; padding:10px 4px;text-align:center;width:100%; }
+
+.success-photo{
+  width: 110px; height: 110px; object-fit: cover; border-radius: 50%;
+  box-shadow: 0 0 0 4px var(--success-color); margin-bottom: 16px;
+  animation: bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 0.4s cubic-bezier(0.25, 1, 0.4, 1), border-radius 0.4s cubic-bezier(0.25, 1, 0.4, 1), box-shadow 0.4s ease;
+  cursor: zoom-in;
+  position: relative; z-index: 20000;
+  -webkit-tap-highlight-color: transparent;
+}
+.success-photo.zoomed {
+  transform: scale(2.6);
+  border-radius: 8%;
+  box-shadow: 0 0 0 1.5px var(--success-color), 0 10px 30px rgba(0,0,0,0.3);
+  cursor: zoom-out;
+}
+
+/* Photo Backdrop */
+#photoBackdrop {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  z-index: 19999; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+}
+#photoBackdrop.show {
+  opacity: 1; pointer-events: auto;
+}
+
 .success-badge{
   background:var(--dynamic-primary);color:#fff;font-size:13px;font-weight:800;
   text-transform:uppercase;padding:6px 20px;border-radius:999px;
   margin-bottom:24px;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);
+  animation:bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s backwards;
 }
 .success-card{
   background:var(--success-card-bg);border:1px solid var(--success-card-border);
@@ -293,10 +362,18 @@ var Storage={
 (function(){document.body.className='theme-'+(Storage.get('selected_terminal')||'chandarana')})();
 </script>
 
+<!-- General Backdrops -->
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
-<div id="previewOverlay" onclick="collapsePreview()"></div>
+<div id="photoBackdrop" onclick="toggleZoom()"></div>
 
-<div class="container">
+<!-- External Hanging Store Sign -->
+<div class="hanging-sign-wrapper" id="signWrapper">
+  <div class="chain left-chain"></div>
+  <div class="chain right-chain"></div>
+  <div class="hanging-sign nudge" id="storeSign">Chandarana</div>
+</div>
+
+<div class="container" id="mainContainer">
   <div id="networkIndicator" class="network-indicator"></div>
 
   <div id="mainForm">
@@ -312,19 +389,16 @@ var Storage={
       </div>
     </div>
 
-    <h2 id="formTitle">Chandarana</h2>
-
     <div class="step-grid">
-
-      <div id="step1" class="step activeStep full-width">
+      <div id="step1" class="step activeStep">
         <label>Branch</label>
         <select id="branch"><option value="">Loading...</option></select>
         <div id="branchMsg" class="msg"></div>
       </div>
 
-      <div id="step2" class="step full-width">
+      <div id="step2" class="step">
         <label>Staff ID</label>
-        <input id="staffID" type="tel" placeholder="Enter your ID" autocomplete="off">
+        <input id="staffID" type="tel" placeholder="Enter ID" autocomplete="off">
         <div id="staffMsg" class="msg"></div>
       </div>
 
@@ -336,48 +410,29 @@ var Storage={
 
       <div id="step4" class="step">
         <label>Identity</label>
-        <div id="cameraBtnWrapper">
-          <div id="videoContainerWrapper">
-            <video id="cameraVideo" autoplay playsinline muted></video>
-            <button id="closeCameraBtn" onclick="stopCamera()" aria-label="Close camera">&#x2715;</button>
-            <div class="camera-ui">
-              <div id="captureBtn" onclick="capturePhoto()"></div>
-            </div>
-          </div>
-          <button id="openCameraBtn" onclick="startCamera()">Take a Selfie</button>
-        </div>
+        <button id="openCameraBtn" onclick="startCamera()">Take Selfie</button>
         <div id="cameraMsg" class="msg"></div>
       </div>
-
-      <div id="step5" class="step full-width">
-        <!-- Centered minimal inline layout -->
-        <div style="display:flex; justify-content:center; align-items:center; gap:20px; height:60px;">
-          <div id="actionDisplay" style="font-size:24px; font-weight:800; color:var(--dynamic-primary); letter-spacing:0.5px;"></div>
-          <div id="previewWrapper" class="preview-wrapper" style="flex-shrink:0;">
-            <img id="preview" alt="Selfie">
-          </div>
-        </div>
-      </div>
-
-      <div id="step6" class="step full-width">
-        <button id="submitBtn" class="primary" onclick="submitAttendance()">
-          <span class="btn-label">SUBMIT ATTENDANCE</span>
-          <div class="btn-spinner"></div>
-        </button>
-        <div id="submitMsg" class="msg" style="justify-content:center;text-align:center;"></div>
-      </div>
-
     </div>
   </div>
 
   <div id="successScreen">
-    <div class="success-emoji"   id="successEmoji">😊</div>
-    <div class="success-badge"   id="successBadge">Submitted</div>
+    <img id="successPhoto" class="success-photo" src="" alt="Captured Selfie" onclick="toggleZoom()">
+    <div class="success-badge" id="successBadge">CLOCK IN</div>
     <div class="success-card">
       <div class="success-name"  id="successName"></div>
       <div class="success-msg"   id="successMsg"></div>
     </div>
     <button class="success-back" onclick="resetToStart()">← Submit Another</button>
+  </div>
+
+  <!-- Camera overlay perfectly matches container -->
+  <div id="videoContainerWrapper">
+    <video id="cameraVideo" autoplay playsinline muted></video>
+    <button id="closeCameraBtn" onclick="stopCamera()" aria-label="Close camera">&#x2715;</button>
+    <div class="camera-ui">
+      <div id="captureBtn" onclick="capturePhoto()"></div>
+    </div>
   </div>
 </div>
 
@@ -400,7 +455,9 @@ var currentTerminal = Storage.get('selected_terminal') || 'chandarana';
 var staff = [], branches = [], coords = null, staffName = "", photo = null;
 var activeFetchId = 0, currentAction = "", videoStream = null;
 
-// Clean old daily cache
+var staffRestrictionError = null; 
+var warningTimer = null; 
+
 function cleanOldHistory() {
   var today = new Date().toDateString();
   var histRaw = Storage.get('local_history_' + currentTerminal);
@@ -413,7 +470,6 @@ function cleanOldHistory() {
   }
 }
 
-// Ensure offline queue is processed
 function processSyncQueue() {
   if (!navigator.onLine) return;
   var qRaw = Storage.get('sync_queue'); if (!qRaw) return;
@@ -441,6 +497,13 @@ function checkNetworkStatus() {
   if (navigator.onLine) ind.classList.remove('offline'); else ind.classList.add('offline');
 }
 
+function triggerSignAnimation() {
+  var sign = document.getElementById('storeSign');
+  sign.classList.remove('nudge');
+  void sign.offsetWidth; 
+  sign.classList.add('nudge');
+}
+
 function updateTerminalUI() {
   document.body.className = 'theme-' + currentTerminal;
   var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -448,8 +511,10 @@ function updateTerminalUI() {
   var meta = document.getElementById('theme-color-meta');
   if (meta) meta.setAttribute('content', hexColor);
   
-  var title = document.getElementById('formTitle');
+  var title = document.getElementById('storeSign');
   title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
+  triggerSignAnimation();
+  
   document.getElementById('btn-chandarana').classList.toggle('active', currentTerminal === 'chandarana');
   document.getElementById('btn-carrefour').classList.toggle('active',  currentTerminal === 'carrefour');
   requestAnimationFrame(function() { requestAnimationFrame(function() {
@@ -459,11 +524,19 @@ function updateTerminalUI() {
 }
 
 function switchTerminal(term) {
-  if (currentTerminal === term) return;
+  if (currentTerminal === term) { triggerSignAnimation(); return; }
   currentTerminal = term; Storage.set('selected_terminal', term);
   staff = []; branches = [];
   document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
-  updateTerminalUI(); resetToStart(); cleanOldHistory(); initApp();
+  
+  document.getElementById('successScreen').style.display='none';
+  document.getElementById('mainForm').style.display='block';
+  document.getElementById('mainContainer').style.overflow = 'hidden';
+  
+  updateTerminalUI(); 
+  resetStepsFrom(2); 
+  cleanOldHistory(); 
+  initApp();
 }
 
 function fetchFromServer(action, data) {
@@ -478,59 +551,95 @@ function populateBranches(list) {
   if (!Array.isArray(list)) return;
   var options = '<option value="">Choose Branch</option>' + list.map(function(b){ return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
   document.getElementById('branch').innerHTML = options;
-  
+}
+
+function restoreUserState() {
   var savedBranch = Storage.get('last_branch_' + currentTerminal);
-  if (savedBranch) { document.getElementById('branch').value = savedBranch; handleBranchChange(); }
+  if (savedBranch) { 
+    var branchEl = document.getElementById('branch');
+    branchEl.value = savedBranch; 
+    if (branchEl.value) handleBranchChange(); 
+  }
+  
+  var savedStaffID = Storage.get('last_staff_id_' + currentTerminal);
+  if (savedStaffID && staff.length > 0) {
+    var staffEl = document.getElementById('staffID');
+    staffEl.value = savedStaffID;
+    handleStaffInput.call(staffEl);
+  }
 }
 
 function initApp() {
   var myId = ++activeFetchId, cacheKey = currentTerminal + '_portal_data', cached = false;
   try {
     var raw = Storage.get(cacheKey);
-    if (raw) { var p = JSON.parse(raw); if (p && Array.isArray(p.branches)) { staff = p.staff || []; branches = p.branches || []; populateBranches(branches); cached = true; } }
+    if (raw) { 
+        var p = JSON.parse(raw); 
+        if (p && Array.isArray(p.branches)) { 
+            staff = p.staff || []; branches = p.branches || []; 
+            populateBranches(branches); 
+            restoreUserState(); 
+            cached = true; 
+        } 
+    }
   } catch(e) {}
+  
   fetchFromServer('getPortalData', {}).then(function(data) {
     if (myId !== activeFetchId) return;
-    var changed = JSON.stringify(branches) !== JSON.stringify(data.branches);
+    var changed = JSON.stringify(branches) !== JSON.stringify(data.branches) || JSON.stringify(staff) !== JSON.stringify(data.staff);
     staff = data.staff || []; branches = data.branches || [];
     try { Storage.set(cacheKey, JSON.stringify({staff:staff, branches:branches})); } catch(e) {}
-    if (!cached || changed) { populateBranches(branches); }
+    
+    if (!cached || changed) { populateBranches(branches); restoreUserState(); }
+    else { restoreUserState(); } 
   }).catch(function() {
     if (myId === activeFetchId && branches.length === 0)
       document.getElementById('branch').innerHTML = '<option value="">Offline — waiting for connection</option>';
   });
 }
 
-// Steps Reset Logic
 function activateStep(n) { document.getElementById('step'+n).classList.add('activeStep'); }
 function resetStepsFrom(n) {
-  for (var i = n; i <= 6; i++) { var el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep'); }
-  if (n<=2) { staffName=''; document.getElementById('staffID').value=''; clearMsg('staffMsg'); }
+  for (var i = n; i <= 4; i++) { var el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep'); }
+  if (n<=2) { staffName=''; document.getElementById('staffID').value=''; clearMsg('staffMsg'); staffRestrictionError = null; }
   if (n<=3) { coords=null; clearMsg('gpsMsg'); }
   if (n<=4) {
-    photo=null; stopCamera(); collapsePreview();
-    var pWrap=document.getElementById('previewWrapper'); if(pWrap) pWrap.style.display='none'; 
-    document.getElementById('preview').src=''; clearMsg('cameraMsg');
+    photo=null; stopCamera(); clearMsg('cameraMsg');
+    document.getElementById('successPhoto').src='';
   }
-  if (n<=5) { 
-    currentAction=''; 
-    document.getElementById('actionDisplay').textContent=''; 
-  }
-  clearMsg('submitMsg');
 }
 
 function resetToStart() {
   document.getElementById('successScreen').style.display='none';
   document.getElementById('mainForm').style.display='block';
-  resetStepsFrom(2); 
+  
+  document.getElementById('mainContainer').style.overflow = 'hidden';
+  
+  document.getElementById('successPhoto').classList.remove('zoomed');
+  document.getElementById('photoBackdrop').classList.remove('show');
+  
+  resetStepsFrom(3); 
   handleBranchChange();
+  var staffEl = document.getElementById('staffID');
+  if (staffEl.value) { handleStaffInput.call(staffEl); }
 }
 
 function showSuccess(id,txt){ var e=document.getElementById(id); e.innerHTML='<span class="dot"></span> '+txt; e.className='msg success'; }
 function showError(id,txt)  { var e=document.getElementById(id); e.innerText=txt; e.className='msg error'; }
 function clearMsg(id)       { var e=document.getElementById(id); e.innerText=''; e.className='msg'; }
 
-// Interactions
+function toggleZoom() {
+  var img = document.getElementById('successPhoto');
+  var backdrop = document.getElementById('photoBackdrop');
+  if (img.classList.contains('zoomed')) {
+    img.classList.remove('zoomed');
+    backdrop.classList.remove('show');
+  } else {
+    img.classList.add('zoomed');
+    backdrop.classList.add('show');
+  }
+}
+
 function handleBranchChange() {
   var val = document.getElementById('branch').value;
   if (!val) { resetStepsFrom(2); return; }
@@ -542,7 +651,9 @@ function handleBranchChange() {
 document.getElementById('branch').onchange = handleBranchChange;
 
 function handleStaffInput() {
+  if (!this.value) return;
   var val = this.value.trim();
+  staffRestrictionError = null; 
   if (val.length < 2) { resetStepsFrom(3); clearMsg('staffMsg'); return; }
   
   var match = null;
@@ -553,18 +664,52 @@ function handleStaffInput() {
     var todayKey = new Date().toDateString();
     var historyRaw = Storage.get('local_history_' + currentTerminal);
     var history = historyRaw ? JSON.parse(historyRaw) : {};
-    var lastAction = history[match.id + '_' + todayKey] || match.status;
+    
+    var historyEntry = history[match.id + '_' + todayKey];
+    var lastAction = match.status; 
+    var lastTime = null;
 
-    // Immediately stop user at Staff ID step if they've already clocked out today
+    if (historyEntry) {
+      if (typeof historyEntry === 'string') {
+        lastAction = historyEntry;
+      } else {
+        lastAction = historyEntry.action;
+        lastTime = historyEntry.time;
+      }
+    }
+
     if (lastAction === 'Clock Out') {
-      showError('staffMsg', 'You have completed today\'s attendance.');
-      resetStepsFrom(3); 
-      return;
+      staffRestrictionError = 'You have completed today\'s attendance.';
     }
     
-    currentAction = (lastAction === 'Clock In') ? 'Clock Out' : 'Clock In';
+    if (lastAction === 'Clock In') {
+      if (lastTime) {
+        var inDate = new Date(lastTime);
+        var inHour = inDate.getHours() + (inDate.getMinutes() / 60);
+        var now = new Date();
+        var currentHour = now.getHours() + (now.getMinutes() / 60);
+        
+        var isMorningShift = (inHour < 12.0); 
+        
+        if (isMorningShift) {
+          if (currentHour < 14.0) { 
+            staffRestrictionError = 'Morning Shift: Cannot clock out before 2:00 PM.';
+          }
+        } else {
+          if (currentHour < 18.0) { 
+            staffRestrictionError = 'Cannot clock out before time.';
+          }
+        }
+      }
+      currentAction = 'Clock Out';
+    } else {
+      currentAction = 'Clock In';
+    }
     
-    showSuccess('staffMsg','Welcome '+staffName);
+    var msgEl = document.getElementById('staffMsg');
+    msgEl.style.opacity = '1';
+    showSuccess('staffMsg', 'Welcome ' + staffName);
+    
     if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
     if (!document.getElementById('step3').classList.contains('activeStep')) activateStep(3);
   } else {
@@ -580,7 +725,8 @@ function showGuideModal(type) {
     icon.textContent='📍'; title.textContent='Location Blocked'; title.style.color='var(--error-color)';
     text.innerHTML='<p>We need your location to verify you are at the branch.</p>'
       +'<p style="margin-top:8px"><strong>🍎 iPhone:</strong><br>Settings → Privacy & Security → Location Services → Allow Safari/Chrome.</p>'
-      +'<p style="margin-top:8px"><strong>🤖 Android:</strong><br>⋮ Menu → Settings → Site settings → Location → Allow.</p>';
+      +'<p style="margin-top:8px"><strong>🤖 Android:</strong><br>⋮ Menu → Settings → Site settings → Location → Allow.</p>'
+      +'<p style="margin-top:12px; color:var(--error-color); font-weight:bold;">After allowing, please clear the browser from your recent apps and reopen.</p>';
   } else if (type==='gps_signal') {
     icon.textContent='📡'; title.textContent='Weak GPS Signal'; title.style.color='var(--warning-text)';
     text.innerHTML='<p>We couldn\'t get an accurate location reading.</p>'
@@ -589,12 +735,34 @@ function showGuideModal(type) {
     icon.textContent='📸'; title.textContent='Camera Access Denied'; title.style.color='var(--error-color)';
     text.innerHTML='<p>Camera permission is required to capture your identity securely.</p>'
       +'<p style="margin-top:8px"><strong>🍎 iPhone:</strong> Settings → Safari/Chrome → Camera → Allow.</p>'
-      +'<p style="margin-top:8px"><strong>🤖 Android:</strong> Site settings → Camera → Allow.</p>';
+      +'<p style="margin-top:8px"><strong>🤖 Android:</strong> Site settings → Camera → Allow.</p>'
+      +'<p style="margin-top:12px; color:var(--error-color); font-weight:bold;">After allowing, please clear the browser from your recent apps and reopen.</p>';
   }
   modal.style.display = 'flex';
 }
 
 function verifyGPS() {
+  if (staffRestrictionError) {
+    var msgEl = document.getElementById('staffMsg');
+    msgEl.style.opacity = '0';
+    setTimeout(function() {
+      showError('staffMsg', staffRestrictionError);
+      msgEl.style.opacity = '1';
+      
+      clearTimeout(warningTimer);
+      warningTimer = setTimeout(function() {
+        msgEl.style.opacity = '0';
+        setTimeout(function() {
+          if(document.getElementById('step2').classList.contains('activeStep')) {
+            showSuccess('staffMsg', 'Welcome ' + staffName);
+          }
+          msgEl.style.opacity = '1';
+        }, 300);
+      }, 3000); 
+    }, 300);
+    return;
+  }
+
   document.getElementById('gpsMsg').innerText='Locating…'; document.getElementById('gpsMsg').className='msg';
   if (!navigator.geolocation) { showError('gpsMsg','GPS not supported on this device.'); return; }
   navigator.geolocation.getCurrentPosition(
@@ -615,16 +783,14 @@ function verifyGPS() {
   );
 }
 
-// Shows Spinner until Hardware returns live feed, then immediately pops
 function startCamera() {
   var btn = document.getElementById('openCameraBtn');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
 
   btn.classList.add('loading');
-  btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; position:relative; transform:none; width:16px; height:16px; margin-right:8px; vertical-align:middle; border-width:2px; top:auto; left:auto;"></span><span style="vertical-align:middle;">Starting Camera...</span>';
+  btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; margin-right:8px;"></span><span style="vertical-align:middle;">Starting...</span>';
   clearMsg('cameraMsg');
 
-  // Request high definition stream for modern devices
   var constraints = { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
   navigator.mediaDevices.getUserMedia(constraints)
     .then(function(stream) {
@@ -634,55 +800,60 @@ function startCamera() {
       video.onloadedmetadata = function() {
         video.play().catch(function(){});
         
-        // Expand AFTER camera is actively loaded
         document.getElementById('videoContainerWrapper').classList.add('expanded');
         document.getElementById('cameraBackdrop').classList.add('show');
         video.classList.add('live');
         
         btn.classList.remove('loading');
-        btn.innerText = 'Take a Selfie';
+        btn.innerText = 'Take Selfie';
       };
     })
     .catch(function(err) {
       console.warn('Camera failed:', err);
       btn.classList.remove('loading');
-      btn.innerText = 'Take a Selfie';
+      btn.innerText = 'Take Selfie';
       showGuideModal('camera');
     });
 }
 
 function capturePhoto() {
   var video = document.getElementById('cameraVideo');
+  var wrapper = document.getElementById('mainContainer'); 
   var vw = video.videoWidth || 1280, vh = video.videoHeight || 720;
-  var maxDim = 1280, scale = (vw > maxDim || vh > maxDim) ? (maxDim / Math.max(vw, vh)) : 1;
+  
+  var cw = wrapper.offsetWidth, ch = wrapper.offsetHeight;
+  var containerAspect = cw / ch;
+  var videoAspect = vw / vh;
+  
+  var sWidth, sHeight, startX, startY;
+  
+  if (videoAspect > containerAspect) {
+    sHeight = vh; sWidth = vh * containerAspect;
+    startX = (vw - sWidth) / 2; startY = 0;
+  } else {
+    sWidth = vw; sHeight = vw / containerAspect;
+    startX = 0; startY = (vh - sHeight) / 2;
+  }
+  
+  var maxOutput = 720;
+  var scale = (sWidth > maxOutput || sHeight > maxOutput) ? (maxOutput / Math.max(sWidth, sHeight)) : 1;
   
   var canvas = document.createElement('canvas');
-  canvas.width = Math.round(vw * scale); canvas.height = Math.round(vh * scale);
+  canvas.width = Math.round(sWidth * scale); 
+  canvas.height = Math.round(sHeight * scale);
   var ctx = canvas.getContext('2d');
   
-  // Mirror the canvas context so the saved photo matches the mirrored video preview perfectly
   ctx.translate(canvas.width, 0);
   ctx.scale(-1, 1);
-  
   ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
   
-  // Save as high-quality JPEG (85% compression)
+  ctx.drawImage(video, startX, startY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
+  
   photo = canvas.toDataURL('image/jpeg', 0.85);
 
-  // Apply to step 5 preview
-  document.getElementById('preview').src = photo;
-  document.getElementById('actionDisplay').textContent = currentAction;
-  document.getElementById('previewWrapper').style.display = 'block';
-  
-  showSuccess('cameraMsg','Identity Captured');
-  
-  activateStep(5);
-  activateStep(6);
-
-  showSuccess('submitMsg', 'Ready for Submission');
+  document.getElementById('successPhoto').src = photo;
   stopCamera();
+  submitAttendance();
 }
 
 function stopCamera() {
@@ -692,7 +863,7 @@ function stopCamera() {
   video.classList.remove('live');
   
   var btn = document.getElementById('openCameraBtn');
-  if (btn && !btn.classList.contains('loading')) btn.textContent = photo ? 'Retake Selfie' : 'Take a Selfie';
+  if (btn && !btn.classList.contains('loading')) btn.textContent = 'Take Selfie';
   
   setTimeout(function() {
     if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
@@ -700,97 +871,26 @@ function stopCamera() {
   }, 300);
 }
 
-// FAST 0.3s Snappy Expand / Collapse Zoom
-document.getElementById('preview').onclick = function() {
-  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
-  if (p.classList.contains('enlarged')) return collapsePreview();
-  
-  var rect = p.getBoundingClientRect();
-  
-  // Freeze current DOM position explicitly
-  p.style.transition = 'none';
-  p.style.position = 'fixed';
-  p.style.top = rect.top + 'px'; 
-  p.style.left = rect.left + 'px';
-  p.style.width = rect.width + 'px'; 
-  p.style.height = rect.height + 'px';
-  p.style.margin = '0'; 
-  p.style.transform = 'translate(0,0)';
-  p.style.zIndex = '10000';
-  
-  // Force a browser reflow
-  void p.offsetWidth;
-  
-  // Apply snappy 0.3s dimensional transition
-  p.style.transition = 'all 0.3s cubic-bezier(0.25, 1, 0.4, 1)';
-  p.style.top = '50%'; 
-  p.style.left = '50%';
-  var targetSize = Math.min(window.innerWidth * 0.85, 360);
-  p.style.width = targetSize + 'px'; 
-  p.style.height = targetSize + 'px';
-  p.style.transform = 'translate(-50%,-50%)'; 
-  p.style.borderRadius = '20px'; // Soft square
-  p.style.boxShadow = '0 0 0 4px var(--success-color), 0 20px 40px rgba(0,0,0,0.5)';
-  p.classList.add('enlarged');
-  
-  ov.style.display = 'block'; 
-  void ov.offsetWidth; 
-  ov.classList.add('show');
-};
-
-function collapsePreview() {
-  var p = document.getElementById('preview'), ov = document.getElementById('previewOverlay');
-  if (!p.classList.contains('enlarged')) return;
-  
-  var wrapper = document.getElementById('previewWrapper');
-  var rect = wrapper.getBoundingClientRect();
-  
-  // Snappier 0.3s return animation
-  p.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
-  p.style.top = rect.top + 'px'; 
-  p.style.left = rect.left + 'px';
-  p.style.width = rect.width + 'px'; 
-  p.style.height = rect.height + 'px';
-  p.style.transform = 'translate(0,0)'; 
-  p.style.borderRadius = '50%'; 
-  p.style.boxShadow = '0 0 0 3px var(--success-color)';
-  ov.classList.remove('show');
-  
-  // Snap back into relative position instantly after visual completes
-  setTimeout(function() {
-    if (!p.classList.contains('enlarged')) return;
-    p.style.transition = 'none'; 
-    p.style.position = 'absolute';
-    p.style.top = '0'; 
-    p.style.left = '0'; 
-    p.style.width = '100%'; 
-    p.style.height = '100%';
-    p.style.transform = 'none'; 
-    p.style.zIndex = '1'; 
-    p.style.borderRadius = ''; 
-    p.style.boxShadow = '0 0 0 3px var(--success-color)';
-    p.classList.remove('enlarged'); 
-    ov.style.display = 'none';
-  }, 300);
-}
-
-// Background Sync Queue
 function queueSubmission(payload) {
   var queue = JSON.parse(Storage.get('sync_queue') || '[]');
   queue.push(payload); Storage.set('sync_queue', JSON.stringify(queue));
   processSyncQueue();
 }
 
-// INSTANT Submit implementation
 function submitAttendance() {
   var branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
   if (!branch||!staffID||!currentAction||!photo) return;
   
-  // Record locally to prevent duplicates
+  Storage.set('last_staff_id_' + currentTerminal, staffID);
+  
   var todayKey = new Date().toDateString();
   var histRaw = Storage.get('local_history_' + currentTerminal);
   var history = histRaw ? JSON.parse(histRaw) : {};
-  history[staffID + '_' + todayKey] = currentAction;
+  
+  history[staffID + '_' + todayKey] = {
+    action: currentAction,
+    time: Date.now()
+  };
   Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
   
   var payload = {
@@ -800,33 +900,35 @@ function submitAttendance() {
   };
   
   queueSubmission(payload);
-  
-  // Execute instantly (0 delay)
   finishSubmission(currentAction);
 }
 
 function finishSubmission(action) {
   var firstName = staffName.split(' ')[0] || staffName;
   var hrs = new Date().getHours(), mins = new Date().getMinutes(), timeVal = hrs + (mins / 60.0);
-  var emoji='✅', msg='';
+  var msg='';
 
   if (action === 'Clock In') {
-    if (timeVal < 6.5)      { emoji='🌟'; msg="Fantastic start — you're early today! Keep it up."; }
-    else if (timeVal <= 7.66) { emoji='✅'; msg="Great, you are on time for the morning shift."; }
-    else if (timeVal < 11.0){ emoji='⏰'; msg="Clocked in. Note: Late for morning shift."; }
-    else if (timeVal < 14.0){ emoji='🌟'; msg="Early for the second shift. Great job!"; }
-    else if (timeVal <= 14.66){ emoji='✅'; msg="On time for the second shift. Have a productive afternoon!"; }
-    else                    { emoji='⏰'; msg="Clocked in. Note: Late for afternoon shift."; }
+    if (timeVal < 6.5)      { msg="Fantastic start — you're early today! Keep it up."; }
+    else if (timeVal <= 7.66) { msg="Great, you are on time for the morning shift."; }
+    else if (timeVal < 11.0){ msg="Note: Late for morning shift.<br><br><span style='color:var(--error-color);font-size:13px;display:block;'>Consistent lateness will be forwarded to management for review.</span>"; }
+    else if (timeVal < 14.0){ msg="Early for the second shift. Great job!"; }
+    else if (timeVal <= 14.66){ msg="On time for the second shift. Have a productive afternoon!"; }
+    else                    { msg="Note: Late for afternoon shift."; }
   } else {
-    if (hrs < 16) { emoji='👋'; msg="Have a wonderful afternoon!"; }
-    else          { emoji='🌙'; msg="Have a restful night!"; }
+    if (hrs < 16) { msg="Have a wonderful afternoon!"; }
+    else          { msg="Have a restful night!"; }
+    
+    if (hrs >= 18) {
+      msg += "<br><br><span style='display:block;'>And remember to place your order.</span>";
+    }
   }
 
-  document.getElementById('successEmoji').textContent = emoji;
+  document.getElementById('successBadge').textContent = action.toUpperCase();
   document.getElementById('successName').textContent = firstName;
-  document.getElementById('successMsg').textContent = msg;
+  document.getElementById('successMsg').innerHTML = msg;
   
-  // Switch to success screen instantly
+  document.getElementById('mainContainer').style.overflow = 'visible';
   document.getElementById('mainForm').style.display = 'none';
   document.getElementById('successScreen').style.display = 'flex';
 }
