@@ -71,75 +71,65 @@ body {
 body.theme-chandarana{--dynamic-primary:var(--theme-chan)}
 body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f6}
 
-/* FLOATING KEYCHAIN TAG UI */
-.tag-wrapper {
+/* METAL RODS HANGING SIGN */
+.hanging-sign-wrapper {
   position: relative;
-  margin-bottom: 48px;
-  filter: drop-shadow(0 15px 25px var(--shadow-color));
-  animation: floatTag 3.5s ease-in-out infinite;
+  margin-bottom: 48px; 
+  perspective: 800px;
   z-index: 10;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transform-origin: 20px center;
+  width: 240px; 
 }
-@keyframes floatTag {
-  0% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-8px) rotate(3deg); }
-  100% { transform: translateY(0) rotate(-2deg); }
-}
-.tag-wrapper.nudge {
-  animation: tagNudge 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-}
-@keyframes tagNudge {
-  0% { transform: scale(1) rotate(-2deg); }
-  30% { transform: scale(1.1) rotate(5deg); }
-  70% { transform: scale(0.95) rotate(-4deg); }
-  100% { transform: scale(1) rotate(-2deg); }
-}
-
-.keychain-ring {
+.chain {
   position: absolute;
-  left: 6px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 24px;
-  height: 24px;
-  border: 4px solid #e5e7eb;
-  border-radius: 50%;
-  z-index: 1;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1), inset 0 2px 4px rgba(0,0,0,0.1);
+  top: -30px;
+  width: 5px;
+  height: 34px;
+  background: linear-gradient(to right, #9ca3af, #f3f4f6, #9ca3af);
+  border-radius: 3px;
+  box-shadow: inset 0 0 3px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
+  z-index: 1; 
 }
+.chain::before {
+  content: ''; position: absolute; top: -6px; left: -3.5px;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--dynamic-primary); 
+  border: 3.5px solid #d1d5db; 
+  box-shadow: 0 8px 12px rgba(0,0,0,0.6), 0 3px 6px rgba(0,0,0,0.4), inset 0 2px 4px rgba(0,0,0,0.7);
+  box-sizing: border-box;
+  transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.left-chain { left: 40px; }
+.right-chain { right: 40px; }
 
-.tag-shape {
+.hanging-sign {
   background: var(--bg-primary);
   color: var(--dynamic-primary);
-  padding: 14px 20px 14px 44px;
+  padding: 12px 10px;
+  border-radius: 12px;
   font-weight: 900;
   font-size: 20px;
   text-transform: uppercase;
   letter-spacing: 2px;
-  clip-path: polygon(24px 0%, 100% 0%, 100% 100%, 24px 100%, 0% 50%);
-  position: relative;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 180px;
+  text-align: center;
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  box-shadow: 0 10px 25px var(--shadow-color), inset 0 -3px 0 rgba(0,0,0,0.05);
+  transform-origin: top center;
   transition: color 0.4s ease;
+  position: relative;
+  z-index: 2; 
 }
 
-.tag-hole {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 12px;
-  height: 12px;
-  background: var(--dynamic-primary);
-  border-radius: 50%;
-  box-shadow: inset 0 3px 6px rgba(0,0,0,0.3);
-  transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+@keyframes swing {
+  0%   { transform: rotateX(0deg) rotateZ(0deg); }
+  20%  { transform: rotateX(25deg) rotateZ(-3deg); }
+  40%  { transform: rotateX(-15deg) rotateZ(2deg); }
+  60%  { transform: rotateX(8deg) rotateZ(-1deg); }
+  80%  { transform: rotateX(-3deg) rotateZ(0deg); }
+  100% { transform: rotateX(0deg) rotateZ(0deg); }
 }
+.hanging-sign.nudge { animation: swing 0.7s cubic-bezier(0.25, 1, 0.5, 1); }
 
 .container{
   max-width:400px; width:100%; aspect-ratio: 1 / 1; 
@@ -347,13 +337,11 @@ var Storage={
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
 <div id="photoBackdrop" onclick="toggleZoom()"></div>
 
-<!-- NEW FLOATING KEYCHAIN TAG -->
-<div class="tag-wrapper nudge" id="signWrapper">
-  <div class="keychain-ring"></div>
-  <div class="tag-shape">
-    <div class="tag-hole"></div>
-    <span id="storeSign">Chandarana</span>
-  </div>
+<!-- HANGING METAL RODS SIGN -->
+<div class="hanging-sign-wrapper" id="signWrapper">
+  <div class="chain left-chain"></div>
+  <div class="chain right-chain"></div>
+  <div class="hanging-sign nudge" id="storeSign">Chandarana</div>
 </div>
 
 <div class="container" id="mainContainer">
@@ -489,7 +477,7 @@ function checkNetworkStatus() {
 }
 
 function triggerSignAnimation() {
-  var sign = document.getElementById('signWrapper');
+  var sign = document.getElementById('storeSign');
   if (sign) {
       sign.classList.remove('nudge');
       void sign.offsetWidth; 
