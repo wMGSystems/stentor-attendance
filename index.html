@@ -419,7 +419,7 @@ var Storage={
 </div>
 
 <script>
-var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec";
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec"; // ADD YOUR URL HERE
 
 var currentTerminal = Storage.get('selected_terminal') || 'chandarana';
 var staff = [], branches = [], coords = null, staffName = "", photo = null;
@@ -428,47 +428,11 @@ var activeFetchId = 0, currentAction = "", videoStream = null;
 var staffRestrictionError = null; 
 var warningTimer = null; 
 
-// Erases data missing today's strict timestamp (bypasses logic entirely upon reaching midnight)
-function cleanOldHistory() {
-  var histRaw = Storage.get('local_history_' + currentTerminal);
-  if (histRaw) {
-    try {
-      var history = JSON.parse(histRaw);
-      var updated = false;
-      var todayStr = new Date().toDateString();
-      for (var key in history) {
-        var entry = history[key];
-        // Purge if old format or date string doesn't match today's exact date
-        if (!entry || typeof entry !== 'object' || entry.dateStr !== todayStr) {
-          delete history[key];
-          updated = true;
-        }
-      }
-      if (updated) Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
-    } catch(e) {}
-  }
-}
-
-function processSyncQueue() {
-  if (!navigator.onLine) return;
-  var qRaw = Storage.get('sync_queue'); if (!qRaw) return;
-  try {
-    var queue = JSON.parse(qRaw);
-    if (queue.length === 0) return;
-    var item = queue[0];
-    fetchFromServer('recordAttendance', item).then(function() {
-      var currentQ = JSON.parse(Storage.get('sync_queue') || '[]');
-      currentQ.shift(); Storage.set('sync_queue', JSON.stringify(currentQ));
-      processSyncQueue();
-    }).catch(function(e) { console.warn("Background sync delay", e); });
-  } catch(e) {}
-}
-
 document.addEventListener('DOMContentLoaded', function() {
-  updateTerminalUI(); checkNetworkStatus(); cleanOldHistory(); initApp(); processSyncQueue();
+  updateTerminalUI(); checkNetworkStatus(); initApp();
   if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
 });
-window.addEventListener('online', function(){ checkNetworkStatus(); processSyncQueue(); });
+window.addEventListener('online', checkNetworkStatus);
 window.addEventListener('offline', checkNetworkStatus);
 
 function checkNetworkStatus() {
@@ -516,7 +480,6 @@ function switchTerminal(term) {
   
   updateTerminalUI(); 
   resetStepsFrom(2); 
-  cleanOldHistory(); 
   initApp();
 }
 
@@ -599,6 +562,10 @@ function resetToStart() {
   
   resetStepsFrom(3); 
   handleBranchChange();
+  
+  // Re-fetch server data behind the scenes so time checks stay fresh
+  initApp();
+  
   var staffEl = document.getElementById('staffID');
   if (staffEl.value) { handleStaffInput.call(staffEl); }
 }
@@ -640,38 +607,18 @@ function handleStaffInput() {
   if (match) {
     staffName = match.name;
     
-    // Force immediate purge of anything not matching today's format just to be totally safe
-    var historyRaw = Storage.get('local_history_' + currentTerminal);
-    var history = historyRaw ? JSON.parse(historyRaw) : {}; 
-    var todayStr = new Date().toDateString();
-    var updatedHist = false;
-    
-    for (var k in history) {
-      if (!history[k] || typeof history[k] !== 'object' || history[k].dateStr !== todayStr) {
-        delete history[k];
-        updatedHist = true;
-      }
-    }
-    if (updatedHist) Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
-    
-    // Evaluate correctly cleaned history
-    var historyEntry = history[match.id];
-    var lastAction = null; 
-    var lastTime = null;
+    // Evaluate live history from server (pulled securely during initApp warm-up)
+    var lastAction = match.status; 
+    var lastTime = match.lastTime;
 
-    if (historyEntry) {
-      lastAction = historyEntry.action;
-      lastTime = historyEntry.time;
-    }
-    
-    // Time constraint logic
+    // Time constraint logic (3 HOUR RULE AND TEXT WARNINGS)
     if (lastAction === 'Clock Out') {
-      staffRestrictionError = 'You have completed today\'s attendance.';
+      staffRestrictionError = 'You have already clocked in and out today.';
     } else if (lastAction === 'Clock In') {
       if (lastTime) {
         var diffHours = (Date.now() - lastTime) / (1000 * 60 * 60);
-        if (diffHours < 5) {
-          staffRestrictionError = 'Cannot clock out before time.';
+        if (diffHours < 3) {
+          staffRestrictionError = 'Clock out at the end of your shift.';
         }
       }
       currentAction = 'Clock Out';
@@ -715,7 +662,6 @@ function showGuideModal(type) {
 }
 
 function doVerifyGPS(isRetry) {
-  // Silent text during retry so it just looks like it's still processing normally
   document.getElementById('gpsMsg').innerText = 'Locating…'; 
   document.getElementById('gpsMsg').className = 'msg';
   if (!navigator.geolocation) { showError('gpsMsg','GPS not supported on this device.'); return; }
@@ -735,7 +681,6 @@ function doVerifyGPS(isRetry) {
       
       if (dist > maxDist) {
          if (!isRetry && navigator.onLine) {
-             // Automatically retry silently with expanded range
              setTimeout(function() { doVerifyGPS(true); }, 500);
          } else {
              showError('gpsMsg', dist>1000 ? 'Too far ('+(dist/1000).toFixed(1)+'km)' : 'Too far ('+Math.round(dist)+'m) — move closer');
@@ -750,7 +695,6 @@ function doVerifyGPS(isRetry) {
         showGuideModal('gps'); 
       } else {
         if (!isRetry && navigator.onLine) {
-           // Silently retry once on weak GPS / total failure (when not blocked by user permission)
            setTimeout(function() { doVerifyGPS(true); }, 500);
         } else {
            showGuideModal('gps_signal'); 
@@ -787,6 +731,11 @@ function verifyGPS() {
 }
 
 function startCamera() {
+  if (!navigator.onLine) {
+    showError('cameraMsg', 'You must have an internet connection to submit.');
+    return;
+  }
+
   var btn = document.getElementById('openCameraBtn');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
 
@@ -856,7 +805,7 @@ function capturePhoto() {
 
   document.getElementById('successPhoto').src = photo;
   stopCamera();
-  submitAttendance();
+  submitAttendanceRealtime();
 }
 
 function stopCamera() {
@@ -874,24 +823,17 @@ function stopCamera() {
   }, 300);
 }
 
-function queueSubmission(payload) {
-  var queue = JSON.parse(Storage.get('sync_queue') || '[]');
-  queue.push(payload); Storage.set('sync_queue', JSON.stringify(queue));
-  processSyncQueue();
-}
-
-function submitAttendance() {
+// Submits entirely via internet without local queuing
+function submitAttendanceRealtime() {
   var branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
   if (!branch||!staffID||!currentAction||!photo) return;
   
+  if (!navigator.onLine) {
+    showError('cameraMsg', 'No internet connection. Please connect to submit.');
+    return;
+  }
+
   Storage.set('last_staff_id_' + currentTerminal, staffID);
-  
-  var histRaw = Storage.get('local_history_' + currentTerminal);
-  var history = histRaw ? JSON.parse(histRaw) : {};
-  
-  // Track action today with date marker so it effortlessly wipes after midnight
-  history[staffID] = { action: currentAction, time: Date.now(), dateStr: new Date().toDateString() };
-  Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
   
   var payload = {
     name: staffName, id: staffID, branch: branch, action: currentAction, image: photo,
@@ -899,8 +841,24 @@ function submitAttendance() {
     clientTimestamp: new Date().toISOString()
   };
   
-  queueSubmission(payload);
-  finishSubmission(currentAction);
+  var btn = document.getElementById('openCameraBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; margin-right:8px;"></span><span style="vertical-align:middle;">Submitting...</span>';
+  clearMsg('cameraMsg');
+
+  fetchFromServer('recordAttendance', payload).then(function(res) {
+    // ONLY show success if Google Server accepted it
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    btn.innerText = 'Take Selfie';
+    finishSubmission(currentAction);
+  }).catch(function(err) {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+    btn.innerText = 'Take Selfie';
+    showError('cameraMsg', 'Submission Failed: ' + err.message);
+  });
 }
 
 function finishSubmission(action) {
