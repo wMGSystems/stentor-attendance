@@ -3,936 +3,240 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="theme-color" id="theme-color-meta" content="#059669">
-<script>
-  (function() {
-    try {
-      var savedTerm = localStorage.getItem('selected_terminal') || 'chandarana';
-      var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      var meta = document.getElementById('theme-color-meta');
-      if (meta) {
-        if (savedTerm === 'carrefour') meta.setAttribute('content', isDark ? '#2563eb' : '#3b82f6');
-        else meta.setAttribute('content', isDark ? '#059669' : '#10b981');
-      }
-    } catch(e) {}
-  })();
-</script>
 <title>Store Attendance</title>
 <style>
+/* CSS Reset and Variables */
 :root {
-  --bg-primary:#ffffff; --bg-secondary:#f7f9fa;
-  --text-primary:#111827; --text-secondary:#4b5563; --text-tertiary:#9ca3af;
-  --border-color:#e5e7eb; --input-bg:#f9fafb; --input-border:#d1d5db;
-  --button-secondary-bg:#eff6ff;
-  --success-color:#10b981; --error-color:#ef4444;
-  --warning-bg:#fef2f2; --warning-border:#fecaca; --warning-text:#b91c1c;
-  --success-card-bg:#f0fdf4; --success-card-border:#bbf7d0;
-  --modal-overlay:rgba(0,0,0,0.65); --shadow-color:rgba(0,0,0,0.1);
-  --label-text:#6b7280;
-  
-  --theme-chan:#10b981; 
-  --theme-carr:#3b82f6; 
-  --dynamic-primary:var(--theme-chan);
+  --bg-primary:#ffffff; --text-primary:#111827; --border-color:#e5e7eb;
+  --success-color:#10b981; --error-color:#ef4444; --theme-chan:#10b981; 
+  --theme-carr:#3b82f6; --dynamic-primary:var(--theme-chan);
 }
-
 @media (prefers-color-scheme:dark) {
-  :root {
-    --bg-primary:#1f2937; --bg-secondary:#111827;
-    --text-primary:#f9fafb; --text-secondary:#d1d5db; --text-tertiary:#9ca3af;
-    --border-color:#374151; --input-bg:#374151; --input-border:#4b5563;
-    --button-secondary-bg:#1e3a8a;
-    --success-color:#34d399; --error-color:#f87171;
-    --warning-bg:#450a0a; --warning-border:#7f1d1d; --warning-text:#fca5a5;
-    --success-card-bg:#064e3b; --success-card-border:#065f46;
-    --modal-overlay:rgba(0,0,0,0.85); --shadow-color:rgba(0,0,0,0.5);
-    --label-text:#9ca3af;
-    
-    --theme-chan:#059669; 
-    --theme-carr:#2563eb; 
-  }
+  :root { --bg-primary:#1f2937; --text-primary:#f9fafb; --border-color:#374151; }
 }
-
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
 body {
-  font-family:-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-  color:var(--text-primary); 
-  background-color: var(--dynamic-primary);
-  min-height:100vh; min-height:100dvh; display:flex; flex-direction:column;
-  align-items:center; 
-  justify-content:center; 
-  padding:env(safe-area-inset-top) 12px env(safe-area-inset-bottom); 
-  overflow-y:auto; -webkit-overflow-scrolling:touch;
-  transition: background-color 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: -apple-system, system-ui; background: var(--dynamic-primary);
+  margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh;
+}
+.container {
+  width: 90%; max-width: 400px; background: var(--bg-primary); border-radius: 24px;
+  padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); position: relative;
+}
+/* Steps and Inputs */
+.step { opacity: 0.15; pointer-events: none; transition: 0.3s; margin-bottom: 15px; }
+.step.active { opacity: 1; pointer-events: auto; }
+label { font-size: 11px; font-weight: 700; text-transform: uppercase; color: #6b7280; display: block; margin-bottom: 5px; }
+input, select, button {
+  width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--border-color);
+  font-size: 16px; padding: 0 12px; outline: none; background: #f9fafb;
+}
+button { background: #eff6ff; color: var(--dynamic-primary); font-weight: 700; cursor: pointer; border: none; }
+button:disabled { opacity: 0.5; }
+.msg { font-size: 12px; margin-top: 5px; min-height: 15px; }
+.msg.error { color: var(--error-color); }
+.msg.success { color: var(--success-color); }
+
+/* Camera Overlay */
+#videoWrapper {
+  position: fixed; inset: 0; background: #000; z-index: 100; display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+}
+video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+#captureBtn {
+  position: absolute; bottom: 40px; width: 70px; height: 70px; border-radius: 50%;
+  border: 5px solid #fff; background: rgba(255,255,255,0.3);
 }
 
-body.theme-chandarana{--dynamic-primary:var(--theme-chan)}
-body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f6}
+/* Loading Spinner */
+.spinner {
+  border: 3px solid rgba(0,0,0,0.1); border-top-color: var(--dynamic-primary);
+  border-radius: 50%; width: 20px; height: 20px; animation: spin 0.8s linear infinite;
+  display: inline-block; margin-right: 8px; vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* METAL RODS HANGING SIGN */
-.hanging-sign-wrapper {
-  position: relative;
-  margin-bottom: 48px; 
-  perspective: 800px;
-  z-index: 10;
-  width: 240px; 
-}
-.chain {
-  position: absolute;
-  top: -30px;
-  width: 5px;
-  height: 34px;
-  background: linear-gradient(to right, #9ca3af, #f3f4f6, #9ca3af);
-  border-radius: 3px;
-  box-shadow: inset 0 0 3px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2);
-  z-index: 1; 
-}
-.chain::before {
-  content: ''; position: absolute; top: -6px; left: -3.5px;
-  width: 12px; height: 12px; border-radius: 50%;
-  background: var(--dynamic-primary); 
-  border: 3.5px solid #d1d5db; 
-  box-shadow: 0 8px 12px rgba(0,0,0,0.6), 0 3px 6px rgba(0,0,0,0.4), inset 0 2px 4px rgba(0,0,0,0.7);
-  box-sizing: border-box;
-  transition: background 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.left-chain { left: 40px; }
-.right-chain { right: 40px; }
-
-.hanging-sign {
-  background: var(--bg-primary);
-  color: var(--dynamic-primary);
-  padding: 12px 10px;
-  border-radius: 12px;
-  font-weight: 900;
-  font-size: 20px;
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  text-align: center;
-  width: 100%;
-  display: block;
-  box-sizing: border-box;
-  box-shadow: 0 10px 25px var(--shadow-color), inset 0 -3px 0 rgba(0,0,0,0.05);
-  transform-origin: top center;
-  transition: color 0.4s ease;
-  position: relative;
-  z-index: 2; 
-}
-
-@keyframes swing {
-  0%   { transform: rotateX(0deg) rotateZ(0deg); }
-  20%  { transform: rotateX(25deg) rotateZ(-3deg); }
-  40%  { transform: rotateX(-15deg) rotateZ(2deg); }
-  60%  { transform: rotateX(8deg) rotateZ(-1deg); }
-  80%  { transform: rotateX(-3deg) rotateZ(0deg); }
-  100% { transform: rotateX(0deg) rotateZ(0deg); }
-}
-.hanging-sign.nudge { animation: swing 0.7s cubic-bezier(0.25, 1, 0.5, 1); }
-
-.container{
-  max-width:400px; width:100%; aspect-ratio: 1 / 1; 
-  margin:0 auto; background:var(--bg-primary);
-  padding:24px 22px; border-radius:24px;
-  box-shadow:0 15px 35px var(--shadow-color);
-  position:relative; overflow:hidden;
-  display:flex; flex-direction:column; justify-content:center; 
-}
-
-#mainForm { width: 100%; }
-
-.network-indicator{
-  position:absolute;top:18px;left:18px;width:8px;height:8px;border-radius:50%;
-  background:var(--success-color);opacity:0.8;transition:background 0.4s ease;
-  box-shadow: 0 0 6px var(--success-color);
-}
-.network-indicator.offline{background:var(--text-tertiary);opacity:0.4; box-shadow:none;}
-
-.top-bar{display:flex;justify-content:flex-end;margin-bottom:20px}
-.terminal-pill-wrapper{
-  position:relative;display:inline-flex;background:var(--input-bg);
-  border:1px solid var(--border-color);border-radius:50px;padding:4px;height:40px;
-  box-shadow:inset 0 2px 4px rgba(0,0,0,0.04);align-items:center;
-}
-.pill-slider{
-  position:absolute;top:4px;bottom:4px;left:4px;border-radius:50px;
-  background:var(--dynamic-primary);box-shadow:0 2px 6px rgba(0,0,0,0.15);
-  transition:all 0.35s cubic-bezier(0.25,1,0.5,1);z-index:1;
-}
-.pill-btn{
-  position:relative;z-index:2;background:transparent;border:none;
-  padding:0 16px;height:100%;font-size:13px;font-weight:700;
-  color:var(--text-secondary);cursor:pointer;transition:color 0.2s ease;
-  display:flex;align-items:center;justify-content:center; outline:none;
-  -webkit-tap-highlight-color:transparent;
-}
-.pill-btn.active{color:#fff;}
-.pill-btn .full-text,.pill-btn .short-text{display:none}
-.pill-btn.active .full-text{display:block}
-.pill-btn:not(.active) .short-text{display:block}
-
-@keyframes bounceIn{ 
-  0%{transform:scale(0.9);opacity:0} 
-  60%{transform:scale(1.05)} 
-  100%{transform:scale(1);opacity:1} 
-}
-@keyframes spin{ to { transform: rotate(360deg); } }
-
-.step-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px}
-.step{opacity:0.3;pointer-events:none;transition:opacity 0.4s ease}
-.step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.45s ease}
-
-label{font-weight:600;font-size:12px;display:block;margin-bottom:6px;color:var(--label-text);text-transform:uppercase;letter-spacing:0.5px}
-input,select{
-  width:100%;height:46px;padding:0 14px;border-radius:12px;
-  border:1px solid var(--input-border);font-size:15px;background:var(--input-bg);
-  color:var(--text-primary);transition:all 0.2s; -webkit-appearance:none; outline:none;
-}
-input:focus,select:focus{border-color:var(--dynamic-primary);background:var(--bg-primary);box-shadow:0 0 0 3px rgba(16, 185, 129, 0.1)}
-body.theme-carrefour input:focus, body.theme-carrefour select:focus {box-shadow:0 0 0 3px rgba(59, 130, 246, 0.1)}
-
-button{
-  width:100%;height:46px;border-radius:12px;border:none; font-size:14px;font-weight:700;
-  background:var(--button-secondary-bg);color:var(--dynamic-primary);
-  cursor:pointer;transition:transform 0.1s, opacity 0.2s, background 0.2s;
-}
-button:active{transform:scale(0.97)}
-button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-
-.btn-spinner {
-  border: 2px solid rgba(0,0,0,0.1); 
-  border-top-color: currentColor; border-radius: 50%; 
-  animation: spin 0.6s linear infinite;
-}
-
-#videoContainerWrapper{
-  position:absolute; top:0; left:0; right:0; bottom:0;
-  width:100%; height:100%; border-radius:24px;
-  overflow:hidden; z-index:60; background-color: #000;
-  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.25, 1, 0.4, 1);
-  transform: scale(0.95); opacity:0; pointer-events:none;
-}
-#videoContainerWrapper.expanded{ pointer-events:auto; opacity:1; transform: scale(1); }
-
-#cameraVideo{ 
-  position:absolute; top:0; left:0; width:100%; height:100%;
-  object-fit:cover; display:block; transform: scaleX(-1); 
-  opacity: 0; transition: opacity 0.4s ease; 
-}
-#cameraVideo.live { opacity: 1; }
-
-#cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
-#cameraBackdrop.show{ display:block; }
-.camera-ui{
-  position:absolute;bottom:0;left:0;right:0; padding:20px;
-  background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 100%);
-  display:flex;align-items:center;justify-content:center; z-index:3;
-}
-#captureBtn{
-  width:64px;height:64px;border-radius:50%;
-  background:rgba(255,255,255,0.3);border:4px solid rgba(255,255,255,0.95);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  transition:transform 0.1s;-webkit-tap-highlight-color:transparent;
-}
-#captureBtn::after{content:'';width:48px;height:48px;background:#fff;border-radius:50%;transition:transform 0.1s}
-#captureBtn:active{transform:scale(0.88)}
-#captureBtn:active::after{transform:scale(0.9)}
-
-#closeCameraBtn{
-  position:absolute;top:16px;right:16px; width:36px;height:36px;border-radius:50%;
-  background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);
-  color:#fff;font-size:16px; cursor:pointer; display:flex;align-items:center;justify-content:center;
-  z-index:4; -webkit-tap-highlight-color:transparent;
-}
-
-.msg{ 
-  font-size:12px;font-weight:600;margin-top:6px;
-  min-height:38px; align-items:flex-start; line-height:1.4;
-  color:var(--text-tertiary);display:flex; 
-  transition: opacity 0.3s ease, color 0.3s ease; opacity: 1;
-}
-.msg.success{color:var(--success-color);font-size:13px}
-.msg.error  {color:var(--error-color)}
-.msg .dot{
-  display:inline-flex;justify-content:center;align-items:center;
-  width:16px;height:16px;background:var(--success-color);border-radius:50%;
-  margin-right:6px;flex-shrink:0;position:relative; margin-top: 1px; 
-}
-.msg .dot::after{
-  content:'';position:absolute;top:45%;left:50%; width:3.5px;height:7px;
-  border-right:2px solid #fff;border-bottom:2px solid #fff;
-  transform:translate(-50%,-50%) rotate(45deg);
-}
-
-#successScreen{ display:none;flex-direction:column;align-items:center; justify-content:center; padding:10px 4px;text-align:center;width:100%; }
-
-.success-photo{
-  width: 110px; height: 110px; object-fit: cover; border-radius: 50%;
-  box-shadow: 0 0 0 4px var(--success-color); margin-bottom: 16px;
-  animation: bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
-  transition: transform 0.4s cubic-bezier(0.25, 1, 0.4, 1), border-radius 0.4s cubic-bezier(0.25, 1, 0.4, 1), box-shadow 0.4s ease;
-  cursor: zoom-in; position: relative; z-index: 20000; -webkit-tap-highlight-color: transparent;
-}
-.success-photo.zoomed {
-  transform: scale(2.6); border-radius: 8%;
-  box-shadow: 0 0 0 1.5px var(--success-color), 0 10px 30px rgba(0,0,0,0.3);
-  cursor: zoom-out;
-}
-
-#photoBackdrop {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.6);
-  z-index: 19999; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-  opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
-}
-#photoBackdrop.show { opacity: 1; pointer-events: auto; }
-
-.success-badge{
-  background:var(--dynamic-primary);color:#fff;font-size:13px;font-weight:800;
-  text-transform:uppercase;padding:6px 20px;border-radius:999px;
-  margin-bottom:24px;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);
-  animation:bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s backwards;
-}
-.success-card{
-  background:var(--success-card-bg);border:1px solid var(--success-card-border);
-  border-radius:20px;padding:24px 20px;width:100%;margin-bottom:20px;
-  animation:bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.1s backwards;
-}
-.success-name{font-size:26px;font-weight:800;color:var(--dynamic-primary);margin-bottom:8px}
-.success-msg {font-size:15px;font-weight:600;color:var(--text-secondary);line-height:1.5}
-.success-back{
-  width:100%;height:48px;background:var(--button-secondary-bg);
-  color:var(--dynamic-primary);border:none;border-radius:12px;
-  font-size:15px;font-weight:700;cursor:pointer;
-}
-
-#guideModal{
-  display:none;position:fixed;inset:0;background:var(--modal-overlay);
-  z-index:19999;flex-direction:column;align-items:center;justify-content:center;
-  padding:20px;backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
-}
-#guideModal .modal-box{
-  background:var(--bg-primary);padding:28px;border-radius:20px;
-  text-align:center;max-width:340px;width:100%; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-}
-#guideModal .modal-box h3{color:var(--error-color);margin:10px 0 16px;font-size:20px}
-.modal-instructions{
-  background:var(--input-bg);color:var(--text-secondary);
-  padding:16px;border-radius:12px;margin-bottom:18px;
-  font-size:13px;line-height:1.6;text-align:left; border: 1px solid var(--border-color);
-}
+#successScreen { display: none; text-align: center; }
+.success-photo { width: 100px; height: 100px; border-radius: 50%; object-fit: cover; border: 4px solid var(--success-color); margin-bottom: 15px; }
 </style>
 </head>
-
 <body class="theme-chandarana">
-<script>
-var Storage={
-  set:function(k,v){try{localStorage.setItem(k,v)}catch(e){}},
-  get:function(k){try{return localStorage.getItem(k)}catch(e){return null}},
-  remove:function(k){try{localStorage.removeItem(k)}catch(e){}}
-};
-(function(){document.body.className='theme-'+(Storage.get('selected_terminal')||'chandarana')})();
-</script>
 
-<div id="cameraBackdrop" onclick="stopCamera()"></div>
-<div id="photoBackdrop" onclick="toggleZoom()"></div>
-
-<!-- HANGING METAL RODS SIGN -->
-<div class="hanging-sign-wrapper" id="signWrapper">
-  <div class="chain left-chain"></div>
-  <div class="chain right-chain"></div>
-  <div class="hanging-sign nudge" id="storeSign">Chandarana</div>
-</div>
-
-<div class="container" id="mainContainer">
-  <div id="networkIndicator" class="network-indicator"></div>
-
+<div class="container">
   <div id="mainForm">
-    <div class="top-bar">
-      <div class="terminal-pill-wrapper">
-        <div class="pill-slider" id="pillSlider"></div>
-        <button class="pill-btn active" id="btn-chandarana" onclick="switchTerminal('chandarana')">
-          <span class="full-text">Chandarana</span><span class="short-text">Chan</span>
-        </button>
-        <button class="pill-btn" id="btn-carrefour" onclick="switchTerminal('carrefour')">
-          <span class="full-text">Carrefour</span><span class="short-text">Carr</span>
-        </button>
-      </div>
+    <h2 id="title" style="text-align:center; color:var(--dynamic-primary)">Chandarana</h2>
+    
+    <div id="step1" class="step active">
+      <label>Branch</label>
+      <select id="branch"><option>Connecting to server...</option></select>
     </div>
 
-    <div class="step-grid">
-      <div id="step1" class="step activeStep">
-        <label>Branch</label>
-        <select id="branch"><option value="">Loading...</option></select>
-        <div id="branchMsg" class="msg"></div>
-      </div>
+    <div id="step2" class="step">
+      <label>Staff ID</label>
+      <input id="staffID" type="tel" placeholder="Enter ID">
+      <div id="staffMsg" class="msg"></div>
+    </div>
 
-      <div id="step2" class="step">
-        <label>Staff ID</label>
-        <input id="staffID" type="tel" placeholder="Enter ID" autocomplete="off">
-        <div id="staffMsg" class="msg"></div>
-      </div>
+    <div id="step3" class="step">
+      <label>Location</label>
+      <button id="gpsBtn" onclick="verifyGPS()">Verify Location</button>
+      <div id="gpsMsg" class="msg"></div>
+    </div>
 
-      <div id="step3" class="step">
-        <label>GPS Location</label>
-        <button onclick="verifyGPS()">Verify</button>
-        <div id="gpsMsg" class="msg"></div>
-      </div>
-
-      <div id="step4" class="step">
-        <label>Identity</label>
-        <button id="openCameraBtn" onclick="startCamera()">Take Selfie</button>
-        <div id="cameraMsg" class="msg"></div>
-      </div>
+    <div id="step4" class="step">
+      <label>Identity</label>
+      <button id="camBtn" onclick="openCam()">Take Selfie & Submit</button>
+      <div id="camMsg" class="msg"></div>
     </div>
   </div>
 
   <div id="successScreen">
-    <img id="successPhoto" class="success-photo" src="" alt="Captured Selfie" onclick="toggleZoom()">
-    <div class="success-badge" id="successBadge">CLOCK IN</div>
-    <div class="success-card">
-      <div class="success-name"  id="successName"></div>
-      <div class="success-msg"   id="successMsg"></div>
-    </div>
-    <button class="success-back" onclick="resetToStart()">← Submit Another</button>
-  </div>
-
-  <div id="videoContainerWrapper">
-    <video id="cameraVideo" autoplay playsinline muted></video>
-    <button id="closeCameraBtn" onclick="stopCamera()" aria-label="Close camera">&#x2715;</button>
-    <div class="camera-ui">
-      <div id="captureBtn" onclick="capturePhoto()"></div>
-    </div>
+    <img id="resPhoto" class="success-photo">
+    <h2 id="resName" style="margin:5px 0; color:var(--dynamic-primary)"></h2>
+    <p id="resMsg" style="color:#4b5563; line-height:1.4"></p>
+    <button onclick="location.reload()" style="margin-top:20px">Done</button>
   </div>
 </div>
 
-<div id="guideModal">
-  <div class="modal-box">
-    <div id="guideIcon" style="font-size:44px;margin-bottom:10px;">🛑</div>
-    <h3 id="guideTitle">Action Blocked</h3>
-    <div class="modal-instructions" id="guideText"></div>
-    <button onclick="document.getElementById('guideModal').style.display='none'"
-      style="background:var(--dynamic-primary);color:#fff;border:none;padding:14px;border-radius:12px;width:100%;font-weight:700;cursor:pointer;">
-      GOT IT
-    </button>
-  </div>
+<div id="videoWrapper">
+  <video id="video" autoplay playsinline></video>
+  <div id="captureBtn" onclick="capture()"></div>
 </div>
 
 <script>
-var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOHinnhI5ORDdxxm4pJuMvETZWfZm2PqN6w5bp-Kxn6YMwsr_mHzbu3js8v6kTVAHkCA/exec";
+const URL = "YOUR_DEPLOYED_APPS_SCRIPT_URL"; // REPLACE THIS
+let currentTerminal = "chandarana";
+let staff = [], branches = [], coords = null, user = null, photo = null;
 
-var currentTerminal = Storage.get('selected_terminal') || 'chandarana';
-var staff = [], branches = [], coords = null, staffName = "", photo = null;
-var activeFetchId = 0, currentAction = "", videoStream = null;
-
-var staffRestrictionError = null; 
-var warningTimer = null; 
-
-// Erases data missing today's strict timestamp (bypasses logic entirely upon reaching midnight)
-function cleanOldHistory() {
-  var histRaw = Storage.get('local_history_' + currentTerminal);
-  if (histRaw) {
-    try {
-      var history = JSON.parse(histRaw);
-      var updated = false;
-      var todayStr = new Date().toDateString();
-      for (var key in history) {
-        var entry = history[key];
-        // Purge if old format or date string doesn't match today's exact date
-        if (!entry || typeof entry !== 'object' || entry.dateStr !== todayStr) {
-          delete history[key];
-          updated = true;
-        }
-      }
-      if (updated) Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
-    } catch(e) {}
-  }
-}
-
-function processSyncQueue() {
-  if (!navigator.onLine) return;
-  var qRaw = Storage.get('sync_queue'); if (!qRaw) return;
-  try {
-    var queue = JSON.parse(qRaw);
-    if (queue.length === 0) return;
-    var item = queue[0];
-    fetchFromServer('recordAttendance', item).then(function() {
-      var currentQ = JSON.parse(Storage.get('sync_queue') || '[]');
-      currentQ.shift(); Storage.set('sync_queue', JSON.stringify(currentQ));
-      processSyncQueue();
-    }).catch(function(e) { console.warn("Background sync delay", e); });
-  } catch(e) {}
-}
-
-document.addEventListener('DOMContentLoaded', function() {
-  updateTerminalUI(); checkNetworkStatus(); cleanOldHistory(); initApp(); processSyncQueue();
-  if (window.matchMedia) window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTerminalUI);
-});
-window.addEventListener('online', function(){ checkNetworkStatus(); processSyncQueue(); });
-window.addEventListener('offline', checkNetworkStatus);
-
-function checkNetworkStatus() {
-  var ind = document.getElementById('networkIndicator');
-  if (navigator.onLine) ind.classList.remove('offline'); else ind.classList.add('offline');
-}
-
-function triggerSignAnimation() {
-  var sign = document.getElementById('storeSign');
-  if (sign) {
-      sign.classList.remove('nudge');
-      void sign.offsetWidth; 
-      sign.classList.add('nudge');
-  }
-}
-
-function updateTerminalUI() {
-  document.body.className = 'theme-' + currentTerminal;
-  var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-  var hexColor = currentTerminal === 'chandarana' ? (isDark ? '#059669' : '#10b981') : (isDark ? '#2563eb' : '#3b82f6');
-  var meta = document.getElementById('theme-color-meta');
-  if (meta) meta.setAttribute('content', hexColor);
-  
-  var title = document.getElementById('storeSign');
-  title.innerText = currentTerminal.charAt(0).toUpperCase() + currentTerminal.slice(1);
-  triggerSignAnimation();
-  
-  document.getElementById('btn-chandarana').classList.toggle('active', currentTerminal === 'chandarana');
-  document.getElementById('btn-carrefour').classList.toggle('active',  currentTerminal === 'carrefour');
-  requestAnimationFrame(function() { requestAnimationFrame(function() {
-    var ab = document.querySelector('.pill-btn.active'), sl = document.getElementById('pillSlider');
-    if (ab && sl) { sl.style.width = ab.offsetWidth + 'px'; sl.style.left = ab.offsetLeft + 'px'; }
-  }); });
-}
-
-function switchTerminal(term) {
-  if (currentTerminal === term) { triggerSignAnimation(); return; }
-  currentTerminal = term; Storage.set('selected_terminal', term);
-  staff = []; branches = [];
-  document.getElementById('branch').innerHTML = '<option value="">Loading...</option>';
-  
-  document.getElementById('successScreen').style.display='none';
-  document.getElementById('mainForm').style.display='block';
-  document.getElementById('mainContainer').style.overflow = 'hidden';
-  
-  updateTerminalUI(); 
-  resetStepsFrom(2); 
-  cleanOldHistory(); 
-  initApp();
-}
-
-function fetchFromServer(action, data) {
-  return fetch(APPS_SCRIPT_URL, {
-    method:'POST', headers:{'Content-Type':'text/plain'},
-    body:JSON.stringify({action:action, data:data, terminal:currentTerminal})
-  }).then(function(r){ return r.json(); })
-    .then(function(j){ if(!j.ok) throw new Error(j.error||'Server error'); return j.data; });
-}
-
-function populateBranches(list) {
-  if (!Array.isArray(list)) return;
-  var options = '<option value="">Choose Branch</option>' + list.map(function(b){ return '<option value="'+b[0]+'">'+b[0]+'</option>'; }).join('');
-  document.getElementById('branch').innerHTML = options;
-}
-
-function restoreUserState() {
-  var savedBranch = Storage.get('last_branch_' + currentTerminal);
-  if (savedBranch) { 
-    var branchEl = document.getElementById('branch');
-    branchEl.value = savedBranch; 
-    if (branchEl.value) handleBranchChange(); 
-  }
-  
-  var savedStaffID = Storage.get('last_staff_id_' + currentTerminal);
-  if (savedStaffID && staff.length > 0) {
-    var staffEl = document.getElementById('staffID');
-    staffEl.value = savedStaffID;
-    handleStaffInput.call(staffEl);
-  }
-}
-
-function initApp() {
-  var myId = ++activeFetchId, cacheKey = currentTerminal + '_portal_data', cached = false;
-  try {
-    var raw = Storage.get(cacheKey);
-    if (raw) { 
-        var p = JSON.parse(raw); 
-        if (p && Array.isArray(p.branches)) { 
-            staff = p.staff || []; branches = p.branches || []; 
-            populateBranches(branches); 
-            restoreUserState(); 
-            cached = true; 
-        } 
-    }
-  } catch(e) {}
-  
-  fetchFromServer('getPortalData', {}).then(function(data) {
-    if (myId !== activeFetchId) return;
-    var changed = JSON.stringify(branches) !== JSON.stringify(data.branches) || JSON.stringify(staff) !== JSON.stringify(data.staff);
-    staff = data.staff || []; branches = data.branches || [];
-    try { Storage.set(cacheKey, JSON.stringify({staff:staff, branches:branches})); } catch(e) {}
-    
-    if (!cached || changed) { populateBranches(branches); restoreUserState(); }
-    else { restoreUserState(); } 
-  }).catch(function() {
-    if (myId === activeFetchId && branches.length === 0)
-      document.getElementById('branch').innerHTML = '<option value="">Offline — waiting for connection</option>';
+async function api(action, data) {
+  const resp = await fetch(URL, {
+    method: "POST",
+    body: JSON.stringify({ action, data, terminal: currentTerminal })
   });
+  const json = await resp.json();
+  if (!json.ok) throw new Error(json.error);
+  return json.data;
 }
 
-function activateStep(n) { document.getElementById('step'+n).classList.add('activeStep'); }
-function resetStepsFrom(n) {
-  for (var i = n; i <= 4; i++) { var el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep'); }
-  if (n<=2) { staffName=''; document.getElementById('staffID').value=''; clearMsg('staffMsg'); staffRestrictionError = null; }
-  if (n<=3) { coords=null; clearMsg('gpsMsg'); }
-  if (n<=4) {
-    photo=null; stopCamera(); clearMsg('cameraMsg');
-    document.getElementById('successPhoto').src='';
+// Start warming up the server connection immediately
+async function init() {
+  try {
+    const data = await api("getPortalData", {});
+    staff = data.staff;
+    branches = data.branches;
+    
+    const sel = document.getElementById('branch');
+    sel.innerHTML = '<option value="">Select Branch</option>' + 
+      branches.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
+    sel.onchange = () => { if(sel.value) activate(2); };
+  } catch (e) {
+    alert("Connection Error. Please check your internet.");
   }
 }
 
-function resetToStart() {
-  document.getElementById('successScreen').style.display='none';
-  document.getElementById('mainForm').style.display='block';
-  document.getElementById('mainContainer').style.overflow = 'hidden';
-  document.getElementById('successPhoto').classList.remove('zoomed');
-  document.getElementById('photoBackdrop').classList.remove('show');
+function activate(n) { document.getElementById('step'+n).classList.add('active'); }
+
+document.getElementById('staffID').oninput = function() {
+  const val = this.value.trim();
+  const msg = document.getElementById('staffMsg');
+  user = staff.find(s => s.id === val);
   
-  resetStepsFrom(3); 
-  handleBranchChange();
-  var staffEl = document.getElementById('staffID');
-  if (staffEl.value) { handleStaffInput.call(staffEl); }
-}
-
-function showSuccess(id,txt){ var e=document.getElementById(id); e.innerHTML='<span class="dot"></span> '+txt; e.className='msg success'; }
-function showError(id,txt)  { var e=document.getElementById(id); e.innerText=txt; e.className='msg error'; }
-function clearMsg(id)       { var e=document.getElementById(id); e.innerText=''; e.className='msg'; }
-
-function toggleZoom() {
-  var img = document.getElementById('successPhoto');
-  var backdrop = document.getElementById('photoBackdrop');
-  if (img.classList.contains('zoomed')) {
-    img.classList.remove('zoomed');
-    backdrop.classList.remove('show');
-  } else {
-    img.classList.add('zoomed');
-    backdrop.classList.add('show');
-  }
-}
-
-function handleBranchChange() {
-  var val = document.getElementById('branch').value;
-  if (!val) { resetStepsFrom(2); return; }
-  Storage.set('last_branch_' + currentTerminal, val);
-  showSuccess('branchMsg','Branch Selected');
-  if (document.getElementById('step2').classList.contains('activeStep') && document.getElementById('staffID').value !== '') resetStepsFrom(2);
-  if (!document.getElementById('step2').classList.contains('activeStep')) activateStep(2);
-}
-document.getElementById('branch').onchange = handleBranchChange;
-
-function handleStaffInput() {
-  var val = this.value.trim();
-  staffRestrictionError = null; 
-  if (val.length < 2) { resetStepsFrom(3); clearMsg('staffMsg'); return; }
-  
-  var match = null;
-  for (var i = 0; i < staff.length; i++) { if (staff[i].id === val) { match = staff[i]; break; } }
-  
-  if (match) {
-    staffName = match.name;
-    
-    // Force immediate purge of anything not matching today's format just to be totally safe
-    var historyRaw = Storage.get('local_history_' + currentTerminal);
-    var history = historyRaw ? JSON.parse(historyRaw) : {}; 
-    var todayStr = new Date().toDateString();
-    var updatedHist = false;
-    
-    for (var k in history) {
-      if (!history[k] || typeof history[k] !== 'object' || history[k].dateStr !== todayStr) {
-        delete history[k];
-        updatedHist = true;
+  if (user) {
+    const now = Date.now();
+    // 3 HOUR RULE LOGIC
+    if (user.lastAction === "Clock In") {
+      const diffHours = (now - user.lastTime) / (1000 * 60 * 60);
+      if (diffHours < 3) {
+        msg.className = "msg error";
+        msg.innerText = "Clock out at the end of your shift";
+        return;
       }
-    }
-    if (updatedHist) Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
-    
-    // Evaluate correctly cleaned history
-    var historyEntry = history[match.id];
-    var lastAction = null; 
-    var lastTime = null;
-
-    if (historyEntry) {
-      lastAction = historyEntry.action;
-      lastTime = historyEntry.time;
-    }
-    
-    // Time constraint logic
-    if (lastAction === 'Clock Out') {
-      staffRestrictionError = 'You have completed today\'s attendance.';
-    } else if (lastAction === 'Clock In') {
-      if (lastTime) {
-        var diffHours = (Date.now() - lastTime) / (1000 * 60 * 60);
-        if (diffHours < 5) {
-          staffRestrictionError = 'Cannot clock out before time.';
-        }
-      }
-      currentAction = 'Clock Out';
+      user.nextAction = "Clock Out";
+    } else if (user.lastAction === "Clock Out") {
+      msg.className = "msg error";
+      msg.innerText = "You have already clocked in";
+      return;
     } else {
-      currentAction = 'Clock In';
+      user.nextAction = "Clock In";
     }
     
-    var msgEl = document.getElementById('staffMsg');
-    msgEl.style.opacity = '1';
-    showSuccess('staffMsg', 'Welcome ' + staffName);
-    
-    if (document.getElementById('step4').classList.contains('activeStep')) resetStepsFrom(4);
-    if (!document.getElementById('step3').classList.contains('activeStep')) activateStep(3);
+    msg.className = "msg success";
+    msg.innerText = "Verified: " + user.name;
+    activate(3);
   } else {
-    resetStepsFrom(3); showError('staffMsg','Invalid Staff ID. Please check.');
+    msg.innerText = "";
   }
-}
-document.getElementById('staffID').oninput = handleStaffInput;
-
-function showGuideModal(type) {
-  var modal=document.getElementById('guideModal'), title=document.getElementById('guideTitle'),
-      text=document.getElementById('guideText'),   icon=document.getElementById('guideIcon');
-  if (type==='gps') {
-    icon.textContent='📍'; title.textContent='Location Blocked'; title.style.color='var(--error-color)';
-    text.innerHTML='<p>We need your location to verify you are at the branch.</p>'
-      +'<p style="margin-top:8px"><strong>🍎 iPhone:</strong><br>Settings → Privacy & Security → Location Services → Allow Safari/Chrome.</p>'
-      +'<p style="margin-top:8px"><strong>🤖 Android:</strong><br>⋮ Menu → Settings → Site settings → Location → Allow.</p>'
-      +'<p style="margin-top:12px; color:var(--error-color); font-weight:bold;">After allowing, please clear the browser from your recent apps and reopen.</p>';
-  } else if (type==='gps_signal') {
-    icon.textContent='📡'; title.textContent='Weak GPS Signal'; title.style.color='var(--warning-text)';
-    text.innerHTML='<p>We couldn\'t get an accurate location reading.</p>'
-      +'<ul style="margin-top:8px;padding-left:20px"><li>Step outside or near a window.</li><li>Turn WiFi ON — it helps GPS lock faster.</li></ul>';
-  } else if (type==='camera') {
-    icon.textContent='📸'; title.textContent='Camera Access Denied'; title.style.color='var(--error-color)';
-    text.innerHTML='<p>Camera permission is required to capture your identity securely.</p>'
-      +'<p style="margin-top:8px"><strong>🍎 iPhone:</strong> Settings → Safari/Chrome → Camera → Allow.</p>'
-      +'<p style="margin-top:8px"><strong>🤖 Android:</strong> Site settings → Camera → Allow.</p>'
-      +'<p style="margin-top:12px; color:var(--error-color); font-weight:bold;">After allowing, please clear the browser from your recent apps and reopen.</p>';
-  }
-  modal.style.display = 'flex';
-}
-
-function doVerifyGPS(isRetry) {
-  // Silent text during retry so it just looks like it's still processing normally
-  document.getElementById('gpsMsg').innerText = 'Locating…'; 
-  document.getElementById('gpsMsg').className = 'msg';
-  if (!navigator.geolocation) { showError('gpsMsg','GPS not supported on this device.'); return; }
-
-  navigator.geolocation.getCurrentPosition(
-    function(pos) {
-      coords = pos.coords;
-      var b=null, bv=document.getElementById('branch').value;
-      for (var i=0;i<branches.length;i++) { if (branches[i][0]===bv){ b=branches[i]; break; } }
-      if (!b) { showError('gpsMsg','Select branch first.'); return; }
-      
-      var R=6371e3, dLat=(b[1]-coords.latitude)*Math.PI/180, dLon=(b[2]-coords.longitude)*Math.PI/180,
-          a=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(coords.latitude*Math.PI/180)*Math.cos(b[1]*Math.PI/180)*Math.sin(dLon/2)*Math.sin(dLon/2),
-          dist=R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-          
-      var maxDist = isRetry ? 350 : 250;
-      
-      if (dist > maxDist) {
-         if (!isRetry && navigator.onLine) {
-             // Automatically retry silently with expanded range
-             setTimeout(function() { doVerifyGPS(true); }, 500);
-         } else {
-             showError('gpsMsg', dist>1000 ? 'Too far ('+(dist/1000).toFixed(1)+'km)' : 'Too far ('+Math.round(dist)+'m) — move closer');
-         }
-      } else { 
-        showSuccess('gpsMsg','Location Verified'); 
-        activateStep(4); 
-      }
-    },
-    function(err) { 
-      if(err.code===1) {
-        showGuideModal('gps'); 
-      } else {
-        if (!isRetry && navigator.onLine) {
-           // Silently retry once on weak GPS / total failure (when not blocked by user permission)
-           setTimeout(function() { doVerifyGPS(true); }, 500);
-        } else {
-           showGuideModal('gps_signal'); 
-        }
-      }
-    },
-    {enableHighAccuracy:true, timeout:15000, maximumAge: isRetry ? 0 : 30000}
-  );
-}
+};
 
 function verifyGPS() {
-  if (staffRestrictionError) {
-    var msgEl = document.getElementById('staffMsg');
-    msgEl.style.opacity = '0';
-    setTimeout(function() {
-      showError('staffMsg', staffRestrictionError);
-      msgEl.style.opacity = '1';
-      
-      clearTimeout(warningTimer);
-      warningTimer = setTimeout(function() {
-        msgEl.style.opacity = '0';
-        setTimeout(function() {
-          if(document.getElementById('step2').classList.contains('activeStep')) {
-            showSuccess('staffMsg', 'Welcome ' + staffName);
-          }
-          msgEl.style.opacity = '1';
-        }, 300);
-      }, 3000); 
-    }, 300);
-    return;
-  }
+  const btn = document.getElementById('gpsBtn');
+  const msg = document.getElementById('gpsMsg');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Locating...';
 
-  doVerifyGPS(false);
+  navigator.geolocation.getCurrentPosition(p => {
+    coords = p.coords;
+    msg.className = "msg success";
+    msg.innerText = "Location locked";
+    btn.innerHTML = "Location Verified";
+    activate(4);
+  }, () => {
+    alert("Please enable GPS/Location access.");
+    btn.disabled = false;
+    btn.innerHTML = "Verify Location";
+  }, { enableHighAccuracy: true });
 }
 
-function startCamera() {
-  var btn = document.getElementById('openCameraBtn');
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
-
-  btn.classList.add('loading');
-  btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; margin-right:8px;"></span><span style="vertical-align:middle;">Starting...</span>';
-  clearMsg('cameraMsg');
-
-  var constraints = { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false };
-  navigator.mediaDevices.getUserMedia(constraints)
-    .then(function(stream) {
-      videoStream = stream;
-      var video = document.getElementById('cameraVideo');
-      video.srcObject = stream;
-      video.onloadedmetadata = function() {
-        video.play().catch(function(){});
-        
-        document.getElementById('videoContainerWrapper').classList.add('expanded');
-        document.getElementById('cameraBackdrop').classList.add('show');
-        video.classList.add('live');
-        
-        btn.classList.remove('loading');
-        btn.innerText = 'Take Selfie';
-      };
-    })
-    .catch(function(err) {
-      console.warn('Camera failed:', err);
-      btn.classList.remove('loading');
-      btn.innerText = 'Take Selfie';
-      showGuideModal('camera');
-    });
+let stream;
+async function openCam() {
+  stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+  document.getElementById('video').srcObject = stream;
+  document.getElementById('videoWrapper').style.display = 'flex';
 }
 
-function capturePhoto() {
-  var video = document.getElementById('cameraVideo');
-  var wrapper = document.getElementById('mainContainer'); 
-  var vw = video.videoWidth || 1280, vh = video.videoHeight || 720;
+async function capture() {
+  const video = document.getElementById('video');
+  const canvas = document.createElement('canvas');
+  canvas.width = 400; canvas.height = 400;
+  const ctx = canvas.getContext('2d');
+  ctx.translate(400, 0); ctx.scale(-1, 1);
+  ctx.drawImage(video, 0, 0, 400, 400);
+  photo = canvas.toDataURL('image/jpeg', 0.7);
   
-  var cw = wrapper.offsetWidth, ch = wrapper.offsetHeight;
-  var containerAspect = cw / ch;
-  var videoAspect = vw / vh;
+  stream.getTracks().forEach(t => t.stop());
+  document.getElementById('videoWrapper').style.display = 'none';
   
-  var sWidth, sHeight, startX, startY;
-  
-  if (videoAspect > containerAspect) {
-    sHeight = vh; sWidth = vh * containerAspect;
-    startX = (vw - sWidth) / 2; startY = 0;
-  } else {
-    sWidth = vw; sHeight = vw / containerAspect;
-    startX = 0; startY = (vh - sHeight) / 2;
-  }
-  
-  var maxOutput = 720;
-  var scale = (sWidth > maxOutput || sHeight > maxOutput) ? (maxOutput / Math.max(sWidth, sHeight)) : 1;
-  
-  var canvas = document.createElement('canvas');
-  canvas.width = Math.round(sWidth * scale); 
-  canvas.height = Math.round(sHeight * scale);
-  var ctx = canvas.getContext('2d');
-  
-  ctx.translate(canvas.width, 0);
-  ctx.scale(-1, 1);
-  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';
-  
-  ctx.drawImage(video, startX, startY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
-  
-  photo = canvas.toDataURL('image/jpeg', 0.85);
-
-  document.getElementById('successPhoto').src = photo;
-  stopCamera();
-  submitAttendance();
+  submit();
 }
 
-function stopCamera() {
-  var wrapper = document.getElementById('videoContainerWrapper'), backdrop = document.getElementById('cameraBackdrop');
-  wrapper.classList.remove('expanded'); backdrop.classList.remove('show');
-  var video = document.getElementById('cameraVideo');
-  video.classList.remove('live');
+async function submit() {
+  const btn = document.getElementById('camBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>Uploading to Server...';
   
-  var btn = document.getElementById('openCameraBtn');
-  if (btn && !btn.classList.contains('loading')) btn.textContent = 'Take Selfie';
-  
-  setTimeout(function() {
-    if (videoStream) { videoStream.getTracks().forEach(function(t){ t.stop(); }); videoStream = null; }
-    video.srcObject = null;
-  }, 300);
-}
-
-function queueSubmission(payload) {
-  var queue = JSON.parse(Storage.get('sync_queue') || '[]');
-  queue.push(payload); Storage.set('sync_queue', JSON.stringify(queue));
-  processSyncQueue();
-}
-
-function submitAttendance() {
-  var branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
-  if (!branch||!staffID||!currentAction||!photo) return;
-  
-  Storage.set('last_staff_id_' + currentTerminal, staffID);
-  
-  var histRaw = Storage.get('local_history_' + currentTerminal);
-  var history = histRaw ? JSON.parse(histRaw) : {};
-  
-  // Track action today with date marker so it effortlessly wipes after midnight
-  history[staffID] = { action: currentAction, time: Date.now(), dateStr: new Date().toDateString() };
-  Storage.set('local_history_' + currentTerminal, JSON.stringify(history));
-  
-  var payload = {
-    name: staffName, id: staffID, branch: branch, action: currentAction, image: photo,
-    lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0,
-    clientTimestamp: new Date().toISOString()
-  };
-  
-  queueSubmission(payload);
-  finishSubmission(currentAction);
-}
-
-function finishSubmission(action) {
-  var firstName = staffName.split(' ')[0] || staffName;
-  var hrs = new Date().getHours(), mins = new Date().getMinutes(), timeVal = hrs + (mins / 60.0);
-  var msg='';
-
-  if (action === 'Clock In') {
-    if (timeVal < 6.5)      { msg="Fantastic start — you're early today! Keep it up."; }
-    else if (timeVal <= 7.66) { msg="Great, you are on time for the morning shift."; }
-    else if (timeVal < 11.0){ msg="Note: Late for morning shift."; }
-    else if (timeVal < 14.0){ msg="Early for the second shift. Great job!"; }
-    else if (timeVal <= 14.66){ msg="On time for the second shift. Have a productive afternoon!"; }
-    else                    { msg="Note: Late for afternoon shift."; }
-  } else {
-    if (hrs < 16) { msg="Have a wonderful afternoon!"; }
-    else          { msg="Have a restful night!"; }
+  try {
+    const payload = {
+      name: user.name, id: user.id, branch: document.getElementById('branch').value,
+      action: user.nextAction, image: photo, lat: coords.latitude, lng: coords.longitude
+    };
     
-    // Order reminder logic exactly >= 18:00
-    if (hrs >= 18) {
-      msg += " And remember to place your order.";
-    }
+    await api("recordAttendance", payload);
+    
+    // ONLY SHOW SUCCESS AFTER TRANSMISSION
+    document.getElementById('mainForm').style.display = 'none';
+    document.getElementById('resPhoto').src = photo;
+    document.getElementById('resName').innerText = user.name.split(' ')[0];
+    document.getElementById('resMsg').innerText = user.nextAction === "Clock In" ? 
+      "Attendance recorded. Have a great shift!" : "Clock out successful. See you next time!";
+    document.getElementById('successScreen').style.display = 'block';
+    
+  } catch (e) {
+    alert("Error: " + e.message);
+    btn.disabled = false;
+    btn.innerHTML = "Retry Submission";
   }
-
-  document.getElementById('successBadge').textContent = action.toUpperCase();
-  document.getElementById('successName').textContent = firstName;
-  document.getElementById('successMsg').textContent = msg;
-  
-  document.getElementById('mainContainer').style.overflow = 'visible';
-  document.getElementById('mainForm').style.display = 'none';
-  document.getElementById('successScreen').style.display = 'flex';
 }
+
+init();
 </script>
 </body>
 </html>
