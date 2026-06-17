@@ -76,7 +76,7 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 .app-wrapper {
   position: relative;
   width: 100%;
-  max-width: 400px;
+  max-width: 420px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -146,9 +146,10 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 .hanging-sign.nudge { animation: swing 0.7s cubic-bezier(0.25, 1, 0.5, 1); }
 
 .container{
-  width:100%; aspect-ratio: 4 / 5; /* Adjusted upward and downward extension */
+  width:100%; 
+  min-height: 460px; /* Adapts dynamically to stacked content */
   margin:0 auto; background:var(--bg-primary);
-  padding:24px 22px; border-radius:24px;
+  padding:32px 24px; border-radius:24px; /* Increased padding */
   box-shadow:0 15px 35px var(--shadow-color);
   position:relative; overflow:hidden;
   display:flex; flex-direction:column; justify-content:center; 
@@ -163,7 +164,7 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 }
 .network-indicator.offline{background:var(--text-tertiary);opacity:0.4; box-shadow:none;}
 
-.top-bar{display:flex;justify-content:flex-end;margin-bottom:20px}
+.top-bar{display:flex;justify-content:flex-end;margin-bottom:24px}
 .terminal-pill-wrapper{
   position:relative;display:inline-flex;background:var(--input-bg);
   border:1px solid var(--border-color);border-radius:50px;padding:4px;height:40px;
@@ -193,21 +194,22 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 }
 @keyframes spin{ to { transform: rotate(360deg); } }
 
-.step-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 12px}
+/* Single vertical column to fill white space optimally */
+.step-grid{display:flex;flex-direction:column;gap:20px}
 .step{opacity:0.3;pointer-events:none;transition:opacity 0.4s ease}
 .step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.45s ease}
 
-label{font-weight:600;font-size:12px;display:block;margin-bottom:6px;color:var(--label-text);text-transform:uppercase;letter-spacing:0.5px}
+label{font-weight:600;font-size:13px;display:block;margin-bottom:8px;color:var(--label-text);text-transform:uppercase;letter-spacing:0.5px}
 input,select{
-  width:100%;height:46px;padding:0 14px;border-radius:12px;
-  border:1px solid var(--input-border);font-size:15px;background:var(--input-bg);
+  width:100%;height:52px;padding:0 16px;border-radius:14px;
+  border:1px solid var(--input-border);font-size:16px;background:var(--input-bg);
   color:var(--text-primary);transition:all 0.2s; -webkit-appearance:none; outline:none;
 }
 input:focus,select:focus{border-color:var(--dynamic-primary);background:var(--bg-primary);box-shadow:0 0 0 3px rgba(16, 185, 129, 0.1)}
 body.theme-carrefour input:focus, body.theme-carrefour select:focus {box-shadow:0 0 0 3px rgba(59, 130, 246, 0.1)}
 
 button{
-  width:100%;height:46px;border-radius:12px;border:none; font-size:14px;font-weight:700;
+  width:100%;height:52px;border-radius:14px;border:none; font-size:15px;font-weight:700;
   background:var(--button-secondary-bg);color:var(--dynamic-primary);
   cursor:pointer;transition:transform 0.1s, opacity 0.2s, background 0.2s;
 }
@@ -236,42 +238,37 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 }
 #cameraVideo.live { opacity: 1; }
 
-#cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+/* Clicking the backdrop will now dismiss the camera entirely */
+#cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 #cameraBackdrop.show{ display:block; }
+
 .camera-ui{
-  position:absolute;bottom:0;left:0;right:0; padding:20px;
+  position:absolute;bottom:0;left:0;right:0; padding:24px;
   background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 100%);
   display:flex;align-items:center;justify-content:center; z-index:3;
 }
 #captureBtn{
-  width:64px;height:64px;border-radius:50%;
+  width:68px;height:68px;border-radius:50%;
   background:rgba(255,255,255,0.3);border:4px solid rgba(255,255,255,0.95);
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:transform 0.1s;-webkit-tap-highlight-color:transparent;
 }
-#captureBtn::after{content:'';width:48px;height:48px;background:#fff;border-radius:50%;transition:transform 0.1s}
+#captureBtn::after{content:'';width:50px;height:50px;background:#fff;border-radius:50%;transition:transform 0.1s}
 #captureBtn:active{transform:scale(0.88)}
 #captureBtn:active::after{transform:scale(0.9)}
 
-#closeCameraBtn{
-  position:absolute;top:16px;right:16px; width:36px;height:36px;border-radius:50%;
-  background:rgba(0,0,0,0.5);border:1px solid rgba(255,255,255,0.3);
-  color:#fff;font-size:16px; cursor:pointer; display:flex;align-items:center;justify-content:center;
-  z-index:4; -webkit-tap-highlight-color:transparent;
-}
-
 .msg{ 
-  font-size:12px;font-weight:600;margin-top:6px;
+  font-size:13px;font-weight:600;margin-top:6px;
   min-height:38px; align-items:flex-start; line-height:1.4;
   color:var(--text-tertiary);display:flex; 
   transition: opacity 0.3s ease, color 0.3s ease; opacity: 1;
 }
-.msg.success{color:var(--success-color);font-size:13px}
+.msg.success{color:var(--success-color);font-size:14px}
 .msg.error  {color:var(--error-color)}
 .msg .dot{
   display:inline-flex;justify-content:center;align-items:center;
   width:16px;height:16px;background:var(--success-color);border-radius:50%;
-  margin-right:6px;flex-shrink:0;position:relative; margin-top: 1px; 
+  margin-right:8px;flex-shrink:0;position:relative; margin-top: 2px; 
 }
 .msg .dot::after{
   content:'';position:absolute;top:45%;left:50%; width:3.5px;height:7px;
@@ -282,8 +279,8 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 #successScreen{ display:none;flex-direction:column;align-items:center; justify-content:center; padding:10px 4px;text-align:center;width:100%; }
 
 .success-photo{
-  width: 110px; height: 110px; object-fit: cover; border-radius: 50%;
-  box-shadow: 0 0 0 4px var(--success-color); margin-bottom: 16px;
+  width: 120px; height: 120px; object-fit: cover; border-radius: 50%;
+  box-shadow: 0 0 0 4px var(--success-color); margin-bottom: 20px;
   animation: bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   transition: transform 0.4s cubic-bezier(0.25, 1, 0.4, 1), border-radius 0.4s cubic-bezier(0.25, 1, 0.4, 1), box-shadow 0.4s ease;
   cursor: zoom-in; position: relative; z-index: 20000; -webkit-tap-highlight-color: transparent;
@@ -302,8 +299,8 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 #photoBackdrop.show { opacity: 1; pointer-events: auto; }
 
 .success-badge{
-  background:var(--dynamic-primary);color:#fff;font-size:13px;font-weight:800;
-  text-transform:uppercase;padding:6px 20px;border-radius:999px;
+  background:var(--dynamic-primary);color:#fff;font-size:14px;font-weight:800;
+  text-transform:uppercase;padding:8px 24px;border-radius:999px;
   margin-bottom:24px;display:inline-block;box-shadow:0 4px 10px rgba(0,0,0,0.1);
   animation:bounceIn 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) 0.05s backwards;
 }
@@ -315,8 +312,8 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 .success-name{font-size:26px;font-weight:800;color:var(--dynamic-primary);margin-bottom:8px}
 .success-msg {font-size:15px;font-weight:600;color:var(--text-secondary);line-height:1.5}
 .success-back{
-  width:100%;height:48px;background:var(--button-secondary-bg);
-  color:var(--dynamic-primary);border:none;border-radius:12px;
+  width:100%;height:52px;background:var(--button-secondary-bg);
+  color:var(--dynamic-primary);border:none;border-radius:14px;
   font-size:15px;font-weight:700;cursor:pointer;
 }
 
@@ -333,7 +330,7 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 .modal-instructions{
   background:var(--input-bg);color:var(--text-secondary);
   padding:16px;border-radius:12px;margin-bottom:18px;
-  font-size:13px;line-height:1.6;text-align:left; border: 1px solid var(--border-color);
+  font-size:14px;line-height:1.6;text-align:left; border: 1px solid var(--border-color);
 }
 </style>
 </head>
@@ -348,11 +345,13 @@ const Storage={
 (() => { document.body.className = 'theme-' + (Storage.get('selected_terminal') || 'chandarana'); })();
 </script>
 
+<!-- Tapping outside the video area entirely drops the camera -->
 <div id="cameraBackdrop" onclick="stopCamera()"></div>
+
 <div id="photoBackdrop" onclick="toggleZoom()"></div>
 
 <div class="app-wrapper">
-  <!-- HANGING METAL RODS SIGN (Positioned Exactly Above Container) -->
+  <!-- HANGING METAL RODS SIGN -->
   <div class="hanging-sign-wrapper" id="signWrapper">
     <div class="chain left-chain"></div>
     <div class="chain right-chain"></div>
@@ -414,7 +413,6 @@ const Storage={
 
     <div id="videoContainerWrapper">
       <video id="cameraVideo" autoplay playsinline muted></video>
-      <button id="closeCameraBtn" onclick="stopCamera()" aria-label="Close camera">&#x2715;</button>
       <div class="camera-ui">
         <div id="captureBtn" onclick="capturePhoto()"></div>
       </div>
@@ -428,7 +426,7 @@ const Storage={
     <h3 id="guideTitle">Action Blocked</h3>
     <div class="modal-instructions" id="guideText"></div>
     <button onclick="document.getElementById('guideModal').style.display='none'"
-      style="background:var(--dynamic-primary);color:#fff;border:none;padding:14px;border-radius:12px;width:100%;font-weight:700;cursor:pointer;">
+      style="background:var(--dynamic-primary);color:#fff;border:none;padding:14px;border-radius:14px;width:100%;font-weight:700;cursor:pointer;">
       GOT IT
     </button>
   </div>
@@ -613,7 +611,7 @@ function handleBranchChange() {
   const val = document.getElementById('branch').value;
   if (!val) { 
     resetStepsFrom(2); 
-    clearMsg('branchMsg'); // BUG FIX: Ensure message clears on 'Select Branch'
+    clearMsg('branchMsg'); 
     return; 
   }
   
