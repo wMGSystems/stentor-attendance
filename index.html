@@ -76,7 +76,7 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 .app-wrapper {
   position: relative;
   width: 100%;
-  max-width: 420px; /* Increased max width slightly to allow larger inputs */
+  max-width: 420px; 
   display: flex;
   align-items: center;
   justify-content: center;
@@ -145,12 +145,12 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 }
 .hanging-sign.nudge { animation: swing 0.7s cubic-bezier(0.25, 1, 0.5, 1); }
 
+/* Container now hugs the content tightly (reduced top/bottom padding, removed fixed height) */
 .container{
   width:100%; 
-  aspect-ratio: 4 / 5.2; /* Taller aspect ratio for a bigger box */
-  min-height: 520px;
   margin:0 auto; background:var(--bg-primary);
-  padding:32px 24px; border-radius:24px; /* Generous padding */
+  padding:24px 24px; /* Reduced padding from 32px to 24px */
+  border-radius:24px; 
   box-shadow:0 15px 35px var(--shadow-color);
   position:relative; overflow:hidden;
   display:flex; flex-direction:column; justify-content:center; 
@@ -165,10 +165,10 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 }
 .network-indicator.offline{background:var(--text-tertiary);opacity:0.4; box-shadow:none;}
 
-.top-bar{display:flex;justify-content:flex-end;margin-bottom:30px} /* More breathing room below top bar */
+.top-bar{display:flex;justify-content:flex-end;margin-bottom:20px} /* Reduced margin */
 .terminal-pill-wrapper{
   position:relative;display:inline-flex;background:var(--input-bg);
-  border:1px solid var(--border-color);border-radius:50px;padding:4px;height:44px; /* Taller pill */
+  border:1px solid var(--border-color);border-radius:50px;padding:4px;height:44px; 
   box-shadow:inset 0 2px 4px rgba(0,0,0,0.04);align-items:center;
 }
 .pill-slider{
@@ -195,12 +195,10 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 }
 @keyframes spin{ to { transform: rotate(360deg); } }
 
-/* Reverted back to grid layout but with MUCH larger gaps */
 .step-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px 16px}
 .step{opacity:0.3;pointer-events:none;transition:opacity 0.4s ease}
 .step.activeStep{opacity:1;pointer-events:auto;animation:bounceIn 0.45s ease}
 
-/* Enlarged text and inputs to maximize space usage */
 label{font-weight:600;font-size:13px;display:block;margin-bottom:10px;color:var(--label-text);text-transform:uppercase;letter-spacing:0.5px}
 input,select{
   width:100%;height:52px;padding:0 16px;border-radius:14px;
@@ -224,14 +222,23 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   animation: spin 0.6s linear infinite;
 }
 
+/* Camera Wrapper moved outside container to maintain its large size */
 #videoContainerWrapper{
-  position:absolute; top:0; left:0; right:0; bottom:0;
-  width:100%; height:100%; border-radius:24px;
+  position:absolute; 
+  top: 50%; left: 50%;
+  width:100%; 
+  aspect-ratio: 4 / 5.2; /* Preserves the exact large size it had before */
+  min-height: 520px;
+  border-radius:24px;
   overflow:hidden; z-index:60; background-color: #000;
   transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.25, 1, 0.4, 1);
-  transform: scale(0.95); opacity:0; pointer-events:none;
+  transform: translate(-50%, -50%) scale(0.95); 
+  opacity:0; pointer-events:none;
 }
-#videoContainerWrapper.expanded{ pointer-events:auto; opacity:1; transform: scale(1); }
+#videoContainerWrapper.expanded{ 
+  pointer-events:auto; opacity:1; 
+  transform: translate(-50%, -50%) scale(1); 
+}
 
 #cameraVideo{ 
   position:absolute; top:0; left:0; width:100%; height:100%;
@@ -240,7 +247,6 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 }
 #cameraVideo.live { opacity: 1; }
 
-/* Clicking the backdrop will now dismiss the camera entirely */
 #cameraBackdrop{ display:none;position:fixed;inset:0;z-index:59; background: rgba(0,0,0,0.65); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
 #cameraBackdrop.show{ display:block; }
 
@@ -259,7 +265,6 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
 #captureBtn:active{transform:scale(0.88)}
 #captureBtn:active::after{transform:scale(0.9)}
 
-/* Adjusted error/success messaging space */
 .msg{ 
   font-size:13px;font-weight:600;margin-top:8px;
   min-height:42px; align-items:flex-start; line-height:1.4;
@@ -413,12 +418,13 @@ const Storage={
       </div>
       <button class="success-back" onclick="resetToStart()">← Submit Another</button>
     </div>
+  </div>
 
-    <div id="videoContainerWrapper">
-      <video id="cameraVideo" autoplay playsinline muted></video>
-      <div class="camera-ui">
-        <div id="captureBtn" onclick="capturePhoto()"></div>
-      </div>
+  <!-- Camera Wrapper moved outside the container to maintain its large size -->
+  <div id="videoContainerWrapper">
+    <video id="cameraVideo" autoplay playsinline muted></video>
+    <div class="camera-ui">
+      <div id="captureBtn" onclick="capturePhoto()"></div>
     </div>
   </div>
 </div>
@@ -514,6 +520,7 @@ function populateBranches(list) {
   if (!Array.isArray(list)) return;
   const options = '<option value="">Choose Branch</option>' + list.map(b => `<option value="${b[0]}">${b[0]}</option>`).join('');
   document.getElementById('branch').innerHTML = options;
+  clearMsg('branchMsg'); // Ensures message is cleared when list is populated
 }
 
 function restoreUserState() {
@@ -614,7 +621,7 @@ function handleBranchChange() {
   const val = document.getElementById('branch').value;
   if (!val) { 
     resetStepsFrom(2); 
-    clearMsg('branchMsg'); 
+    clearMsg('branchMsg'); // Clears message if "Choose Branch" is selected
     return; 
   }
   
@@ -798,7 +805,7 @@ function startCamera() {
 
 function capturePhoto() {
   const video = document.getElementById('cameraVideo');
-  const wrapper = document.getElementById('mainContainer'); 
+  const wrapper = document.getElementById('videoContainerWrapper'); // Uses the new wrapper for dimensions
   const vw = video.videoWidth || 1280, vh = video.videoHeight || 720;
   
   const cw = wrapper.offsetWidth, ch = wrapper.offsetHeight;
