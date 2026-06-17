@@ -219,7 +219,6 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   animation: spin 0.6s linear infinite;
 }
 
-/* Smooth Camera Fade In/Out & Shrink Animation */
 #videoContainerWrapper{
   position:absolute; 
   top: 50%; left: 50%;
@@ -228,22 +227,13 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   min-height: 520px;
   border-radius:24px;
   overflow:hidden; z-index:60; background-color: #000;
-  /* Smoother fade in/out */
-  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), border-radius 0.4s ease;
-  transform: translate(-50%, -50%) scale(0.9); 
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.25, 1, 0.4, 1);
+  transform: translate(-50%, -50%) scale(0.95); 
   opacity:0; pointer-events:none;
 }
 #videoContainerWrapper.expanded{ 
   pointer-events:auto; opacity:1; 
   transform: translate(-50%, -50%) scale(1); 
-  border-radius: 24px;
-}
-/* The new shrink-to-photo animation */
-#videoContainerWrapper.expanded.shrink-to-photo {
-  transform: translate(-50%, -50%) scale(0.25);
-  border-radius: 50%;
-  opacity: 0;
-  transition: transform 0.5s cubic-bezier(0.25, 1, 0.4, 1), border-radius 0.5s cubic-bezier(0.25, 1, 0.4, 1), opacity 0.3s ease 0.2s;
 }
 
 #cameraVideo{ 
@@ -260,10 +250,6 @@ button:disabled{opacity:0.5;cursor:not-allowed;transform:none}
   position:absolute;bottom:0;left:0;right:0; padding:24px;
   background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 100%);
   display:flex;align-items:center;justify-content:center; z-index:3;
-  transition: opacity 0.3s ease;
-}
-#videoContainerWrapper.shrink-to-photo .camera-ui {
-  opacity: 0; /* Hide the capture button while shrinking */
 }
 
 #captureBtn{
@@ -854,23 +840,7 @@ function capturePhoto() {
   photo = canvas.toDataURL('image/jpeg', 0.85);
   document.getElementById('successPhoto').src = photo;
 
-  // Trigger the shrink-to-photo animation
-  const backdrop = document.getElementById('cameraBackdrop');
-  wrapper.classList.add('shrink-to-photo');
-  backdrop.classList.remove('show');
-
-  const btn = document.getElementById('openCameraBtn');
-  if (btn && !btn.classList.contains('loading')) btn.textContent = 'Take Selfie';
-
-  // Wait for the shrink animation to finish before fully resetting the camera
-  setTimeout(() => {
-    wrapper.classList.remove('expanded');
-    wrapper.classList.remove('shrink-to-photo');
-    video.classList.remove('live');
-    if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
-    video.srcObject = null;
-  }, 600);
-
+  stopCamera();
   submitAttendanceRealtime();
 }
 
@@ -879,16 +849,16 @@ function stopCamera() {
   wrapper.classList.remove('expanded'); 
   backdrop.classList.remove('show');
   
+  const video = document.getElementById('cameraVideo');
+  video.classList.remove('live');
+  
   const btn = document.getElementById('openCameraBtn');
   if (btn && !btn.classList.contains('loading')) btn.textContent = 'Take Selfie';
   
-  // Wait for the smooth fade out transition before killing the video stream
   setTimeout(() => {
-    const video = document.getElementById('cameraVideo');
-    video.classList.remove('live');
     if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; }
     video.srcObject = null;
-  }, 400);
+  }, 300);
 }
 
 function submitAttendanceRealtime() {
