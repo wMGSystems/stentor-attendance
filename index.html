@@ -312,7 +312,14 @@ function purgeCacheAtMidnight() {
 
       <div id="o-expanded-fields" style="display:none;">
         <div class="section-card" style="display:flex; gap:12px;">
-          <div style="flex:1;"><label class="input-label">Branch</label><input type="text" id="o-branch" class="ui-input" readonly></div>
+          <!-- Branch Input with Hold to Edit Logic -->
+          <div style="flex:1; position:relative;">
+            <label class="input-label">Branch <span id="o-branch-lock-icon" style="font-size:10px; opacity:0.6; font-weight:700; text-transform:none; float:right;">🔒 Hold to edit</span></label>
+            <select id="o-branch" class="ui-select" style="appearance:none; background:var(--bg-secondary); color:var(--dynamic-primary); border-color:transparent; pointer-events:none;"></select>
+            <div id="o-branch-overlay" style="position:absolute; top:20px; left:0; right:0; bottom:0; z-index:11;"
+                 ontouchstart="startBranchHold(event)" ontouchend="cancelBranchHold()" ontouchcancel="cancelBranchHold()"
+                 onmousedown="startBranchHold(event)" onmouseup="cancelBranchHold()" onmouseleave="cancelBranchHold()"></div>
+          </div>
           <div style="flex:1;"><label class="input-label">Phone</label><input type="tel" id="o-phone" class="ui-input" readonly></div>
         </div>
       </div>
@@ -450,6 +457,7 @@ let activeStore = 'chandarana', currentTerminal = Storage.get('selected_terminal
 document.addEventListener('DOMContentLoaded', function() {
   purgeCacheAtMidnight(); 
   loadOrderStaffBackground(); 
+  fetchPortalDataSilent(); // Fetch attendance branches silently for relieving auto-fill
   window.addEventListener('online', checkNetworkStatus); 
   window.addEventListener('offline', checkNetworkStatus);
 });
@@ -490,6 +498,18 @@ function updatePillSlider(containerId, sliderId) {
   }, 50);
 }
 
+// Background Silently Fetch Attendance for Relieving checks
+function fetchPortalDataSilent() {
+  ['chandarana', 'carrefour'].forEach(term => {
+    fetch(SCRIPT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify({action:'getPortalData', terminal:term}) })
+    .then(r => r.json())
+    .then(j => {
+      if(j.ok) {
+        Storage.set(term + '_portal_data', JSON.stringify(j.data));
+      }
+    }).catch(e=>{});
+  });
+}
 
 // ==========================================
 // ORDER SYSTEM LOGIC
@@ -545,24 +565,95 @@ function loadOrderStaffBackground() {
     }).catch(e => {});
 }
 
+// Branch Selection Logic for Orders (Hold to Edit)
+let branchHoldTimer;
+function startBranchHold(e) {
+  if (e.type === 'mousedown' && e.button !== 0) return;
+  branchHoldTimer = setTimeout(() => {
+     unlockBranchSelect();
+     if(navigator.vibrate) navigator.vibrate(50);
+  }, 600); // 600ms hold
+}
+function cancelBranchHold() { clearTimeout(branchHoldTimer); }
+
+function unlockBranchSelect() {
+  const sel = document.getElementById('o-branch'), overlay = document.getElementById('o-branch-overlay'), icon = document.getElementById('o-branch-lock-icon');
+  sel.style.pointerEvents = 'auto'; sel.style.appearance = 'auto'; sel.style.background = 'var(--input-bg)'; sel.style.color = 'var(--text-primary)'; sel.style.borderColor = 'var(--input-border)';
+  overlay.style.display = 'none'; icon.innerText = '🔓 Select below';
+}
+function lockBranchSelect() {
+  const sel = document.getElementById('o-branch'), overlay = document.getElementById('o-branch-overlay'), icon = document.getElementById('o-branch-lock-icon');
+  sel.style.pointerEvents = 'none'; sel.style.appearance = 'none'; sel.style.background = 'var(--bg-secondary)'; sel.style.color = 'var(--dynamic-primary)'; sel.style.borderColor = 'transparent';
+  overlay.style.display = 'block'; icon.innerText = '🔒 Hold to edit';
+}
+
+function populateOrderBranches(forceBranch) {
+   const sel = document.getElementById('o-branch');
+   let branches = [];
+   try {
+      const pData = JSON.parse(Storage.get(activeStore + '_portal_data'));
+      if (pData && pData.branches) { branches = pData.branches.map(b => b[0]); }
+   } catch(e) {}
+   
+   if (forceBranch && !branches.includes(forceBranch)) branches.push(forceBranch);
+   if (branches.length === 0 && forceBranch) branches.push(forceBranch);
+   
+   sel.innerHTML = branches.map(b => `<option value="${b}">${b}</option>`).join('');
+}
+
+function applyOrderStaffData(val, name, phone, defaultBranch) {
+  Storage.set('last_order_id_' + activeStore, val); 
+  const msgDiv = document.getElementById('o-staffMsg'), nameInp = document.getElementById('o-name'), nameCont = document.getElementById('o-name-container'), expFields = document.getElementById('o-expanded-fields'), lockedSec = document.getElementById('o-locked-section');
+  
+  currentOrderStaffFullname = name;
+  const parts = name.trim().split(' '); 
+  nameInp.value = parts.slice(0, 2).join(' ') + (parts.length>2?'...':'');
+  
+  // CHECK ATTENDANCE CLOCK-IN FOR RELIEVING
+  let targetBranch = defaultBranch || '';
+  let relievedMsg = '';
+  try {
+    const pData = JSON.parse(Storage.get(activeStore + '_portal_data'));
+    if (pData && pData.staff) {
+      const attMatch = pData.staff.find(s => s.id === val);
+      if (attMatch && attMatch.lastTime) { // Check if any attendance record logged TODAY
+         const d = new Date(attMatch.lastTime);
+         const now = new Date();
+         if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+             if (attMatch.lastBranch && attMatch.lastBranch !== targetBranch) {
+                 targetBranch = attMatch.lastBranch;
+                 relievedMsg = ' (Relieving Branch)';
+             }
+         }
+      }
+    }
+  } catch(e) {}
+
+  populateOrderBranches(targetBranch); 
+  document.getElementById('o-branch').value = targetBranch;
+  document.getElementById('o-phone').value = phone || '';
+  
+  nameCont.style.opacity = '1'; expFields.style.display='block'; lockedSec.classList.add('unlocked');
+  
+  msgDiv.innerHTML = `<span class="dot"></span> ID Verified${relievedMsg}`; 
+  msgDiv.className = 'msg success'; 
+}
+
 function instantOrderStaffCheck(val) {
   val = val.trim(); 
   const msgDiv = document.getElementById('o-staffMsg'), nameCont = document.getElementById('o-name-container'), nameInp = document.getElementById('o-name'), expFields = document.getElementById('o-expanded-fields'), lockedSec = document.getElementById('o-locked-section');
   
+  lockBranchSelect(); // Lock branch dropdown whenever ID changes
+  
   if(val.length < 2) { 
-    msgDiv.innerHTML = ''; nameInp.value = ''; currentOrderStaffFullname = ''; document.getElementById('o-branch').value = ''; document.getElementById('o-phone').value = ''; nameCont.style.opacity = '0'; expFields.style.display='none'; lockedSec.classList.remove('unlocked'); 
+    msgDiv.innerHTML = ''; nameInp.value = ''; currentOrderStaffFullname = ''; document.getElementById('o-branch').innerHTML = ''; document.getElementById('o-phone').value = ''; nameCont.style.opacity = '0'; expFields.style.display='none'; lockedSec.classList.remove('unlocked'); 
     Storage.remove('last_order_id_' + activeStore); return; 
   }
   
   const match = orderStaffCache[activeStore].find(s => s.id === val);
   
   if(match) {
-    Storage.set('last_order_id_' + activeStore, val); 
-    msgDiv.innerHTML = '<span class="dot"></span> ID Verified'; msgDiv.className = 'msg success'; 
-    currentOrderStaffFullname = match.name;
-    const parts = match.name.trim().split(' '); nameInp.value = parts.slice(0, 2).join(' ') + (parts.length>2?'...':'');
-    document.getElementById('o-branch').value = match.branch || ''; document.getElementById('o-phone').value = match.phone || '';
-    nameCont.style.opacity = '1'; expFields.style.display='block'; lockedSec.classList.add('unlocked');
+    applyOrderStaffData(val, match.name, match.phone, match.branch);
   } else { 
     msgDiv.innerHTML = '<span class="btn-spinner" style="width:14px;height:14px;"></span> Searching...'; msgDiv.className = 'msg';
     nameCont.style.opacity = '0'; expFields.style.display='none'; lockedSec.classList.remove('unlocked');
@@ -572,7 +663,7 @@ function instantOrderStaffCheck(val) {
     .then(res => {
        if (res.found && res.store === activeStore && document.getElementById('o-id').value.trim() === val) { 
          orderStaffCache[activeStore].push({id: val, name: res.name, phone: res.phone, branch: res.branch}); 
-         instantOrderStaffCheck(val); 
+         applyOrderStaffData(val, res.name, res.phone, res.branch);
        } else if ((!res.found || res.store !== activeStore) && document.getElementById('o-id').value.trim() === val) { 
          msgDiv.innerHTML = 'Invalid ID for this Store'; msgDiv.className = 'msg error'; 
        }
