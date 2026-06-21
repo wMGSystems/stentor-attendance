@@ -128,6 +128,10 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 body.theme-carrefour .ui-input:focus, body.theme-carrefour .ui-select:focus {box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
 .ui-input:read-only { background: var(--bg-secondary); color: var(--dynamic-primary); border-color: transparent; }
 
+/* Add native optgroup styling compatibility */
+optgroup { font-weight: 900; color: var(--text-tertiary); font-style: normal; }
+option { font-weight: 700; color: var(--text-primary); }
+
 .btn-primary { width:100%; height:52px; border-radius:14px; border:none; font-size:15px; font-weight:800; background:var(--button-secondary-bg); color:var(--dynamic-primary); cursor:pointer; display:flex; align-items:center; justify-content:center; transition: transform 0.1s, opacity 0.2s, background 0.2s; }
 .btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
@@ -315,7 +319,7 @@ function purgeCacheAtMidnight() {
           <!-- Branch Input with Hold to Edit Logic -->
           <div style="flex:1; position:relative;">
             <label class="input-label">Branch <span id="o-branch-lock-icon" style="font-size:10px; opacity:0.6; font-weight:700; text-transform:none; float:right;">🔒 Hold to edit</span></label>
-            <select id="o-branch" class="ui-select" style="appearance:none; background:var(--bg-secondary); color:var(--dynamic-primary); border-color:transparent; pointer-events:none;"></select>
+            <select id="o-branch" class="ui-select" style="pointer-events:none; appearance:none;"></select>
             <div id="o-branch-overlay" style="position:absolute; top:20px; left:0; right:0; bottom:0; z-index:11;"
                  ontouchstart="startBranchHold(event)" ontouchend="cancelBranchHold()" ontouchcancel="cancelBranchHold()"
                  onmousedown="startBranchHold(event)" onmouseup="cancelBranchHold()" onmouseleave="cancelBranchHold()"></div>
@@ -578,60 +582,121 @@ function cancelBranchHold() { clearTimeout(branchHoldTimer); }
 
 function unlockBranchSelect() {
   const sel = document.getElementById('o-branch'), overlay = document.getElementById('o-branch-overlay'), icon = document.getElementById('o-branch-lock-icon');
-  sel.style.pointerEvents = 'auto'; sel.style.appearance = 'auto'; sel.style.background = 'var(--input-bg)'; sel.style.color = 'var(--text-primary)'; sel.style.borderColor = 'var(--input-border)';
+  sel.style.pointerEvents = 'auto'; sel.style.appearance = 'auto'; 
   overlay.style.display = 'none'; icon.innerText = '🔓 Select below';
 }
 function lockBranchSelect() {
   const sel = document.getElementById('o-branch'), overlay = document.getElementById('o-branch-overlay'), icon = document.getElementById('o-branch-lock-icon');
-  sel.style.pointerEvents = 'none'; sel.style.appearance = 'none'; sel.style.background = 'var(--bg-secondary)'; sel.style.color = 'var(--dynamic-primary)'; sel.style.borderColor = 'transparent';
+  sel.style.pointerEvents = 'none'; sel.style.appearance = 'none'; 
+  // Keeps field looking identical to normal text input
+  sel.style.background = 'var(--input-bg)'; sel.style.color = 'var(--text-primary)'; sel.style.borderColor = 'var(--input-border)';
   overlay.style.display = 'block'; icon.innerText = '🔒 Hold to edit';
 }
 
-function populateOrderBranches(forceBranch) {
+function populateOrderBranches() {
    const sel = document.getElementById('o-branch');
-   let branches = [];
-   try {
-      const pData = JSON.parse(Storage.get(activeStore + '_portal_data'));
-      if (pData && pData.branches) { branches = pData.branches.map(b => b[0]); }
-   } catch(e) {}
+   let chanBranches = [], carrBranches = [];
+   try { const pData = JSON.parse(Storage.get('chandarana_portal_data')); if (pData && pData.branches) chanBranches = pData.branches.map(b => b[0]); } catch(e) {}
+   try { const pData = JSON.parse(Storage.get('carrefour_portal_data')); if (pData && pData.branches) carrBranches = pData.branches.map(b => b[0]); } catch(e) {}
    
-   if (forceBranch && !branches.includes(forceBranch)) branches.push(forceBranch);
-   if (branches.length === 0 && forceBranch) branches.push(forceBranch);
+   let html = `<optgroup label="Chandarana">` + chanBranches.map(b => `<option value="${b}" data-store="chandarana">${b}</option>`).join('') + `</optgroup>`;
+   html += `<optgroup label="Carrefour">` + carrBranches.map(b => `<option value="${b}" data-store="carrefour">${b}</option>`).join('') + `</optgroup>`;
    
-   sel.innerHTML = branches.map(b => `<option value="${b}">${b}</option>`).join('');
+   sel.innerHTML = html;
 }
 
-function applyOrderStaffData(val, name, phone, defaultBranch) {
+// When branch is changed manually, detect if we need to switch tabs
+document.getElementById('o-branch').addEventListener('change', function(e) {
+  const opt = this.options[this.selectedIndex];
+  const selectedStore = opt.getAttribute('data-store');
+  const selectedBranch = this.value;
+  const currentId = document.getElementById('o-id').value;
+
+  if (selectedStore && selectedStore !== activeStore) {
+    instantOrderStaffCheck(currentId, selectedStore, selectedBranch);
+  }
+});
+
+function processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch) {
+  let targetStore = defaultStore;
+  let targetBranch = match.branch;
+  let relievedMsg = '';
+
+  if (forcedBranch && forcedStore) {
+    targetStore = forcedStore;
+    targetBranch = forcedBranch;
+    if (targetStore !== defaultStore || targetBranch !== match.branch) relievedMsg = ' (Relieving)';
+  } else {
+    // 💡 GLOBAL ATTENDANCE PEEK LOGIC
+    const storesToCheck = ['chandarana', 'carrefour'];
+    let latestClockInTime = 0;
+    let clockedInStore = null;
+    let clockedInBranch = null;
+
+    storesToCheck.forEach(store => {
+      try {
+        const pData = JSON.parse(Storage.get(store + '_portal_data'));
+        const s = pData?.staff?.find(x => x.id === val);
+        if (s && s.lastTime) {
+          const d = new Date(s.lastTime), now = new Date();
+          // Did they clock in TODAY?
+          if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+            if (s.lastTime > latestClockInTime) {
+              latestClockInTime = s.lastTime;
+              clockedInStore = store;
+              clockedInBranch = s.branch; 
+            }
+          }
+        }
+      } catch(e) {}
+    });
+
+    if (clockedInStore && clockedInBranch) {
+      targetStore = clockedInStore;
+      targetBranch = clockedInBranch;
+      if (targetStore !== defaultStore || targetBranch !== match.branch) relievedMsg = ' (Relieving)';
+    }
+  }
+
+  // Cross-Terminal Switch if necessary
+  if (targetStore !== activeStore) {
+    orderStoreState[activeStore].id = document.getElementById('o-id').value;
+    saveOrderState();
+
+    activeStore = targetStore;
+    document.body.className = targetStore === 'chandarana' ? 'theme-chandarana' : 'theme-carrefour';
+    var isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var meta = document.getElementById('theme-color-meta'); if (meta) meta.setAttribute('content', targetStore === 'chandarana' ? (isDark ? '#059669' : '#10b981') : (isDark ? '#2563eb' : '#3b82f6'));
+
+    document.getElementById('o-btn-chandarana').classList.toggle('active', targetStore === 'chandarana'); 
+    document.getElementById('o-btn-carrefour').classList.toggle('active', targetStore === 'carrefour');
+    
+    updatePillSlider('o-terminal-wrapper', 'o-pill-slider');
+    renderDynamicOrderContent(); restoreOrderState();
+  }
+
   Storage.set('last_order_id_' + activeStore, val); 
   const msgDiv = document.getElementById('o-staffMsg'), nameInp = document.getElementById('o-name'), nameCont = document.getElementById('o-name-container'), expFields = document.getElementById('o-expanded-fields'), lockedSec = document.getElementById('o-locked-section');
   
-  currentOrderStaffFullname = name;
-  const parts = name.trim().split(' '); 
+  currentOrderStaffFullname = match.name;
+  const parts = match.name.trim().split(' '); 
   nameInp.value = parts.slice(0, 2).join(' ') + (parts.length>2?'...':'');
-  
-  // CHECK ATTENDANCE CLOCK-IN FOR RELIEVING
-  let targetBranch = defaultBranch || '';
-  let relievedMsg = '';
-  try {
-    const pData = JSON.parse(Storage.get(activeStore + '_portal_data'));
-    if (pData && pData.staff) {
-      const attMatch = pData.staff.find(s => s.id === val);
-      if (attMatch && attMatch.lastTime) { // Check if any attendance record logged TODAY
-         const d = new Date(attMatch.lastTime);
-         const now = new Date();
-         if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
-             if (attMatch.lastBranch && attMatch.lastBranch !== targetBranch) {
-                 targetBranch = attMatch.lastBranch;
-                 relievedMsg = ' (Relieving Branch)';
-             }
-         }
-      }
-    }
-  } catch(e) {}
 
-  populateOrderBranches(targetBranch); 
-  document.getElementById('o-branch').value = targetBranch;
-  document.getElementById('o-phone').value = phone || '';
+  populateOrderBranches(); 
+  const sel = document.getElementById('o-branch');
+  sel.value = targetBranch;
+  
+  // Failsafe: if branch dynamically added isn't in lists yet
+  if (sel.value !== targetBranch) {
+      const opt = document.createElement('option');
+      opt.value = targetBranch;
+      opt.textContent = targetBranch;
+      opt.setAttribute('data-store', targetStore);
+      sel.appendChild(opt);
+      sel.value = targetBranch;
+  }
+
+  document.getElementById('o-phone').value = match.phone || '';
   
   nameCont.style.opacity = '1'; expFields.style.display='block'; lockedSec.classList.add('unlocked');
   
@@ -639,33 +704,41 @@ function applyOrderStaffData(val, name, phone, defaultBranch) {
   msgDiv.className = 'msg success'; 
 }
 
-function instantOrderStaffCheck(val) {
+function instantOrderStaffCheck(val, forcedStore = null, forcedBranch = null) {
   val = val.trim(); 
   const msgDiv = document.getElementById('o-staffMsg'), nameCont = document.getElementById('o-name-container'), nameInp = document.getElementById('o-name'), expFields = document.getElementById('o-expanded-fields'), lockedSec = document.getElementById('o-locked-section');
   
-  lockBranchSelect(); // Lock branch dropdown whenever ID changes
+  lockBranchSelect(); 
   
   if(val.length < 2) { 
     msgDiv.innerHTML = ''; nameInp.value = ''; currentOrderStaffFullname = ''; document.getElementById('o-branch').innerHTML = ''; document.getElementById('o-phone').value = ''; nameCont.style.opacity = '0'; expFields.style.display='none'; lockedSec.classList.remove('unlocked'); 
     Storage.remove('last_order_id_' + activeStore); return; 
   }
-  
-  const match = orderStaffCache[activeStore].find(s => s.id === val);
+
+  // 1. Check globally across both caches
+  let match = orderStaffCache.chandarana.find(s => s.id === val);
+  let defaultStore = match ? 'chandarana' : null;
+  if (!match) {
+     match = orderStaffCache.carrefour.find(s => s.id === val);
+     if (match) defaultStore = 'carrefour';
+  }
   
   if(match) {
-    applyOrderStaffData(val, match.name, match.phone, match.branch);
+    processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch);
   } else { 
+    // Fetch from server globally
     msgDiv.innerHTML = '<span class="btn-spinner" style="width:14px;height:14px;"></span> Searching...'; msgDiv.className = 'msg';
     nameCont.style.opacity = '0'; expFields.style.display='none'; lockedSec.classList.remove('unlocked');
     
     fetch(SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'fetchUser', id: val }) })
     .then(r => r.json())
     .then(res => {
-       if (res.found && res.store === activeStore && document.getElementById('o-id').value.trim() === val) { 
-         orderStaffCache[activeStore].push({id: val, name: res.name, phone: res.phone, branch: res.branch}); 
-         applyOrderStaffData(val, res.name, res.phone, res.branch);
-       } else if ((!res.found || res.store !== activeStore) && document.getElementById('o-id').value.trim() === val) { 
-         msgDiv.innerHTML = 'Invalid ID for this Store'; msgDiv.className = 'msg error'; 
+       if (document.getElementById('o-id').value.trim() !== val) return;
+       if (res.found) { 
+         orderStaffCache[res.store].push({id: val, name: res.name, phone: res.phone, branch: res.branch}); 
+         processStaffMatch(val, {name: res.name, phone: res.phone, branch: res.branch}, res.store, forcedStore, forcedBranch);
+       } else { 
+         msgDiv.innerHTML = 'Invalid ID'; msgDiv.className = 'msg error'; 
        }
     }).catch(e => { if (document.getElementById('o-id').value.trim() === val) { msgDiv.innerHTML = 'Network Error'; msgDiv.className = 'msg error'; } });
   }
