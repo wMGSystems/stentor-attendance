@@ -128,10 +128,6 @@ body.theme-carrefour {--dynamic-primary:var(--theme-carr);--success-color:#3b82f
 body.theme-carrefour .ui-input:focus, body.theme-carrefour .ui-select:focus {box-shadow:0 0 0 3px rgba(59,130,246,0.1)}
 .ui-input:read-only { background: var(--bg-secondary); color: var(--dynamic-primary); border-color: transparent; }
 
-/* Add native optgroup styling compatibility */
-optgroup { font-weight: 900; color: var(--text-tertiary); font-style: normal; }
-option { font-weight: 700; color: var(--text-primary); }
-
 .btn-primary { width:100%; height:52px; border-radius:14px; border:none; font-size:15px; font-weight:800; background:var(--button-secondary-bg); color:var(--dynamic-primary); cursor:pointer; display:flex; align-items:center; justify-content:center; transition: transform 0.1s, opacity 0.2s, background 0.2s; }
 .btn-primary:active { transform: scale(0.97); }
 .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
@@ -316,7 +312,7 @@ function purgeCacheAtMidnight() {
 
       <div id="o-expanded-fields" style="display:none;">
         <div class="section-card" style="display:flex; gap:12px;">
-          <!-- Branch Input with Hold to Edit Logic -->
+          <!-- Branch Input with Smart Hold to Edit Logic -->
           <div style="flex:1; position:relative;">
             <label class="input-label">Branch <span id="o-branch-lock-icon" style="font-size:10px; opacity:0.6; font-weight:700; text-transform:none; float:right;">🔒 Hold to edit</span></label>
             <select id="o-branch" class="ui-select" style="pointer-events:none; appearance:none;"></select>
@@ -569,7 +565,7 @@ function loadOrderStaffBackground() {
     }).catch(e => {});
 }
 
-// Branch Selection Logic for Orders (Hold to Edit)
+// Branch Selection Logic for Orders (Hold to Edit & Smart Lock)
 let branchHoldTimer;
 function startBranchHold(e) {
   if (e.type === 'mousedown' && e.button !== 0) return;
@@ -580,17 +576,41 @@ function startBranchHold(e) {
 }
 function cancelBranchHold() { clearTimeout(branchHoldTimer); }
 
+function lockBranchSelect(isAttendanceVerified) {
+  const sel = document.getElementById('o-branch'), overlay = document.getElementById('o-branch-overlay'), icon = document.getElementById('o-branch-lock-icon');
+  
+  sel.style.pointerEvents = 'none'; 
+  sel.style.appearance = 'none'; 
+  sel.style.color = 'var(--dynamic-primary)';
+  sel.style.fontWeight = '900';
+  
+  if (isAttendanceVerified) {
+    // Verified by attendance -> perfectly read-only, hide hint entirely
+    icon.style.display = 'none';
+    overlay.style.display = 'none';
+    sel.style.background = 'var(--bg-secondary)'; 
+    sel.style.borderColor = 'transparent';
+  } else {
+    // Unverified/Default -> show hold to edit hint
+    icon.style.display = 'inline';
+    icon.innerText = '🔒 Hold to edit';
+    overlay.style.display = 'block';
+    sel.style.background = 'var(--input-bg)'; 
+    sel.style.borderColor = 'var(--input-border)';
+  }
+}
+
 function unlockBranchSelect() {
   const sel = document.getElementById('o-branch'), overlay = document.getElementById('o-branch-overlay'), icon = document.getElementById('o-branch-lock-icon');
-  sel.style.pointerEvents = 'auto'; sel.style.appearance = 'auto'; 
-  overlay.style.display = 'none'; icon.innerText = '🔓 Select below';
-}
-function lockBranchSelect() {
-  const sel = document.getElementById('o-branch'), overlay = document.getElementById('o-branch-overlay'), icon = document.getElementById('o-branch-lock-icon');
-  sel.style.pointerEvents = 'none'; sel.style.appearance = 'none'; 
-  // Keeps field looking identical to normal text input
-  sel.style.background = 'var(--input-bg)'; sel.style.color = 'var(--text-primary)'; sel.style.borderColor = 'var(--input-border)';
-  overlay.style.display = 'block'; icon.innerText = '🔒 Hold to edit';
+  sel.style.pointerEvents = 'auto'; 
+  sel.style.appearance = 'auto'; 
+  sel.style.color = 'var(--dynamic-primary)';
+  sel.style.fontWeight = '900';
+  overlay.style.display = 'none'; 
+  icon.style.display = 'inline';
+  icon.innerText = '🔓 Select below';
+  sel.style.background = 'var(--input-bg)';
+  sel.style.borderColor = 'var(--input-border)';
 }
 
 function populateOrderBranches() {
@@ -599,8 +619,9 @@ function populateOrderBranches() {
    try { const pData = JSON.parse(Storage.get('chandarana_portal_data')); if (pData && pData.branches) chanBranches = pData.branches.map(b => b[0]); } catch(e) {}
    try { const pData = JSON.parse(Storage.get('carrefour_portal_data')); if (pData && pData.branches) carrBranches = pData.branches.map(b => b[0]); } catch(e) {}
    
-   let html = `<optgroup label="Chandarana">` + chanBranches.map(b => `<option value="${b}" data-store="chandarana">${b}</option>`).join('') + `</optgroup>`;
-   html += `<optgroup label="Carrefour">` + carrBranches.map(b => `<option value="${b}" data-store="carrefour">${b}</option>`).join('') + `</optgroup>`;
+   // Themed optgroups for easier manual selection
+   let html = `<optgroup label="Chandarana" style="color: var(--theme-chan); font-weight: 900;">` + chanBranches.map(b => `<option value="${b}" data-store="chandarana" style="color: var(--text-primary); font-weight: 700;">${b}</option>`).join('') + `</optgroup>`;
+   html += `<optgroup label="Carrefour" style="color: var(--theme-carr); font-weight: 900;">` + carrBranches.map(b => `<option value="${b}" data-store="carrefour" style="color: var(--text-primary); font-weight: 700;">${b}</option>`).join('') + `</optgroup>`;
    
    sel.innerHTML = html;
 }
@@ -618,44 +639,47 @@ document.getElementById('o-branch').addEventListener('change', function(e) {
 });
 
 function processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch) {
+  let isAttendanceVerified = false;
   let targetStore = defaultStore;
   let targetBranch = match.branch;
   let relievedMsg = '';
 
+  // 💡 GLOBAL ATTENDANCE PEEK LOGIC
+  const storesToCheck = ['chandarana', 'carrefour'];
+  let latestClockInTime = 0;
+  let clockedInStore = null;
+  let clockedInBranch = null;
+
+  storesToCheck.forEach(store => {
+    try {
+      const pData = JSON.parse(Storage.get(store + '_portal_data'));
+      const s = pData?.staff?.find(x => x.id === val);
+      if (s && s.lastTime) {
+        const d = new Date(s.lastTime), now = new Date();
+        if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
+          if (s.lastTime > latestClockInTime) {
+            latestClockInTime = s.lastTime;
+            clockedInStore = store;
+            clockedInBranch = s.branch; 
+          }
+        }
+      }
+    } catch(e) {}
+  });
+
+  if (clockedInStore && clockedInBranch) {
+    targetStore = clockedInStore;
+    targetBranch = clockedInBranch;
+    isAttendanceVerified = true;
+    if (targetStore !== defaultStore || targetBranch !== match.branch) relievedMsg = ' (Auto-detected)';
+  }
+
+  // Failsafe/Manual Override logic
   if (forcedBranch && forcedStore) {
     targetStore = forcedStore;
     targetBranch = forcedBranch;
-    if (targetStore !== defaultStore || targetBranch !== match.branch) relievedMsg = ' (Relieving)';
-  } else {
-    // 💡 GLOBAL ATTENDANCE PEEK LOGIC
-    const storesToCheck = ['chandarana', 'carrefour'];
-    let latestClockInTime = 0;
-    let clockedInStore = null;
-    let clockedInBranch = null;
-
-    storesToCheck.forEach(store => {
-      try {
-        const pData = JSON.parse(Storage.get(store + '_portal_data'));
-        const s = pData?.staff?.find(x => x.id === val);
-        if (s && s.lastTime) {
-          const d = new Date(s.lastTime), now = new Date();
-          // Did they clock in TODAY?
-          if (d.getDate() === now.getDate() && d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()) {
-            if (s.lastTime > latestClockInTime) {
-              latestClockInTime = s.lastTime;
-              clockedInStore = store;
-              clockedInBranch = s.branch; 
-            }
-          }
-        }
-      } catch(e) {}
-    });
-
-    if (clockedInStore && clockedInBranch) {
-      targetStore = clockedInStore;
-      targetBranch = clockedInBranch;
-      if (targetStore !== defaultStore || targetBranch !== match.branch) relievedMsg = ' (Relieving)';
-    }
+    isAttendanceVerified = false; // Manually forced, fallback to showing 'hold to edit' just in case
+    relievedMsg = '';
   }
 
   // Cross-Terminal Switch if necessary
@@ -686,7 +710,7 @@ function processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch) 
   const sel = document.getElementById('o-branch');
   sel.value = targetBranch;
   
-  // Failsafe: if branch dynamically added isn't in lists yet
+  // Failsafe if dynamically assigned branch isn't in lists yet
   if (sel.value !== targetBranch) {
       const opt = document.createElement('option');
       opt.value = targetBranch;
@@ -695,6 +719,9 @@ function processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch) 
       sel.appendChild(opt);
       sel.value = targetBranch;
   }
+
+  // Intelligently handle branch lock UI based on verification
+  lockBranchSelect(isAttendanceVerified);
 
   document.getElementById('o-phone').value = match.phone || '';
   
@@ -708,14 +735,12 @@ function instantOrderStaffCheck(val, forcedStore = null, forcedBranch = null) {
   val = val.trim(); 
   const msgDiv = document.getElementById('o-staffMsg'), nameCont = document.getElementById('o-name-container'), nameInp = document.getElementById('o-name'), expFields = document.getElementById('o-expanded-fields'), lockedSec = document.getElementById('o-locked-section');
   
-  lockBranchSelect(); 
-  
   if(val.length < 2) { 
     msgDiv.innerHTML = ''; nameInp.value = ''; currentOrderStaffFullname = ''; document.getElementById('o-branch').innerHTML = ''; document.getElementById('o-phone').value = ''; nameCont.style.opacity = '0'; expFields.style.display='none'; lockedSec.classList.remove('unlocked'); 
     Storage.remove('last_order_id_' + activeStore); return; 
   }
 
-  // 1. Check globally across both caches
+  // Check globally across both caches
   let match = orderStaffCache.chandarana.find(s => s.id === val);
   let defaultStore = match ? 'chandarana' : null;
   if (!match) {
