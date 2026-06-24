@@ -236,7 +236,7 @@ th:first-child, td.flavor-name { position: sticky; left: 0; background: var(--bg
 #zoomedImage { 
   position: absolute; 
   object-fit: cover; 
-  box-shadow: 0 0 0 1.5px var(--success-color), 0 25px 60px rgba(0,0,0,0.6);
+  box-shadow: 0 0 0 4px var(--success-color), 0 25px 60px rgba(0,0,0,0.6);
   z-index: 20001;
   cursor: zoom-out;
 }
@@ -458,7 +458,10 @@ document.addEventListener('DOMContentLoaded', function() {
   purgeCacheAtMidnight(); 
   loadOrderStaffBackground(); 
   fetchPortalDataSilent(); // Fetch attendance branches silently for relieving auto-fill
-  window.addEventListener('online', checkNetworkStatus); 
+  window.addEventListener('online', () => {
+    checkNetworkStatus();
+    processAttendanceQueue(); // Process any queued offline submissions immediately
+  }); 
   window.addEventListener('offline', checkNetworkStatus);
 });
 
@@ -585,13 +588,11 @@ function lockBranchSelect(isAttendanceVerified) {
   sel.style.fontWeight = '900';
   
   if (isAttendanceVerified) {
-    // Verified by attendance -> perfectly read-only, hide hint entirely
     icon.style.display = 'none';
     overlay.style.display = 'none';
     sel.style.background = 'var(--bg-secondary)'; 
     sel.style.borderColor = 'transparent';
   } else {
-    // Unverified/Default -> show hold to edit hint
     icon.style.display = 'inline';
     icon.innerText = '🔒 Hold to edit';
     overlay.style.display = 'block';
@@ -619,14 +620,12 @@ function populateOrderBranches() {
    try { const pData = JSON.parse(Storage.get('chandarana_portal_data')); if (pData && pData.branches) chanBranches = pData.branches.map(b => b[0]); } catch(e) {}
    try { const pData = JSON.parse(Storage.get('carrefour_portal_data')); if (pData && pData.branches) carrBranches = pData.branches.map(b => b[0]); } catch(e) {}
    
-   // Themed optgroups for easier manual selection
    let html = `<optgroup label="Chandarana" style="color: var(--theme-chan); font-weight: 900;">` + chanBranches.map(b => `<option value="${b}" data-store="chandarana" style="color: var(--text-primary); font-weight: 700;">${b}</option>`).join('') + `</optgroup>`;
    html += `<optgroup label="Carrefour" style="color: var(--theme-carr); font-weight: 900;">` + carrBranches.map(b => `<option value="${b}" data-store="carrefour" style="color: var(--text-primary); font-weight: 700;">${b}</option>`).join('') + `</optgroup>`;
    
    sel.innerHTML = html;
 }
 
-// When branch is changed manually, detect if we need to switch tabs
 document.getElementById('o-branch').addEventListener('change', function(e) {
   const opt = this.options[this.selectedIndex];
   const selectedStore = opt.getAttribute('data-store');
@@ -644,7 +643,6 @@ function processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch) 
   let targetBranch = match.branch;
   let relievedMsg = '';
 
-  // 💡 GLOBAL ATTENDANCE PEEK LOGIC
   const storesToCheck = ['chandarana', 'carrefour'];
   let latestClockInTime = 0;
   let clockedInStore = null;
@@ -674,15 +672,13 @@ function processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch) 
     if (targetStore !== defaultStore || targetBranch !== match.branch) relievedMsg = ' (Auto-detected)';
   }
 
-  // Failsafe/Manual Override logic
   if (forcedBranch && forcedStore) {
     targetStore = forcedStore;
     targetBranch = forcedBranch;
-    isAttendanceVerified = false; // Manually forced, fallback to showing 'hold to edit' just in case
+    isAttendanceVerified = false; 
     relievedMsg = '';
   }
 
-  // Cross-Terminal Switch if necessary
   if (targetStore !== activeStore) {
     orderStoreState[activeStore].id = document.getElementById('o-id').value;
     saveOrderState();
@@ -710,7 +706,6 @@ function processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch) 
   const sel = document.getElementById('o-branch');
   sel.value = targetBranch;
   
-  // Failsafe if dynamically assigned branch isn't in lists yet
   if (sel.value !== targetBranch) {
       const opt = document.createElement('option');
       opt.value = targetBranch;
@@ -720,13 +715,10 @@ function processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch) 
       sel.value = targetBranch;
   }
 
-  // Intelligently handle branch lock UI based on verification
   lockBranchSelect(isAttendanceVerified);
-
   document.getElementById('o-phone').value = match.phone || '';
   
   nameCont.style.opacity = '1'; expFields.style.display='block'; lockedSec.classList.add('unlocked');
-  
   msgDiv.innerHTML = `<span class="dot"></span> ID Verified${relievedMsg}`; 
   msgDiv.className = 'msg success'; 
 }
@@ -740,7 +732,6 @@ function instantOrderStaffCheck(val, forcedStore = null, forcedBranch = null) {
     Storage.remove('last_order_id_' + activeStore); return; 
   }
 
-  // Check globally across both caches
   let match = orderStaffCache.chandarana.find(s => s.id === val);
   let defaultStore = match ? 'chandarana' : null;
   if (!match) {
@@ -751,7 +742,6 @@ function instantOrderStaffCheck(val, forcedStore = null, forcedBranch = null) {
   if(match) {
     processStaffMatch(val, match, defaultStore, forcedStore, forcedBranch);
   } else { 
-    // Fetch from server globally
     msgDiv.innerHTML = '<span class="btn-spinner" style="width:14px;height:14px;"></span> Searching...'; msgDiv.className = 'msg';
     nameCont.style.opacity = '0'; expFields.style.display='none'; lockedSec.classList.remove('unlocked');
     
@@ -1005,7 +995,10 @@ function resetStepsFrom(n) {
   for (let i = n; i <= 4; i++) { const el = document.getElementById('step'+i); if (el) el.classList.remove('activeStep'); }
   if (n <= 2) { staffName = ''; clearMsg('staffMsg'); staffRestrictionError = null; lastValidatedId = ""; }
   if (n <= 3) { coords = null; clearMsg('gpsMsg'); }
-  if (n <= 4) { photo = null; stopCamera(); clearMsg('cameraMsg'); document.getElementById('successPhoto').src = ''; }
+  if (n <= 4) { 
+    photo = null; stopCamera(); clearMsg('cameraMsg'); document.getElementById('successPhoto').src = '';
+    const btn = document.getElementById('openCameraBtn'); if(btn) btn.textContent = 'Take Selfie'; 
+  }
 }
 
 function resetAttForm() {
@@ -1031,11 +1024,9 @@ function openZoom() {
   const overlayImg = document.getElementById('zoomedImage');
   const sourceImg = document.getElementById('successPhoto');
 
-  // 1. Get exact position of original photo
   const rect = sourceImg.getBoundingClientRect();
   overlayImg.src = sourceImg.src;
   
-  // 2. Map overlay image precisely to original circle (No animation yet)
   overlayImg.style.transition = 'none';
   overlayImg.style.left = rect.left + 'px';
   overlayImg.style.top = rect.top + 'px';
@@ -1043,14 +1034,12 @@ function openZoom() {
   overlayImg.style.height = rect.height + 'px';
   overlayImg.style.borderRadius = '50%';
   
-  // 3. Make container visible, hide original source image
   container.style.display = 'block';
-  void container.offsetWidth; // Force Reflow
+  void container.offsetWidth; 
   sourceImg.style.opacity = '0'; 
   
-  // 4. Trigger morph to big square
   overlayImg.style.transition = 'all 0.4s cubic-bezier(0.25, 1, 0.4, 1)';
-  const targetW = Math.min(window.innerWidth * 0.85, 400); // 85% width or max 400px
+  const targetW = Math.min(window.innerWidth * 0.85, 400); 
   
   overlayImg.style.left = ((window.innerWidth - targetW) / 2) + 'px';
   overlayImg.style.top = ((window.innerHeight - targetW) / 2) + 'px';
@@ -1058,7 +1047,6 @@ function openZoom() {
   overlayImg.style.height = targetW + 'px';
   overlayImg.style.borderRadius = '24px';
   
-  // 5. Fade in background blur
   bg.classList.add('show');
 }
 
@@ -1070,20 +1058,17 @@ function closeZoom() {
   
   const rect = sourceImg.getBoundingClientRect();
   
-  // 1. Morph back exactly to the source circle's coordinates
   overlayImg.style.left = rect.left + 'px';
   overlayImg.style.top = rect.top + 'px';
   overlayImg.style.width = rect.width + 'px';
   overlayImg.style.height = rect.height + 'px';
   overlayImg.style.borderRadius = '50%';
   
-  // 2. Fade out background completely independent of the image
   bg.classList.remove('show');
   
-  // 3. Wait for animation to finish, then swap visibility
   setTimeout(() => { 
     container.style.display = 'none'; 
-    sourceImg.style.opacity = '1'; // Show original circle again perfectly!
+    sourceImg.style.opacity = '1'; 
   }, 400);
 }
 
@@ -1132,6 +1117,12 @@ function handleStaffInput() {
       currentAction = 'Clock Out';
     } else { currentAction = 'Clock In'; }
     
+    // Change Button Text to match action Dynamically
+    if (currentAction) {
+      const btn = document.getElementById('openCameraBtn');
+      if (btn) btn.textContent = currentAction;
+    }
+
     const msgEl = document.getElementById('staffMsg'); msgEl.style.opacity = '1';
     showSuccess('staffMsg', `Welcome ${staffName}`);
     
@@ -1197,7 +1188,6 @@ function verifyGPS() {
 }
 
 function startCamera() {
-  if (!navigator.onLine) { showError('cameraMsg', 'You must have an internet connection to submit.'); return; }
   const btn = document.getElementById('openCameraBtn');
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { showGuideModal('camera'); return; }
 
@@ -1209,9 +1199,9 @@ function startCamera() {
   navigator.mediaDevices.getUserMedia(constraints)
     .then(stream => {
       videoStream = stream; const video = document.getElementById('cameraVideo'); video.srcObject = stream;
-      video.onloadedmetadata = () => { video.play().catch(()=>{}); document.getElementById('videoContainerWrapper').classList.add('expanded'); document.getElementById('cameraBackdrop').classList.add('show'); video.classList.add('live'); btn.classList.remove('loading'); btn.innerText = 'Take Selfie'; };
+      video.onloadedmetadata = () => { video.play().catch(()=>{}); document.getElementById('videoContainerWrapper').classList.add('expanded'); document.getElementById('cameraBackdrop').classList.add('show'); video.classList.add('live'); btn.classList.remove('loading'); btn.innerText = currentAction || 'Take Selfie'; };
     })
-    .catch(err => { console.warn('Camera failed:', err); btn.classList.remove('loading'); btn.innerText = 'Take Selfie'; showGuideModal('camera'); });
+    .catch(err => { console.warn('Camera failed:', err); btn.classList.remove('loading'); btn.innerText = currentAction || 'Take Selfie'; showGuideModal('camera'); });
 }
 
 function capturePhoto() {
@@ -1238,28 +1228,103 @@ function stopCamera() {
   const wrapper = document.getElementById('videoContainerWrapper'), backdrop = document.getElementById('cameraBackdrop');
   wrapper.classList.remove('expanded'); backdrop.classList.remove('show');
   const video = document.getElementById('cameraVideo'); video.classList.remove('live');
-  const btn = document.getElementById('openCameraBtn'); if (btn && !btn.classList.contains('loading')) btn.textContent = 'Take Selfie';
+  const btn = document.getElementById('openCameraBtn'); if (btn && !btn.classList.contains('loading')) btn.textContent = currentAction || 'Take Selfie';
   
   setTimeout(() => { if (videoStream) { videoStream.getTracks().forEach(t => t.stop()); videoStream = null; } video.srcObject = null; }, 300);
 }
 
-function submitAttendanceRealtime() {
+// ----------------------------------------------------
+// OFFLINE QUEUEING & INSTANT SUBMISSION SYSTEM
+// ----------------------------------------------------
+async function submitAttendanceRealtime() {
   const branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
-  if (!branch||!staffID||!currentAction||!photo) return;
-  if (!navigator.onLine) { showError('cameraMsg', 'No internet connection. Please connect to submit.'); return; }
+  if (!branch || !staffID || !currentAction || !photo) return;
 
   Storage.set('last_staff_id_' + currentTerminal, staffID);
   
-  const payload = { name: staffName, id: staffID, branch: branch, action: currentAction, image: photo, lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0, clientTimestamp: new Date().toISOString() };
+  const payload = { 
+    name: staffName, id: staffID, branch: branch, action: currentAction, 
+    image: photo, lat: coords ? coords.latitude : 0, lng: coords ? coords.longitude : 0, 
+    clientTimestamp: new Date().toISOString() 
+  };
   
-  const btn = document.getElementById('openCameraBtn'); btn.classList.add('loading'); btn.disabled = true;
-  btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; margin-right:8px;"></span><span style="vertical-align:middle;">Submitting...</span>';
-  clearMsg('cameraMsg');
+  const submittedAction = currentAction;
+  
+  // 1. INSTANT SUCCESS FEEDBACK - Block nothing, User moves on!
+  finishSubmission(submittedAction);
 
-  fetchFromServer('recordAttendance', payload).then(res => {
-    btn.classList.remove('loading'); btn.disabled = false; btn.innerText = 'Take Selfie'; finishSubmission(currentAction);
-  }).catch(err => { btn.classList.remove('loading'); btn.disabled = false; btn.innerText = 'Take Selfie'; showError('cameraMsg', 'Submission Failed: ' + err.message); });
+  // 2. ATTEMPT IMMEDIATE UPLOAD IF ONLINE (Never stores if successful)
+  if (navigator.onLine) {
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'recordAttendance', data: payload, terminal: currentTerminal })
+      });
+      const j = await res.json();
+      
+      // If fully successful OR server explicitly rejects it (e.g. Already clocked in),
+      // we DO NOT store it offline. We just exit.
+      if (j.ok || (j.error && !j.error.includes("busy"))) {
+        return; 
+      }
+    } catch(err) {
+      // Fetch failed / Network error -> Fall through to the offline queue
+    }
+  }
+
+  // 3. STORE LOCALLY IF OFFLINE OR SERVER BUSY
+  let queue = [];
+  try { queue = JSON.parse(Storage.get('attendance_queue')) || []; } catch(e){}
+  queue.push({ payload: payload, terminal: currentTerminal });
+  Storage.set('attendance_queue', JSON.stringify(queue));
+  
+  // Try kicking off the background sync
+  processAttendanceQueue();
 }
+
+let isAttQueueSyncing = false;
+async function processAttendanceQueue() {
+  if (isAttQueueSyncing || !navigator.onLine) return;
+  
+  let queue = [];
+  try { queue = JSON.parse(Storage.get('attendance_queue')) || []; } catch(e){}
+  if (queue.length === 0) return;
+
+  isAttQueueSyncing = true;
+
+  while (queue.length > 0 && navigator.onLine) {
+    const item = queue[0];
+    try {
+      const res = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'recordAttendance', data: item.payload, terminal: item.terminal })
+      });
+      const j = await res.json();
+      
+      // If the server explicitly says "Server is busy", we stop and try again on the next tick
+      if (!j.ok && j.error && j.error.includes("busy")) {
+        break; 
+      }
+      
+      // Request successful OR explicitly rejected by business rules: Remove from local queue
+      queue.shift();
+      Storage.set('attendance_queue', JSON.stringify(queue));
+      
+    } catch (err) {
+      // Network disconnected / timeout: Stop processing, retry next loop
+      break; 
+    }
+  }
+  
+  isAttQueueSyncing = false;
+}
+
+// Check every 15 seconds silently in the background
+setInterval(processAttendanceQueue, 15000);
+
+// ----------------------------------------------------
 
 function finishSubmission(action) {
   const firstName = staffName.split(' ')[0] || staffName;
