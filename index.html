@@ -1250,10 +1250,33 @@ async function submitAttendanceRealtime() {
   
   const submittedAction = currentAction;
   
-  // 1. INSTANT SUCCESS FEEDBACK - Block nothing, User moves on!
+  // 1. OPTIMISTIC LOCAL UPDATE (Prevents Multiple/Duplicate Submissions Instantly)
+  const match = staff.find(s => s.id === staffID);
+  if (match) {
+    match.status = submittedAction;
+    match.lastTime = Date.now();
+    match.branch = branch;
+    
+    // Update the local cache so they are blocked even if they refresh the page
+    try {
+      const cacheKey = currentTerminal + '_portal_data';
+      const cached = JSON.parse(Storage.get(cacheKey));
+      if (cached && cached.staff) {
+        const cachedMatch = cached.staff.find(s => s.id === staffID);
+        if (cachedMatch) {
+          cachedMatch.status = submittedAction;
+          cachedMatch.lastTime = match.lastTime;
+          cachedMatch.branch = branch;
+          Storage.set(cacheKey, JSON.stringify(cached));
+        }
+      }
+    } catch(e) {}
+  }
+  
+  // 2. INSTANT SUCCESS FEEDBACK - User moves on instantly!
   finishSubmission(submittedAction);
 
-  // 2. ATTEMPT IMMEDIATE UPLOAD IF ONLINE (Never stores if successful)
+  // 3. ATTEMPT IMMEDIATE UPLOAD IF ONLINE (Never stores if successful)
   if (navigator.onLine) {
     try {
       const res = await fetch(SCRIPT_URL, {
@@ -1273,7 +1296,7 @@ async function submitAttendanceRealtime() {
     }
   }
 
-  // 3. STORE LOCALLY IF OFFLINE OR SERVER BUSY
+  // 4. STORE LOCALLY IF OFFLINE OR SERVER BUSY
   let queue = [];
   try { queue = JSON.parse(Storage.get('attendance_queue')) || []; } catch(e){}
   queue.push({ payload: payload, terminal: currentTerminal });
@@ -1290,6 +1313,17 @@ async function processAttendanceQueue() {
   let queue = [];
   try { queue = JSON.parse(Storage.get('attendance_queue')) || []; } catch(e){}
   if (queue.length === 0) return;
+
+  // AUTO-CLEANUP: Drop any offline data older than 6 hours so it doesn't hog storage
+  const now = Date.now();
+  const maxAge = 6 * 60 * 60 * 1000; // 6 hours in milliseconds
+  const initialLength = queue.length;
+  queue = queue.filter(item => (now - new Date(item.payload.clientTimestamp).getTime()) < maxAge);
+  
+  if (queue.length !== initialLength) {
+    Storage.set('attendance_queue', JSON.stringify(queue));
+    if (queue.length === 0) return;
+  }
 
   isAttQueueSyncing = true;
 
