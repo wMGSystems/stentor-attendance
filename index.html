@@ -260,6 +260,7 @@ function purgeCacheAtMidnight() {
     Storage.remove('carrefour_portal_data');
     Storage.remove('order_staff_chandarana');
     Storage.remove('order_staff_carrefour');
+    Storage.remove('local_att_state'); // Purge lightweight local memory daily
     Storage.set('cache_date', today);
   }
 }
@@ -997,7 +998,8 @@ function resetStepsFrom(n) {
   if (n <= 3) { coords = null; clearMsg('gpsMsg'); }
   if (n <= 4) { 
     photo = null; stopCamera(); clearMsg('cameraMsg'); document.getElementById('successPhoto').src = '';
-    const btn = document.getElementById('openCameraBtn'); if(btn) btn.textContent = 'Take Selfie'; 
+    const btn = document.getElementById('openCameraBtn'); 
+    if(btn) { btn.textContent = 'Take Selfie'; btn.disabled = false; } 
   }
 }
 
@@ -1101,8 +1103,23 @@ function handleStaffInput() {
     
     staffName = match.name;
     let lastAction = match.status; 
-    const lastTime = match.lastTime;
+    let lastTime = match.lastTime;
 
+    // LIGHTWEIGHT LOCAL MEMORY CHECK - Prevents cheating via refresh
+    try {
+      const localState = JSON.parse(Storage.get('local_att_state')) || {};
+      const myLocal = localState[val];
+      const todayStr = new Date().toDateString();
+      if (myLocal && myLocal.date === todayStr) {
+         // Overwrite server state if local is newer (happens instantly)
+         if (!lastTime || myLocal.ts > lastTime) {
+            lastAction = myLocal.action;
+            lastTime = myLocal.ts;
+         }
+      }
+    } catch(e) {}
+
+    // Verify Date Reset
     if (lastTime) {
       const d = new Date(lastTime);
       const now = new Date();
@@ -1111,13 +1128,21 @@ function handleStaffInput() {
       }
     }
 
-    if (lastAction === 'Clock Out') { staffRestrictionError = 'You have already clocked out today.'; } 
-    else if (lastAction === 'Clock In') {
-      if (lastTime && (Date.now() - lastTime) / (1000 * 60 * 60) < 3) { staffRestrictionError = 'Clock out at the end of your shift.'; }
+    if (lastAction === 'Clock Out') { 
+      staffRestrictionError = 'You have already clocked out today.'; 
+    } else if (lastAction === 'Clock In') {
+      const hoursSince = (Date.now() - lastTime) / (1000 * 60 * 60);
+      const currentHour = new Date().getHours();
+      
+      // 6-HOUR & 7 PM EXEMPTION LOGIC
+      if (hoursSince < 6 && currentHour < 19) { 
+        staffRestrictionError = 'Please wait 6 hours before clocking out, or wait until 7 PM.'; 
+      }
       currentAction = 'Clock Out';
-    } else { currentAction = 'Clock In'; }
+    } else { 
+      currentAction = 'Clock In'; 
+    }
     
-    // Change Button Text to match action Dynamically
     if (currentAction) {
       const btn = document.getElementById('openCameraBtn');
       if (btn) btn.textContent = currentAction;
@@ -1221,7 +1246,17 @@ function capturePhoto() {
   ctx.drawImage(video, startX, startY, sWidth, sHeight, 0, 0, canvas.width, canvas.height);
   
   photo = canvas.toDataURL('image/jpeg', 0.85); document.getElementById('successPhoto').src = photo;
-  stopCamera(); submitAttendanceRealtime();
+  stopCamera(); 
+  
+  // Update button UI & wait for cloud
+  const btn = document.getElementById('openCameraBtn');
+  btn.innerHTML = '<span class="btn-spinner" style="display:inline-block; vertical-align:middle; width:16px; height:16px; margin-right:8px;"></span><span style="vertical-align:middle;">Submitting...</span>';
+  btn.disabled = true;
+  
+  document.getElementById('cameraMsg').innerHTML = 'Syncing securely to cloud...';
+  document.getElementById('cameraMsg').className = 'msg';
+  
+  submitAttendanceRealtime();
 }
 
 function stopCamera() {
@@ -1234,7 +1269,7 @@ function stopCamera() {
 }
 
 // ----------------------------------------------------
-// OFFLINE QUEUEING & INSTANT SUBMISSION SYSTEM
+// AWAITED CLOUD SUBMISSION & OFFLINE SYSTEM
 // ----------------------------------------------------
 async function submitAttendanceRealtime() {
   const branch = document.getElementById('branch').value, staffID = document.getElementById('staffID').value;
@@ -1249,34 +1284,10 @@ async function submitAttendanceRealtime() {
   };
   
   const submittedAction = currentAction;
-  
-  // 1. OPTIMISTIC LOCAL UPDATE (Prevents Multiple/Duplicate Submissions Instantly)
-  const match = staff.find(s => s.id === staffID);
-  if (match) {
-    match.status = submittedAction;
-    match.lastTime = Date.now();
-    match.branch = branch;
-    
-    // Update the local cache so they are blocked even if they refresh the page
-    try {
-      const cacheKey = currentTerminal + '_portal_data';
-      const cached = JSON.parse(Storage.get(cacheKey));
-      if (cached && cached.staff) {
-        const cachedMatch = cached.staff.find(s => s.id === staffID);
-        if (cachedMatch) {
-          cachedMatch.status = submittedAction;
-          cachedMatch.lastTime = match.lastTime;
-          cachedMatch.branch = branch;
-          Storage.set(cacheKey, JSON.stringify(cached));
-        }
-      }
-    } catch(e) {}
-  }
-  
-  // 2. INSTANT SUCCESS FEEDBACK - User moves on instantly!
-  finishSubmission(submittedAction);
+  const btn = document.getElementById('openCameraBtn');
+  let isSuccess = false;
 
-  // 3. ATTEMPT IMMEDIATE UPLOAD IF ONLINE (Never stores if successful)
+  // 1. AWAIT CLOUD UPLOAD FIRST
   if (navigator.onLine) {
     try {
       const res = await fetch(SCRIPT_URL, {
@@ -1286,24 +1297,62 @@ async function submitAttendanceRealtime() {
       });
       const j = await res.json();
       
-      // If fully successful OR server explicitly rejects it (e.g. Already clocked in),
-      // we DO NOT store it offline. We just exit.
-      if (j.ok || (j.error && !j.error.includes("busy"))) {
-        return; 
+      if (j.ok) {
+        isSuccess = true;
+      } else if (j.error && j.error.includes("busy")) {
+        // Server busy - we fallback to the offline queue rather than throwing an error
+        isSuccess = false;
+      } else {
+        // Absolute Server Rejection (e.g., already clocked in on another device)
+        showError('cameraMsg', j.error);
+        btn.textContent = currentAction || 'Take Selfie';
+        btn.disabled = false;
+        return; // STOP EXECUTION
       }
     } catch(err) {
-      // Fetch failed / Network error -> Fall through to the offline queue
+      // Network failed mid-flight -> proceed to offline queue
     }
   }
 
-  // 4. STORE LOCALLY IF OFFLINE OR SERVER BUSY
-  let queue = [];
-  try { queue = JSON.parse(Storage.get('attendance_queue')) || []; } catch(e){}
-  queue.push({ payload: payload, terminal: currentTerminal });
-  Storage.set('attendance_queue', JSON.stringify(queue));
+  // 2. QUEUE OFFLINE IF FAILED/BUSY
+  if (!isSuccess) {
+     let queue = [];
+     try { queue = JSON.parse(Storage.get('attendance_queue')) || []; } catch(e){}
+     queue.push({ payload: payload, terminal: currentTerminal });
+     Storage.set('attendance_queue', JSON.stringify(queue));
+     processAttendanceQueue(); // Triggers background retry
+  }
+
+  // 3. SECURE LIGHT LOCAL MEMORY (Persists across reloads & purges at midnight)
+  let localState = {};
+  try { localState = JSON.parse(Storage.get('local_att_state')) || {}; } catch(e){}
+  localState[staffID] = { 
+    action: submittedAction, 
+    ts: Date.now(), 
+    date: new Date().toDateString(), 
+    branch: branch 
+  };
+  Storage.set('local_att_state', JSON.stringify(localState));
+
+  // 4. UPDATE MAIN PORTAL CACHE TO MATCH
+  try {
+    const cacheKey = currentTerminal + '_portal_data';
+    const cached = JSON.parse(Storage.get(cacheKey));
+    if (cached && cached.staff) {
+      const cachedMatch = cached.staff.find(s => s.id === staffID);
+      if (cachedMatch) {
+        cachedMatch.status = submittedAction;
+        cachedMatch.lastTime = Date.now();
+        cachedMatch.branch = branch;
+        Storage.set(cacheKey, JSON.stringify(cached));
+      }
+    }
+  } catch(e) {}
   
-  // Try kicking off the background sync
-  processAttendanceQueue();
+  // 5. CLEAR UI & SHOW SUCCESS SCREEN
+  clearMsg('cameraMsg');
+  finishSubmission(submittedAction);
+  btn.disabled = false;
 }
 
 let isAttQueueSyncing = false;
